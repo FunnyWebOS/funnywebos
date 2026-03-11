@@ -1,0 +1,1072 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mickey</title>
+  <style>
+    :root {
+      --bg: #050a14;
+      --panel: rgba(15, 23, 42, 0.72);
+      --panel-2: rgba(15, 23, 42, 0.55);
+      --border: rgba(255, 255, 255, 0.12);
+      --text: #f8fafc;
+      --muted: rgba(248, 250, 252, 0.62);
+      --muted-2: rgba(248, 250, 252, 0.38);
+      --accent: #c084fc;
+      --accent-2: #38bdf8;
+      --shadow: 0 30px 90px rgba(0, 0, 0, 0.55);
+      --radius: 18px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --font: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+    }
+
+    :root[data-theme="light"] {
+      --bg: #f6f7fb;
+      --panel: rgba(255, 255, 255, 0.82);
+      --panel-2: rgba(255, 255, 255, 0.62);
+      --border: rgba(2, 6, 23, 0.12);
+      --text: #0f172a;
+      --muted: rgba(15, 23, 42, 0.64);
+      --muted-2: rgba(15, 23, 42, 0.42);
+      --shadow: 0 30px 90px rgba(2, 6, 23, 0.18);
+    }
+
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      font-family: var(--font);
+      background:
+        radial-gradient(1000px 700px at 70% 30%, rgba(192, 132, 252, 0.18), transparent 60%),
+        radial-gradient(900px 600px at 25% 25%, rgba(56, 189, 248, 0.14), transparent 60%),
+        linear-gradient(180deg, rgba(2, 6, 23, 0.55), rgba(2, 6, 23, 0.85)),
+        var(--bg);
+      color: var(--text);
+      overflow: hidden;
+    }
+
+    :root[data-theme="light"] body {
+      background:
+        radial-gradient(1000px 700px at 70% 30%, rgba(192, 132, 252, 0.16), transparent 60%),
+        radial-gradient(900px 600px at 25% 25%, rgba(56, 189, 248, 0.14), transparent 60%),
+        linear-gradient(180deg, rgba(255, 255, 255, 0.65), rgba(246, 247, 251, 1)),
+        var(--bg);
+    }
+
+    .wrap {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      padding: 16px;
+      gap: 12px;
+      width: 100%;
+      max-width: 980px;
+      margin: 0 auto;
+    }
+
+    .top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 14px;
+      border-radius: var(--radius);
+      background: var(--panel);
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(22px) saturate(170%);
+      -webkit-backdrop-filter: blur(22px) saturate(170%);
+    }
+
+    .brand { display: flex; align-items: center; gap: 12px; min-width: 0; }
+    .avatar {
+      width: 40px; height: 40px; border-radius: 14px;
+      background: linear-gradient(135deg, rgba(192, 132, 252, 1), rgba(56, 189, 248, 1));
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 900;
+      color: #0b1222;
+      box-shadow: 0 10px 25px rgba(192, 132, 252, 0.25);
+      flex: 0 0 auto;
+    }
+    .brand-info { min-width: 0; }
+    .title { font-weight: 900; letter-spacing: 0.3px; }
+    .subtitle { font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+    .btns { display: flex; gap: 8px; align-items: center; }
+    button {
+      border: 1px solid var(--border);
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text);
+      padding: 10px 12px;
+      border-radius: 12px;
+      cursor: pointer;
+      font-weight: 700;
+      transition: transform 0.08s ease, background 0.2s ease, opacity 0.2s ease;
+      user-select: none;
+    }
+    button:hover { background: rgba(255, 255, 255, 0.1); }
+    button:active { transform: translateY(1px) scale(0.99); }
+    button.primary {
+      border: none;
+      background: linear-gradient(90deg, rgba(192, 132, 252, 1), rgba(56, 189, 248, 1));
+      color: #0b1222;
+      box-shadow: 0 12px 30px rgba(56, 189, 248, 0.18);
+    }
+    button.ghost { background: transparent; }
+    button[disabled] { opacity: 0.6; cursor: not-allowed; }
+
+    .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+    .chip {
+      padding: 9px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      border: 1px solid var(--border);
+      background: var(--panel-2);
+      color: var(--text);
+      cursor: pointer;
+      transition: background 0.2s ease, transform 0.08s ease;
+    }
+    .chip:hover { background: rgba(255, 255, 255, 0.1); }
+    .chip:active { transform: translateY(1px); }
+
+    .chat {
+      flex: 1;
+      overflow: auto;
+      padding: 14px;
+      border-radius: var(--radius);
+      background: var(--panel);
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(22px) saturate(170%);
+      -webkit-backdrop-filter: blur(22px) saturate(170%);
+    }
+    .chat::-webkit-scrollbar { width: 6px; }
+    .chat::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.18); border-radius: 999px; }
+
+    .msg { display: flex; gap: 10px; margin: 10px 0; }
+    .msg .bubble {
+      max-width: 92%;
+      padding: 12px 12px;
+      border-radius: 16px;
+      border: 1px solid var(--border);
+      background: rgba(255, 255, 255, 0.06);
+      line-height: 1.35;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .msg.user { justify-content: flex-end; }
+    .msg.user .bubble {
+      background: linear-gradient(135deg, rgba(192, 132, 252, 0.18), rgba(56, 189, 248, 0.14));
+      border-color: rgba(56, 189, 248, 0.25);
+    }
+    .msg.assistant .bubble { background: rgba(255, 255, 255, 0.06); }
+    .msg .meta { font-size: 11px; color: var(--muted-2); margin-top: 6px; }
+
+    .composer {
+      display: flex;
+      gap: 10px;
+      padding: 12px;
+      border-radius: var(--radius);
+      background: var(--panel);
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(22px) saturate(170%);
+      -webkit-backdrop-filter: blur(22px) saturate(170%);
+      align-items: flex-end;
+    }
+    .input {
+      flex: 1;
+      border: 1px solid var(--border);
+      background: rgba(0, 0, 0, 0.18);
+      color: var(--text);
+      border-radius: 14px;
+      padding: 10px 12px;
+      min-height: 44px;
+      max-height: 120px;
+      resize: none;
+      outline: none;
+      font-family: inherit;
+      font-size: 16px;
+      line-height: 1.35;
+    }
+    :root[data-theme="light"] .input { background: rgba(2, 6, 23, 0.04); }
+    .hint { font-size: 12px; color: var(--muted); padding: 0 2px; }
+
+    .panel {
+      position: fixed;
+      inset: 16px;
+      border-radius: var(--radius);
+      background: rgba(2, 6, 23, 0.55);
+      backdrop-filter: blur(18px) saturate(140%);
+      -webkit-backdrop-filter: blur(18px) saturate(140%);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      z-index: 50;
+    }
+    :root[data-theme="light"] .panel { background: rgba(15, 23, 42, 0.3); border-color: rgba(2, 6, 23, 0.12); }
+    .panel.open { display: flex; }
+    .panel-card {
+      width: min(780px, 100%);
+      max-height: 100%;
+      overflow: auto;
+      border-radius: var(--radius);
+      background: var(--panel);
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
+      padding: 16px;
+    }
+    .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+    .field { display: flex; flex-direction: column; gap: 6px; flex: 1; min-width: 220px; }
+    label { font-size: 12px; color: var(--muted); }
+    select, .text {
+      border: 1px solid var(--border);
+      background: rgba(0, 0, 0, 0.18);
+      color: var(--text);
+      border-radius: 12px;
+      padding: 10px 12px;
+      outline: none;
+      font-family: inherit;
+    }
+    :root[data-theme="light"] select,
+    :root[data-theme="light"] .text { background: rgba(2, 6, 23, 0.04); }
+    .text.mono { font-family: var(--mono); }
+    .small { font-size: 12px; color: var(--muted); line-height: 1.3; }
+    .kbd { font-family: var(--mono); font-size: 11px; padding: 2px 6px; border: 1px solid var(--border); border-radius: 8px; background: rgba(255,255,255,0.06); }
+    .danger { background: rgba(255, 59, 48, 0.12); border-color: rgba(255, 59, 48, 0.25); }
+    .danger:hover { background: rgba(255, 59, 48, 0.18); }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="top">
+      <div class="brand">
+        <div class="avatar">M</div>
+        <div class="brand-info">
+          <div class="title">Mickey</div>
+          <div class="subtitle" id="status">Initialisation…</div>
+        </div>
+      </div>
+      <div class="btns">
+        <button class="ghost" id="btn-speak" title="Activer / désactiver la voix">🔊</button>
+        <button class="ghost" id="btn-mic" title="Dicter (micro)">🎙️</button>
+        <button class="ghost" id="btn-settings" title="Réglages">⚙️</button>
+      </div>
+    </div>
+
+    <div class="chips">
+      <div class="chip" data-send="Mets le thème clair">Thème clair</div>
+      <div class="chip" data-send="Mets le thème sombre">Thème sombre</div>
+      <div class="chip" data-send="Ouvre les paramètres">Paramètres</div>
+      <div class="chip" data-send="Ouvre l'explorateur de fichiers">Fichiers</div>
+      <div class="chip" data-send="Aide">Aide</div>
+    </div>
+
+    <div class="chat" id="chat"></div>
+
+    <div class="composer">
+      <div style="flex:1; display:flex; flex-direction:column; gap:6px;">
+        <textarea class="input" id="input" placeholder="Dis-moi: “mets le thème clair”, “ouvre paramètres”, ou pose une question…"></textarea>
+        <div class="hint">Raccourci OS: <span class="kbd">Ctrl</span> + <span class="kbd">Shift</span> + <span class="kbd">M</span></div>
+      </div>
+      <button class="primary" id="btn-send">Envoyer</button>
+    </div>
+  </div>
+
+  <div class="panel" id="panel">
+    <div class="panel-card">
+      <div class="row" style="justify-content: space-between; margin-bottom: 10px;">
+        <div>
+          <div style="font-weight: 900; font-size: 16px;">Réglages Mickey</div>
+          <div class="small">Groq + commandes système. Les actions dangereuses demandent confirmation.</div>
+        </div>
+        <button id="btn-close-panel">Fermer</button>
+      </div>
+
+      <div class="row" style="margin-top: 10px;">
+        <div class="field">
+          <label>Modèle Groq</label>
+          <select id="model">
+            <option value="llama-3.3-70b-versatile">llama-3.3-70b-versatile (par défaut)</option>
+            <option value="llama-3.1-8b-instant">llama-3.1-8b-instant (rapide)</option>
+            <option value="qwen/qwen3-32b">qwen/qwen3-32b</option>
+            <option value="openai/gpt-oss-120b">openai/gpt-oss-120b</option>
+          </select>
+          <div class="small" id="key-status"></div>
+          <div class="row" style="gap: 8px;">
+            <input type="password" class="text mono" id="groq-key" style="flex: 1 1 260px;"
+              placeholder="Clé Groq (gsk_…)" autocomplete="off" spellcheck="false" />
+            <button id="btn-save-key" type="button">Enregistrer</button>
+            <button class="danger" id="btn-clear-key" type="button" title="Supprimer la clé sauvegardée">Effacer</button>
+          </div>
+          <div class="small">Optionnel: colle ta clé ici (stockée localement dans ce navigateur).</div>
+        </div>
+        <div class="field">
+          <label>Mémoire (persistante)</label>
+          <input class="text" id="memory" placeholder="Ex: Réponds toujours en français, style concis…" />
+          <div class="small">Stocké localement (localStorage).</div>
+        </div>
+      </div>
+
+      <div class="row" style="margin-top: 10px;">
+        <div class="field">
+          <label>Commandes supportées</label>
+          <div class="small">
+            - Thème: “mets le thème clair/sombre”<br/>
+            - Fond d’écran: “mets le fond d’écran gradient”<br/>
+            - Apps: “ouvre …”, “ferme …”<br/>
+            - OS: “ouvre la recherche”, “verrouille la session”<br/>
+            - Couleur: “mets l’accent en #C084FC”<br/>
+            - Zoom UI: “zoom 110%”<br/>
+            - Mémoire: “mémorise: …”, “oublie la mémoire”
+          </div>
+        </div>
+        <div class="field">
+          <label>Données</label>
+          <div class="row">
+            <button class="danger" id="btn-clear">Effacer l’historique</button>
+            <button id="btn-stop-tts">Stop voix</button>
+          </div>
+          <div class="small">Astuce: la clé Groq se lit depuis `.env` via `AETHER_GROQ_API_KEY` (attention si tu déploies en public).</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const wm = (window.parent && window.parent.windowManager) ? window.parent.windowManager : null;
+    const elements = {
+      chat: document.getElementById('chat'),
+      input: document.getElementById('input'),
+      send: document.getElementById('btn-send'),
+      status: document.getElementById('status'),
+      btnSpeak: document.getElementById('btn-speak'),
+      btnMic: document.getElementById('btn-mic'),
+      btnSettings: document.getElementById('btn-settings'),
+      panel: document.getElementById('panel'),
+      btnClosePanel: document.getElementById('btn-close-panel'),
+      model: document.getElementById('model'),
+      memory: document.getElementById('memory'),
+      keyStatus: document.getElementById('key-status'),
+      groqKey: document.getElementById('groq-key'),
+      btnSaveKey: document.getElementById('btn-save-key'),
+      btnClearKey: document.getElementById('btn-clear-key'),
+      btnClear: document.getElementById('btn-clear'),
+      btnStopTts: document.getElementById('btn-stop-tts')
+    };
+
+    const STORAGE = {
+      model: 'mickey_model',
+      memory: 'mickey_memory',
+      history: 'mickey_history_v1',
+      speak: 'mickey_speak_enabled',
+      groqKey: 'aether_groq_api_key'
+    };
+
+    const DEFAULT_GROQ_MODEL = 'llama-3.3-70b-versatile';
+    const MODEL_MIGRATIONS = {
+      'llama3-70b-8192': DEFAULT_GROQ_MODEL,
+      'llama3-8b-8192': 'llama-3.1-8b-instant',
+      'mixtral-8x7b-32768': DEFAULT_GROQ_MODEL,
+      'gemma-7b-it': 'llama-3.1-8b-instant',
+      'gemma2-9b-it': 'llama-3.1-8b-instant',
+      'mistral-saba-24b': 'qwen/qwen3-32b'
+    };
+
+    function norm(s) {
+      return String(s || '')
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/\s+/g, ' ')
+        .trim();
+    }
+
+    function safeNow() {
+      try { return new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }); }
+      catch { return ''; }
+    }
+
+    function scrollToBottom() {
+      elements.chat.scrollTop = elements.chat.scrollHeight;
+    }
+
+    function addMessage(role, content) {
+      const msg = document.createElement('div');
+      msg.className = 'msg ' + (role === 'user' ? 'user' : 'assistant');
+      const bubble = document.createElement('div');
+      bubble.className = 'bubble';
+      bubble.textContent = content;
+      const meta = document.createElement('div');
+      meta.className = 'meta';
+      meta.textContent = safeNow();
+      bubble.appendChild(meta);
+      msg.appendChild(bubble);
+      elements.chat.appendChild(msg);
+      scrollToBottom();
+    }
+
+    function setStatus(text) {
+      elements.status.textContent = text;
+    }
+
+    function getGroqKey() {
+      const fromWm = (wm && wm.groqApiKey) ? String(wm.groqApiKey).trim() : '';
+      if (fromWm) return fromWm;
+      try {
+        const stored = String(localStorage.getItem(STORAGE.groqKey) || '').trim();
+        if (stored && wm && !wm.groqApiKey) {
+          if (typeof wm.setGroqApiKey === 'function') wm.setGroqApiKey(stored);
+          else wm.groqApiKey = stored;
+        }
+        return stored;
+      } catch {
+        return '';
+      }
+    }
+
+    function migrateModel(modelId) {
+      const raw = String(modelId || '').trim();
+      if (!raw) return DEFAULT_GROQ_MODEL;
+      const migrated = MODEL_MIGRATIONS[raw] || raw;
+      if (migrated !== raw) {
+        try { localStorage.setItem(STORAGE.model, migrated); } catch {}
+      }
+      return migrated;
+    }
+
+    function ensureModelOption(value) {
+      const v = String(value || '').trim();
+      if (!v || !elements.model) return;
+      const exists = Array.from(elements.model.options || []).some(opt => opt && opt.value === v);
+      if (exists) return;
+      const opt = document.createElement('option');
+      opt.value = v;
+      opt.textContent = v;
+      elements.model.appendChild(opt);
+    }
+
+    function getGroqModel() {
+      const stored = (() => {
+        try { return String(localStorage.getItem(STORAGE.model) || '').trim(); } catch { return ''; }
+      })();
+      const picked = stored || (elements.model ? elements.model.value : '') || DEFAULT_GROQ_MODEL;
+      const migrated = migrateModel(picked);
+      ensureModelOption(migrated);
+      if (elements.model) elements.model.value = migrated;
+      return migrated;
+    }
+
+    function maskKey(key) {
+      const k = String(key || '').trim();
+      if (!k) return '';
+      if (k.length <= 10) return `${k.slice(0, 2)}…${k.slice(-2)}`;
+      return `${k.slice(0, 4)}…${k.slice(-4)}`;
+    }
+
+    function syncKeyStatus() {
+      const k = getGroqKey();
+      elements.keyStatus.textContent = k
+        ? `Clé Groq détectée ✅ (${maskKey(k)})`
+        : 'Clé Groq manquante ❌ (AETHER_GROQ_API_KEY dans .env/env, ou colle la clé ici)';
+    }
+
+    function setGroqKey(value) {
+      const k = String(value || '').trim();
+      try {
+        if (k) localStorage.setItem(STORAGE.groqKey, k);
+        else localStorage.removeItem(STORAGE.groqKey);
+      } catch {}
+      try {
+        if (wm) {
+          if (typeof wm.setGroqApiKey === 'function') wm.setGroqApiKey(k);
+          else wm.groqApiKey = k;
+        }
+      } catch {}
+      syncKeyStatus();
+      return k;
+    }
+
+    async function reloadEnvMaybe() {
+      try {
+        if (wm && typeof wm.loadSupabaseConfigFromEnv === 'function') {
+          await wm.loadSupabaseConfigFromEnv();
+        }
+      } catch {}
+      syncKeyStatus();
+    }
+
+    function getRegistry() {
+      return (wm && Array.isArray(wm.appsRegistry)) ? wm.appsRegistry : [];
+    }
+
+    function getKnownApps() {
+      const apps = getRegistry()
+        .filter(a => a && a.id)
+        .map(a => ({ id: String(a.id), title: String(a.title || a.id) }));
+      const uniq = new Map();
+      apps.forEach(app => {
+        if (!app.id) return;
+        if (!uniq.has(app.id)) uniq.set(app.id, app);
+      });
+      return Array.from(uniq.values());
+    }
+
+    function formatAppsList(maxItems = 18) {
+      const apps = getKnownApps()
+        .filter(app => app && app.id && app.id !== 'mickey')
+        .slice(0, Math.max(1, maxItems));
+      if (apps.length === 0) return "Je n’ai pas encore accès à la liste des apps.";
+      return [
+        "Apps disponibles (exemples):",
+        ...apps.map(app => `- ${app.title} (${app.id})`),
+        "",
+        "Astuce: dis “ouvre <nom>” ou “ouvre une app aléatoire”."
+      ].join("\\n");
+    }
+
+    function bestAppMatch(query) {
+      const q = norm(query);
+      if (!q) return null;
+
+      const aliases = new Map([
+        ['parametres', 'settings'],
+        ['parametre', 'settings'],
+        ['settings', 'settings'],
+        ['fichiers', 'explorer'],
+        ['explorateur', 'explorer'],
+        ['store', 'store'],
+        ['app store', 'store'],
+        ['navigateur', 'browser'],
+        ['browser', 'browser'],
+        ['wiki', 'wiki'],
+        ['aide', 'wiki'],
+        ['mickey', 'mickey']
+      ]);
+      if (aliases.has(q)) {
+        const id = aliases.get(q);
+        const fromRegistry = getRegistry().find(a => a && a.id === id);
+        return fromRegistry || { id, title: id };
+      }
+
+      const apps = getRegistry();
+      const direct = apps.find(a => a && (norm(a.id) === q || norm(a.title) === q));
+      if (direct) return direct;
+      const partial = apps.find(a => a && (norm(a.title).includes(q) || norm(a.id).includes(q)));
+      if (partial) return partial;
+      return null;
+    }
+
+    function runAction(action) {
+      const type = action && action.type ? action.type : '';
+      if (type === 'help') {
+        return [
+          "Je peux:",
+          "- Mettre le thème clair/sombre",
+          "- Changer le fond d’écran",
+          "- Ouvrir/fermer une app",
+          "- Ouvrir la recherche / launchpad",
+          "- Verrouiller la session / mode immersif",
+          "- Changer la couleur d’accent",
+          "- Régler le zoom UI",
+          "- Mémoriser une consigne (training léger)",
+          "",
+          "Exemples:",
+          "• mets le thème clair",
+          "• mets le fond d’écran gradient",
+          "• ouvre paramètres",
+          "• ferme store",
+          "• mets l’accent en #C084FC",
+          "• zoom 110%",
+          "• ouvre la recherche",
+          "• verrouille la session",
+          "• mémorise: réponds toujours en français"
+        ].join("\\n");
+      }
+      if (type === 'remember') {
+        const current = String(localStorage.getItem(STORAGE.memory) || '').trim();
+        const note = String(action.note || '').trim();
+        const next = [current, note].filter(Boolean).join('\\n').trim();
+        localStorage.setItem(STORAGE.memory, next);
+        elements.memory.value = next;
+        return "C’est noté. Tu peux ouvrir ⚙️ pour voir/éditer la mémoire.";
+      }
+      if (type === 'forget_memory') {
+        localStorage.setItem(STORAGE.memory, '');
+        elements.memory.value = '';
+        return "Mémoire effacée.";
+      }
+      if (type === 'list_apps') {
+        return formatAppsList(28);
+      }
+
+      if (!wm) throw new Error('windowManager introuvable');
+      if (type === 'set_theme') {
+        wm.setTheme(action.theme);
+        return `Thème ${action.theme === 'light' ? 'clair' : 'sombre'} activé.`;
+      }
+      if (type === 'set_wallpaper') {
+        wm.setWallpaper(action.wallpaper);
+        return `Fond d’écran mis à jour.`;
+      }
+      if (type === 'open_app') {
+        const appMeta = getRegistry().find(a => a && a.id === action.id) || null;
+        const title = action.title || (appMeta && appMeta.title) || (action.id ? action.id : 'App');
+        wm.createWindow(action.id, title, true);
+        return `J’ouvre ${title}.`;
+      }
+      if (type === 'open_random_app') {
+        const apps = getKnownApps().filter(app => app && app.id && app.id !== 'mickey');
+        if (apps.length === 0) return "Je n’ai pas trouvé d’app à ouvrir.";
+        const picked = apps[Math.floor(Math.random() * apps.length)];
+        wm.createWindow(picked.id, picked.title, true);
+        return `J’ouvre ${picked.title} (au hasard).`;
+      }
+      if (type === 'close_app') {
+        wm.closeWindow(action.id);
+        return `Je ferme ${action.id}.`;
+      }
+      if (type === 'toggle_search') {
+        wm.toggleSearch();
+        return `Recherche ouverte.`;
+      }
+      if (type === 'toggle_launchpad') {
+        wm.toggleLaunchpad();
+        return `Launchpad ouvert.`;
+      }
+      if (type === 'lock_session') {
+        wm.lockSession();
+        return `Session verrouillée.`;
+      }
+      if (type === 'toggle_immersive') {
+        wm.toggleImmersiveMode();
+        return `Mode immersif basculé.`;
+      }
+      if (type === 'set_accent') {
+        wm.setAccentColor(action.color);
+        return `Couleur d’accent mise à jour (${action.color}).`;
+      }
+      if (type === 'set_ui_scale') {
+        wm.setUIScale(action.scale);
+        return `Zoom UI réglé à ${action.scale}%.`;
+      }
+      return null;
+    }
+
+    function parseCommand(text) {
+      const t = norm(text);
+      if (!t) return null;
+
+      if (t === 'aide' || t === 'help' || t.includes('commande')) return { type: 'help' };
+      if (
+        (t.includes('liste') || t.includes('quelles') || t.includes('quoi')) &&
+        (t.includes('app') || t.includes('apps') || t.includes('application') || t.includes('applications'))
+      ) {
+        return { type: 'list_apps' };
+      }
+      if (t.startsWith('memorise') || t.startsWith('souviens toi') || t.startsWith('souviens-toi')) {
+        const note = String(text || '').replace(/^\s*(mémorise|memorise|souviens[- ]toi)\s*:?\s*/i, '').trim();
+        if (note) return { type: 'remember', note };
+      }
+      if (t.includes('efface la memoire') || t.includes('efface memoire') || t.includes('oublie tout') || t.includes('oublie la memoire') || t.includes('oublie memoire')) {
+        return { type: 'forget_memory' };
+      }
+
+      const wantsTheme =
+        t.includes('theme') ||
+        t.includes('mode') ||
+        t.includes('thme') ||
+        t.includes('apparence') ||
+        t.includes('interface') ||
+        t.includes('ui');
+      const looksLikeWallpaper = t.includes('wallpaper') || t.includes('background') || (t.includes('fond') && (t.includes('ecran') || t.includes('d ecran') || t.includes("d'ecran")));
+      const wantsThemeImplicit = !looksLikeWallpaper &&
+        (t.includes('mets') || t.includes('met') || t.includes('passe') || t.includes('active')) &&
+        (t.includes('clair') || t.includes('light') || t.includes('sombre') || t.includes('dark') || t.includes('noir'));
+      if ((wantsTheme || wantsThemeImplicit) && (t.includes('clair') || t.includes('light'))) return { type: 'set_theme', theme: 'light' };
+      if ((wantsTheme || wantsThemeImplicit) && (t.includes('sombre') || t.includes('dark') || t.includes('noir'))) return { type: 'set_theme', theme: 'dark' };
+
+      const wantsWallpaper = (t.includes('fond') && (t.includes('ecran') || t.includes('d ecran') || t.includes("d'ecran"))) || t.includes('wallpaper') || t.includes('background');
+      if (wantsWallpaper) {
+        const urlMatch = String(text || '').match(/(https?:\/\/[^\s]+|data:[^\s]+)/i);
+        if (urlMatch) return { type: 'set_wallpaper', wallpaper: urlMatch[1] };
+        if (t.includes('defaut') || t.includes('default')) return { type: 'set_wallpaper', wallpaper: 'default' };
+        if (t.includes('gradient')) return { type: 'set_wallpaper', wallpaper: 'gradient' };
+        if (t.includes('bleu') || t.includes('blue')) return { type: 'set_wallpaper', wallpaper: 'blue' };
+        if (t.includes('sunset') || t.includes('coucher')) return { type: 'set_wallpaper', wallpaper: 'sunset' };
+        if (t.includes('sombre') || t.includes('dark') || t.includes('noir')) return { type: 'set_wallpaper', wallpaper: 'dark' };
+      }
+
+      const accentMatch = t.match(/#([0-9a-f]{6})\b/i);
+      if ((t.includes('accent') || t.includes('couleur')) && accentMatch) {
+        return { type: 'set_accent', color: '#' + accentMatch[1] };
+      }
+
+      const zoomMatch = t.match(/\b(zoom|echelle|scale)\s*(\d{2,3})\s*%?\b/);
+      if (zoomMatch) {
+        const scale = Math.max(80, Math.min(150, Number(zoomMatch[2]) || 100));
+        return { type: 'set_ui_scale', scale };
+      }
+
+      if (t.includes('recherche') && (t.includes('ouvre') || t.includes('open'))) return { type: 'toggle_search' };
+      if (t.includes('launchpad') && (t.includes('ouvre') || t.includes('open') || t.includes('demarre'))) return { type: 'toggle_launchpad' };
+      if (t.includes('verrouille') || t.includes('lock')) return { type: 'lock_session' };
+      if (t.includes('immersif') || t.includes('fullscreen')) return { type: 'toggle_immersive' };
+
+      const openMatch = t.match(/\b(ouvre|lance|open|start)\b\s+(.+)$/);
+      if (openMatch) {
+        const raw = openMatch[2].replace(/\b(le|la|les|un|une|des|du|de|d)\b/g, '').replace(/^\s*'|'\s*$/g, '').trim();
+        if (raw.includes('aleatoire') || raw.includes('au hasard') || raw.includes('random')) {
+          return { type: 'open_random_app' };
+        }
+        const app = bestAppMatch(raw);
+        if (app && app.id) return { type: 'open_app', id: app.id, title: app.title || app.id };
+      }
+
+      const closeMatch = t.match(/\b(ferme|close|quit)\b\s+(.+)$/);
+      if (closeMatch) {
+        const raw = closeMatch[2].replace(/\b(le|la|les|un|une|des|du|de|d)\b/g, '').trim();
+        const app = bestAppMatch(raw);
+        if (app && app.id) return { type: 'close_app', id: app.id };
+      }
+
+      return null;
+    }
+
+    function loadHistory() {
+      try {
+        const raw = localStorage.getItem(STORAGE.history);
+        const parsed = raw ? JSON.parse(raw) : [];
+        return Array.isArray(parsed) ? parsed : [];
+      } catch {
+        return [];
+      }
+    }
+
+    function saveHistory(history) {
+      try { localStorage.setItem(STORAGE.history, JSON.stringify(history.slice(-40))); } catch {}
+    }
+
+    let history = loadHistory(); // {role, content}
+    let speakEnabled = false;
+    let speaking = null;
+
+    function stopTTS() {
+      try {
+        window.speechSynthesis && window.speechSynthesis.cancel();
+      } catch {}
+      speaking = null;
+    }
+
+    function speak(text) {
+      if (!speakEnabled) return;
+      if (!text) return;
+      if (!('speechSynthesis' in window)) return;
+      stopTTS();
+      const utter = new SpeechSynthesisUtterance(text);
+      utter.lang = 'fr-FR';
+      try {
+        const voices = window.speechSynthesis.getVoices ? window.speechSynthesis.getVoices() : [];
+        const fr = voices.find(v => /fr/i.test(v.lang)) || voices[0];
+        if (fr) utter.voice = fr;
+      } catch {}
+      speaking = utter;
+      window.speechSynthesis.speak(utter);
+    }
+
+    async function callGroq(userText, { signal } = {}) {
+      let key = getGroqKey();
+      if (!key) {
+        await reloadEnvMaybe();
+        key = getGroqKey();
+      }
+      if (!key) {
+        return "Je n’ai pas de clé Groq. Mets `AETHER_GROQ_API_KEY=` dans `.env`/`env` (ou colle la clé dans ⚙️ Réglages Mickey), puis recharge AetherOS.";
+      }
+
+      const memory = String(localStorage.getItem(STORAGE.memory) || '').trim();
+      let model = getGroqModel();
+      const theme = (() => {
+        try { return (wm && wm.theme) ? wm.theme : (window.parent.document.documentElement.getAttribute('data-theme') || 'dark'); }
+        catch { return 'dark'; }
+      })();
+
+      const appsForPrompt = getKnownApps()
+        .filter(app => app && app.id && app.id !== 'mickey')
+        .slice(0, 40)
+        .map(app => `${app.title} (${app.id})`);
+
+      const sys = [
+        "Tu t’appelles Mickey.",
+        "Tu es l’assistant intégré d’AetherOS (un OS dans le navigateur).",
+        "Réponds en français, ton concis et utile.",
+        "N’invente jamais une app ou une fonctionnalité qui n’existe pas. Si tu n’es pas sûr, pose une question.",
+        "Si une action système est demandée, propose des commandes concrètes.",
+        `Contexte: thème=${theme}.`
+      ].concat(appsForPrompt.length ? [`Apps connues: ${appsForPrompt.join(', ')}.`] : []).join("\\n");
+
+      const messages = [
+        { role: 'system', content: sys },
+        ...(memory ? [{ role: 'system', content: `Mémoire utilisateur: ${memory}` }] : []),
+        ...history.slice(-18),
+        { role: 'user', content: userText }
+      ];
+
+      for (let attempt = 0; attempt < 2; attempt++) {
+        const chosenModel = attempt === 0 ? model : DEFAULT_GROQ_MODEL;
+        if (attempt === 1) {
+          try { localStorage.setItem(STORAGE.model, chosenModel); } catch {}
+          ensureModelOption(chosenModel);
+          if (elements.model) elements.model.value = chosenModel;
+        }
+
+        const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${key}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ model: chosenModel, messages }),
+          signal
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok || (data && data.error)) {
+          const msg = (data && data.error && data.error.message) ? data.error.message : `HTTP ${res.status}`;
+          if (attempt === 0 && /decommissioned/i.test(msg) && chosenModel !== DEFAULT_GROQ_MODEL) {
+            model = DEFAULT_GROQ_MODEL;
+            continue;
+          }
+          throw new Error(msg);
+        }
+        const text = (data && data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content)
+          ? String(data.choices[0].message.content).trim()
+          : '';
+        return text || "Je n’ai pas réussi à générer une réponse.";
+      }
+
+      return "Je n’ai pas réussi à générer une réponse.";
+    }
+
+    let inflight = null;
+    async function send(text) {
+      const content = String(text || '').trim();
+      if (!content) return;
+      elements.input.value = '';
+      elements.input.focus();
+
+      addMessage('user', content);
+      history.push({ role: 'user', content });
+      saveHistory(history);
+
+      const cmd = parseCommand(content);
+      if (cmd) {
+        try {
+          const out = runAction(cmd);
+          if (out) {
+            addMessage('assistant', out);
+            history.push({ role: 'assistant', content: out });
+            saveHistory(history);
+            speak(out);
+            setStatus('Action exécutée.');
+            return;
+          }
+        } catch (err) {
+          const msg = `Erreur action: ${err.message || err}`;
+          addMessage('assistant', msg);
+          history.push({ role: 'assistant', content: msg });
+          saveHistory(history);
+          setStatus('Erreur.');
+          return;
+        }
+      }
+
+      const normalized = norm(content);
+      const looksLikeAppCommand = /\b(ouvre|lance|open|start|ferme|close|quit)\b/.test(normalized);
+      if (looksLikeAppCommand) {
+        const out = [
+          "Je ne reconnais pas cette app.",
+          "",
+          formatAppsList(18)
+        ].join("\\n");
+        addMessage('assistant', out);
+        history.push({ role: 'assistant', content: out });
+        saveHistory(history);
+        setStatus('Prêt.');
+        speak(out);
+        return;
+      }
+
+      try {
+        if (inflight) inflight.abort();
+        inflight = new AbortController();
+        setStatus('Mickey réfléchit…');
+        const reply = await callGroq(content, { signal: inflight.signal });
+        addMessage('assistant', reply);
+        history.push({ role: 'assistant', content: reply });
+        saveHistory(history);
+        setStatus('Prêt.');
+        speak(reply);
+      } catch (err) {
+        const msg = `Erreur Groq: ${err.message || err}`;
+        addMessage('assistant', msg);
+        history.push({ role: 'assistant', content: msg });
+        saveHistory(history);
+        setStatus('Erreur.');
+      } finally {
+        inflight = null;
+      }
+    }
+
+    // UI events
+    elements.send.addEventListener('click', () => send(elements.input.value));
+    elements.input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        send(elements.input.value);
+      }
+    });
+
+    document.querySelectorAll('.chip[data-send]').forEach(chip => {
+      chip.addEventListener('click', () => send(chip.getAttribute('data-send')));
+    });
+
+    function openPanel() {
+      elements.panel.classList.add('open');
+      reloadEnvMaybe();
+      elements.memory.value = localStorage.getItem(STORAGE.memory) || '';
+      getGroqModel();
+    }
+    function closePanel() { elements.panel.classList.remove('open'); }
+    elements.btnSettings.addEventListener('click', openPanel);
+    elements.btnClosePanel.addEventListener('click', closePanel);
+    elements.panel.addEventListener('click', (e) => { if (e.target === elements.panel) closePanel(); });
+
+    elements.model.addEventListener('change', () => {
+      const next = migrateModel(elements.model.value);
+      ensureModelOption(next);
+      elements.model.value = next;
+      localStorage.setItem(STORAGE.model, next);
+    });
+    elements.memory.addEventListener('input', () => {
+      localStorage.setItem(STORAGE.memory, elements.memory.value);
+    });
+
+    elements.btnClear.addEventListener('click', () => {
+      if (!confirm('Effacer tout l’historique Mickey ?')) return;
+      history = [];
+      saveHistory(history);
+      elements.chat.innerHTML = '';
+      addMessage('assistant', "Historique effacé.");
+    });
+
+    elements.btnStopTts.addEventListener('click', stopTTS);
+
+    elements.btnSaveKey.addEventListener('click', () => {
+      const saved = setGroqKey(elements.groqKey.value);
+      elements.groqKey.value = '';
+      setStatus(saved ? 'Clé Groq enregistrée.' : 'Clé Groq effacée.');
+    });
+
+    elements.btnClearKey.addEventListener('click', () => {
+      if (!confirm('Supprimer la clé Groq sauvegardée ?')) return;
+      setGroqKey('');
+      setStatus('Clé Groq effacée.');
+    });
+
+    elements.groqKey.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        elements.btnSaveKey.click();
+      }
+    });
+
+    elements.btnSpeak.addEventListener('click', () => {
+      speakEnabled = !speakEnabled;
+      localStorage.setItem(STORAGE.speak, speakEnabled ? '1' : '0');
+      elements.btnSpeak.textContent = speakEnabled ? '🔊' : '🔈';
+      setStatus(speakEnabled ? 'Voix activée.' : 'Voix désactivée.');
+      if (!speakEnabled) stopTTS();
+    });
+
+    // Speech recognition (optional)
+    let rec = null;
+    let recActive = false;
+    function setupSpeechRecognition() {
+      const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SR) return;
+      rec = new SR();
+      rec.lang = 'fr-FR';
+      rec.continuous = false;
+      rec.interimResults = true;
+      rec.onresult = (e) => {
+        let final = '';
+        let interim = '';
+        for (let i = e.resultIndex; i < e.results.length; i++) {
+          const t = e.results[i][0] ? e.results[i][0].transcript : '';
+          if (e.results[i].isFinal) final += t;
+          else interim += t;
+        }
+        elements.input.value = (final || interim).trim();
+      };
+      rec.onend = () => {
+        recActive = false;
+        elements.btnMic.textContent = '🎙️';
+      };
+      rec.onerror = () => {
+        recActive = false;
+        elements.btnMic.textContent = '🎙️';
+      };
+    }
+
+    elements.btnMic.addEventListener('click', async () => {
+      if (!rec) setupSpeechRecognition();
+      if (!rec) {
+        alert("Reconnaissance vocale non supportée dans ce navigateur.");
+        return;
+      }
+      try {
+        if (recActive) {
+          rec.stop();
+          return;
+        }
+        recActive = true;
+        elements.btnMic.textContent = '🛑';
+        rec.start();
+      } catch {
+        recActive = false;
+        elements.btnMic.textContent = '🎙️';
+      }
+    });
+
+    // Sync theme from parent OS
+    function syncTheme() {
+      let theme = 'dark';
+      try { theme = window.parent.document.documentElement.getAttribute('data-theme') || 'dark'; } catch {}
+      document.documentElement.setAttribute('data-theme', theme);
+    }
+    syncTheme();
+    try {
+      const obs = new MutationObserver(syncTheme);
+      obs.observe(window.parent.document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+    } catch {}
+
+    // Init
+    speakEnabled = localStorage.getItem(STORAGE.speak) === '1';
+    elements.btnSpeak.textContent = speakEnabled ? '🔊' : '🔈';
+    getGroqModel();
+    elements.memory.value = localStorage.getItem(STORAGE.memory) || '';
+
+    reloadEnvMaybe().finally(() => {
+      setStatus(getGroqKey() ? 'Prêt (Groq). Essaie: “mets le thème clair”.' : 'Prêt (sans Groq). Ajoute une clé Groq (⚙️).');
+    });
+
+    // Render stored history
+    if (history.length === 0) {
+      addMessage('assistant', "Salut, je suis Mickey. Dis-moi “mets le thème clair” 😉");
+      history.push({ role: 'assistant', content: "Salut, je suis Mickey. Dis-moi “mets le thème clair” 😉" });
+      saveHistory(history);
+    } else {
+      history.forEach(m => addMessage(m.role, m.content));
+    }
+  </script>
+</body>
+</html>

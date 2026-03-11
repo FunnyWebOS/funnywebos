@@ -1,0 +1,1662 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <title>AetherOS — Trailer</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Segoe+UI:wght@200;300;400;600&family=Bebas+Neue&family=Inter:wght@100;200;300;400&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --c: #00f5ff;
+            --w: #ffffff;
+            --bg: #000;
+        }
+
+        html,
+        body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background: #000;
+            color: #fff;
+            font-family: 'Inter', 'Segoe UI', sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* ══ STAGE ══ */
+        #stage {
+            position: fixed;
+            inset: 0;
+            background: #000;
+        }
+
+        /* ══ SCÈNES ══ */
+        .sc {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .sc.ON {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        /* ══ OVERLAYS ══ */
+        #vign {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 50;
+            background: radial-gradient(ellipse at center, transparent 20%, rgba(0, 0, 0, .55) 100%);
+        }
+
+        #fl {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 60;
+            opacity: 0;
+            background: #fff;
+        }
+
+        #fl2 {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 60;
+            opacity: 0;
+            background: #000;
+        }
+
+        /* ══ PROGRESS BAR (type Windows) ══ */
+        #pbar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: rgba(255, 255, 255, .06);
+            z-index: 80;
+        }
+
+        #pfill {
+            height: 100%;
+            background: linear-gradient(90deg, rgba(255, 255, 255, .2), rgba(255, 255, 255, .5));
+            width: 0;
+            transition: width linear;
+        }
+
+        /* ══ S0: INTRO ══ */
+        #s0 {
+            background: #000;
+            flex-direction: column;
+            gap: 22px;
+            cursor: pointer;
+            z-index: 10;
+        }
+
+        .i-logo {
+            font-weight: 100;
+            font-size: clamp(52px, 9vw, 120px);
+            letter-spacing: .08em;
+            color: #fff;
+            text-shadow: 0 0 80px rgba(255, 255, 255, .15);
+        }
+
+        .i-sep {
+            width: 40px;
+            height: 1px;
+            background: rgba(255, 255, 255, .2);
+            margin: 0 auto;
+        }
+
+        .i-sub {
+            font-weight: 200;
+            font-size: clamp(10px, 1.2vw, 14px);
+            letter-spacing: .4em;
+            color: rgba(255, 255, 255, .4);
+            text-transform: uppercase;
+            text-align: center;
+        }
+
+        .i-btn {
+            margin-top: 12px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 28px;
+            border: 1px solid rgba(255, 255, 255, .15);
+            border-radius: 2px;
+            cursor: pointer;
+            font-size: 12px;
+            letter-spacing: .2em;
+            color: rgba(255, 255, 255, .5);
+            text-transform: uppercase;
+            font-weight: 300;
+            transition: border-color .3s, color .3s;
+        }
+
+        .i-btn:hover {
+            border-color: rgba(255, 255, 255, .4);
+            color: rgba(255, 255, 255, .8);
+        }
+
+        .i-btn svg {
+            fill: rgba(255, 255, 255, .5);
+            width: 12px;
+            height: 12px;
+        }
+
+        /* ══ AMBIENT BG — particules lumineuses ══ */
+        #ambient {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 1;
+            overflow: hidden;
+        }
+
+        .amb-orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(80px);
+            animation: orbFloat linear infinite;
+            opacity: 0;
+        }
+
+        @keyframes orbFloat {
+            0% {
+                transform: translate(0, 0) scale(1);
+            }
+
+            33% {
+                transform: translate(30px, -20px) scale(1.05);
+            }
+
+            66% {
+                transform: translate(-20px, 15px) scale(.97);
+            }
+
+            100% {
+                transform: translate(0, 0) scale(1);
+            }
+        }
+
+        /* ══ S1: OUVERTURE LENTE ══ */
+        #s1 {
+            background: #000;
+            flex-direction: column;
+        }
+
+        .s1-word {
+            font-weight: 100;
+            font-size: clamp(32px, 6vw, 90px);
+            letter-spacing: .15em;
+            color: rgba(255, 255, 255, 0);
+            text-align: center;
+            text-shadow: 0 0 60px rgba(255, 255, 255, .4);
+            transition: color 1.8s ease, text-shadow 1.8s ease, transform 2s ease;
+            transform: scale(.96) translateY(10px);
+        }
+
+        .s1-word.IN {
+            color: rgba(255, 255, 255, .9);
+            transform: scale(1) translateY(0);
+        }
+
+        .s1-word.BIG {
+            font-size: clamp(60px, 10vw, 150px);
+            font-weight: 100;
+            letter-spacing: .2em;
+        }
+
+        .s1-tagline {
+            font-weight: 200;
+            font-size: clamp(9px, 1vw, 13px);
+            letter-spacing: .5em;
+            color: rgba(255, 255, 255, 0);
+            text-transform: uppercase;
+            margin-top: 16px;
+            text-align: center;
+            transition: color 1.4s ease;
+        }
+
+        .s1-tagline.IN {
+            color: rgba(255, 255, 255, .3);
+        }
+
+        /* ══ SCÈNES TEXTE WINDOWS-STYLE ══
+   Grande police fine, fond très sombre, montée progressive */
+        .wintxt {
+            background: #000;
+            flex-direction: column;
+            gap: 14px;
+            padding: 0 8vw;
+        }
+
+        .wt-lead {
+            font-weight: 100;
+            font-size: clamp(36px, 6.5vw, 96px);
+            letter-spacing: .06em;
+            text-align: center;
+            line-height: 1.05;
+            color: rgba(255, 255, 255, 0);
+            transform: translateY(18px);
+            transition: color 1s ease, transform 1s ease;
+        }
+
+        .wt-lead.IN {
+            color: rgba(255, 255, 255, .88);
+            transform: translateY(0);
+        }
+
+        .wt-sub {
+            font-weight: 200;
+            font-size: clamp(9px, 1.1vw, 14px);
+            letter-spacing: .35em;
+            color: rgba(255, 255, 255, 0);
+            text-transform: uppercase;
+            text-align: center;
+            transition: color .8s ease .4s;
+        }
+
+        .wt-sub.IN {
+            color: rgba(255, 255, 255, .28);
+        }
+
+        /* ══ START MENU — style Mica/Acrylic ══ */
+        #s_sm {
+            background: #000;
+            align-items: flex-end;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .sm-bg {
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(ellipse at 50% 80%, rgba(60, 100, 200, .08) 0%, rgba(0, 0, 0, 0) 60%);
+        }
+
+        .smw {
+            position: relative;
+            z-index: 2;
+            width: min(540px, 94vw);
+            background: rgba(12, 14, 22, .85);
+            border: 1px solid rgba(255, 255, 255, .08);
+            border-radius: 16px 16px 0 0;
+            padding: 20px 18px 18px;
+            box-shadow:
+                0 -2px 60px rgba(0, 100, 255, .06),
+                0 -30px 80px rgba(0, 0, 0, .9),
+                inset 0 1px 0 rgba(255, 255, 255, .05);
+            backdrop-filter: blur(40px) saturate(1.4);
+            transform: translateY(100%);
+            /* slow cinematic slide */
+        }
+
+        .sm-close-pill {
+            width: 36px;
+            height: 4px;
+            border-radius: 2px;
+            background: rgba(255, 255, 255, .12);
+            margin: 0 auto 18px;
+        }
+
+        .sm-search {
+            background: rgba(255, 255, 255, .06);
+            border: 1px solid rgba(255, 255, 255, .07);
+            border-radius: 8px;
+            padding: 10px 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 12.5px;
+            color: rgba(255, 255, 255, .22);
+            margin-bottom: 18px;
+            font-weight: 300;
+        }
+
+        .sm-section {
+            font-size: 10px;
+            color: rgba(255, 255, 255, .25);
+            letter-spacing: .15em;
+            text-transform: uppercase;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-weight: 400;
+        }
+
+        .sm-section span {
+            color: rgba(255, 255, 255, .15);
+            font-size: 9px;
+        }
+
+        .sm-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 14px 8px;
+        }
+
+        .sm-app {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 7px;
+            cursor: pointer;
+            padding: 6px 4px;
+            border-radius: 8px;
+            transition: background .15s;
+        }
+
+        .sm-app:hover {
+            background: rgba(255, 255, 255, .05);
+        }
+
+        .sm-ico {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, .4);
+        }
+
+        .sm-n {
+            font-size: 8.5px;
+            color: rgba(255, 255, 255, .4);
+            text-align: center;
+            max-width: 58px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            font-weight: 300;
+        }
+
+        .sm-divider {
+            height: 1px;
+            background: rgba(255, 255, 255, .05);
+            margin: 14px -4px;
+        }
+
+        .sm-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding-top: 2px;
+        }
+
+        .sm-user {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .sm-av {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, rgba(0, 200, 255, .6), rgba(0, 80, 200, .8));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .sm-un {
+            font-size: 12px;
+            color: rgba(255, 255, 255, .45);
+            font-weight: 300;
+        }
+
+        .sm-power {
+            font-size: 10px;
+            color: rgba(255, 100, 100, .45);
+            letter-spacing: .08em;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-weight: 300;
+        }
+
+        /* ══ FILE EXPLORER — DeepFiles ══ */
+        #s_fe {
+            background: #000;
+        }
+
+        .few-wrap {
+            position: relative;
+            width: min(860px, 94vw);
+            opacity: 0;
+            transform: scale(.93) translateY(20px);
+            /* slow cinematic reveal */
+            transition: opacity 1.4s ease, transform 1.4s ease;
+        }
+
+        .few-wrap.IN {
+            opacity: 1;
+            transform: scale(1) translateY(0);
+        }
+
+        .few {
+            background: rgba(10, 12, 22, .9);
+            border: 1px solid rgba(255, 255, 255, .07);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow:
+                0 0 0 1px rgba(255, 255, 255, .03),
+                0 60px 120px rgba(0, 0, 0, .95),
+                0 0 80px rgba(0, 80, 200, .04);
+            backdrop-filter: blur(30px);
+        }
+
+        .fe-tb {
+            background: rgba(8, 10, 18, .95);
+            padding: 10px 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border-bottom: 1px solid rgba(255, 255, 255, .04);
+        }
+
+        .wb {
+            width: 11px;
+            height: 11px;
+            border-radius: 50%;
+            opacity: .7;
+        }
+
+        .wb.r {
+            background: #ff5f57;
+        }
+
+        .wb.y {
+            background: #febc2e;
+        }
+
+        .wb.g {
+            background: #28c840;
+        }
+
+        .fe-title {
+            font-size: 11px;
+            letter-spacing: .15em;
+            color: rgba(255, 255, 255, .2);
+            margin-left: 8px;
+            font-weight: 300;
+            text-transform: uppercase;
+        }
+
+        .fe-nav {
+            display: flex;
+            gap: 4px;
+            margin-left: auto;
+        }
+
+        .fe-nav span {
+            width: 22px;
+            height: 22px;
+            border-radius: 5px;
+            background: rgba(255, 255, 255, .04);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            color: rgba(255, 255, 255, .25);
+        }
+
+        .fe-addr {
+            padding: 6px 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border-bottom: 1px solid rgba(255, 255, 255, .04);
+        }
+
+        .fe-path {
+            flex: 1;
+            background: rgba(255, 255, 255, .03);
+            border: 1px solid rgba(255, 255, 255, .05);
+            border-radius: 6px;
+            padding: 6px 12px;
+            font-size: 11px;
+            color: rgba(255, 255, 255, .4);
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-weight: 300;
+        }
+
+        .fe-pa {
+            color: rgba(255, 255, 255, .65);
+        }
+
+        .fe-ps {
+            color: rgba(255, 255, 255, .2);
+        }
+
+        .fe-search-b {
+            background: rgba(255, 255, 255, .03);
+            border: 1px solid rgba(255, 255, 255, .05);
+            border-radius: 6px;
+            padding: 6px 12px;
+            font-size: 11px;
+            color: rgba(255, 255, 255, .22);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            width: 170px;
+            font-weight: 300;
+        }
+
+        .fe-tools {
+            padding: 7px 14px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border-bottom: 1px solid rgba(255, 255, 255, .04);
+        }
+
+        .fe-tb2 {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 11px;
+            color: rgba(255, 255, 255, .35);
+            padding: 4px 8px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 300;
+        }
+
+        .fe-tb2.hl {
+            color: rgba(120, 180, 255, .6);
+        }
+
+        .fe-div {
+            width: 1px;
+            height: 16px;
+            background: rgba(255, 255, 255, .06);
+        }
+
+        .fe-body {
+            display: flex;
+            height: 260px;
+        }
+
+        .fe-sb {
+            width: 175px;
+            background: rgba(6, 8, 16, .8);
+            border-right: 1px solid rgba(255, 255, 255, .04);
+            padding: 12px 8px;
+            flex-shrink: 0;
+        }
+
+        .fe-sec {
+            font-size: 8px;
+            color: rgba(255, 255, 255, .18);
+            letter-spacing: .15em;
+            text-transform: uppercase;
+            margin: 8px 5px 7px;
+            font-weight: 400;
+        }
+
+        .fe-si {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            padding: 6px 8px;
+            border-radius: 6px;
+            font-size: 11.5px;
+            color: rgba(255, 255, 255, .32);
+            cursor: pointer;
+            margin-bottom: 1px;
+            font-weight: 300;
+        }
+
+        .fe-si.a {
+            background: rgba(100, 150, 255, .06);
+            color: rgba(120, 180, 255, .6);
+        }
+
+        .fe-main {
+            flex: 1;
+            padding: 24px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            align-content: flex-start;
+        }
+
+        .fe-file {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            padding: 10px;
+            border-radius: 8px;
+            transition: background .15s;
+        }
+
+        .fe-file:hover {
+            background: rgba(255, 255, 255, .04);
+        }
+
+        .fe-fi {
+            width: 62px;
+            height: 78px;
+            background: linear-gradient(155deg, rgba(30, 60, 100, .6), rgba(15, 30, 60, .8));
+            border: 1px solid rgba(100, 150, 255, .12);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 26px;
+            position: relative;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, .5);
+        }
+
+        .fe-fi::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 16px;
+            height: 16px;
+            background: rgba(100, 150, 255, .1);
+            border-radius: 0 8px 0 8px;
+        }
+
+        .fe-fn {
+            font-size: 10px;
+            color: rgba(255, 255, 255, .38);
+            font-weight: 300;
+        }
+
+        /* ══ DOCK ══ */
+        #s_dk {
+            background: #000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .dk-scene {
+            display: flex;
+            align-items: center;
+            gap: 80px;
+            flex-wrap: wrap;
+            justify-content: center;
+            padding: 0 40px;
+        }
+
+        .dk-copy {
+            max-width: 300px;
+        }
+
+        .dk-headline {
+            font-weight: 100;
+            font-size: clamp(36px, 6vw, 80px);
+            letter-spacing: .08em;
+            color: rgba(255, 255, 255, 0);
+            line-height: 1.1;
+            transition: color 1.2s ease, transform 1.2s ease;
+            transform: translateX(-20px);
+        }
+
+        .dk-headline.IN {
+            color: rgba(255, 255, 255, .85);
+            transform: translateX(0);
+        }
+
+        .dk-sub {
+            font-weight: 200;
+            font-size: clamp(9px, 1vw, 12px);
+            letter-spacing: .3em;
+            color: rgba(255, 255, 255, 0);
+            text-transform: uppercase;
+            margin-top: 12px;
+            transition: color 1s ease .4s;
+        }
+
+        .dk-sub.IN {
+            color: rgba(255, 255, 255, .25);
+        }
+
+        .dkw {
+            background: rgba(10, 12, 20, .85);
+            border: 1px solid rgba(255, 255, 255, .08);
+            border-radius: 20px;
+            padding: 12px 8px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+            opacity: 0;
+            transform: translateY(30px) scale(.95);
+            box-shadow:
+                0 0 0 1px rgba(255, 255, 255, .03),
+                0 40px 80px rgba(0, 0, 0, .9),
+                inset 0 1px 0 rgba(255, 255, 255, .04);
+            backdrop-filter: blur(30px);
+            transition: opacity 1.2s ease, transform 1.2s ease;
+        }
+
+        .dkw.IN {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+
+        .di {
+            width: 52px;
+            height: 52px;
+            border-radius: 13px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 27px;
+            cursor: pointer;
+            position: relative;
+            transition: transform .3s cubic-bezier(.34, 1.56, .64, 1);
+        }
+
+        .di:hover {
+            transform: scale(1.22) translateX(-6px);
+        }
+
+        .di::after {
+            content: attr(data-t);
+            position: absolute;
+            right: calc(100%+8px);
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(0, 0, 0, .8);
+            border: 1px solid rgba(255, 255, 255, .08);
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 10px;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity .1s;
+            font-weight: 300;
+        }
+
+        .di:hover::after {
+            opacity: 1;
+        }
+
+        .ddiv {
+            width: 24px;
+            height: 1px;
+            background: rgba(255, 255, 255, .07);
+            margin: 2px 0;
+        }
+
+        /* ══ GRIDSTORE — lent, zoom doux ══ */
+        #s_gs {
+            background: #000;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .gs-bar {
+            display: flex;
+            align-items: center;
+            gap: 18px;
+            padding: 10px 24px;
+            border-bottom: 1px solid rgba(255, 255, 255, .04);
+            flex-shrink: 0;
+            width: 100%;
+            background: rgba(6, 8, 16, .95);
+            backdrop-filter: blur(20px);
+        }
+
+        .gs-logo {
+            font-weight: 200;
+            font-size: 20px;
+            letter-spacing: .15em;
+            color: rgba(255, 255, 255, .6);
+        }
+
+        .gs-tabs {
+            display: flex;
+            gap: 4px;
+        }
+
+        .gs-tab {
+            font-size: 10px;
+            color: rgba(255, 255, 255, .25);
+            padding: 4px 12px;
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, .06);
+            font-weight: 300;
+        }
+
+        .gs-tab.a {
+            color: rgba(180, 220, 255, .7);
+            border-color: rgba(100, 160, 255, .2);
+            background: rgba(100, 160, 255, .06);
+        }
+
+        .gs-search {
+            background: rgba(255, 255, 255, .04);
+            border: 1px solid rgba(255, 255, 255, .06);
+            border-radius: 16px;
+            padding: 4px 13px;
+            font-size: 10.5px;
+            color: rgba(255, 255, 255, .2);
+            margin-left: auto;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-weight: 300;
+        }
+
+        .gs-scroll {
+            flex: 1;
+            overflow: hidden;
+            width: 100%;
+        }
+
+        .gs-inner {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            padding: 14px 22px 40px;
+            will-change: transform;
+        }
+
+        .gs-card {
+            background: rgba(255, 255, 255, .025);
+            border: 1px solid rgba(255, 255, 255, .05);
+            border-radius: 12px;
+            padding: 16px 14px;
+            display: flex;
+            align-items: center;
+            gap: 13px;
+            opacity: 0;
+            transform: translateY(14px);
+            backdrop-filter: blur(10px);
+        }
+
+        .gs-ico {
+            width: 52px;
+            height: 52px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 26px;
+            flex-shrink: 0;
+        }
+
+        .gs-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .gs-nm {
+            font-size: 13px;
+            font-weight: 400;
+            color: rgba(255, 255, 255, .8);
+            margin-bottom: 2px;
+        }
+
+        .gs-dv {
+            font-size: 9.5px;
+            color: rgba(255, 255, 255, .22);
+            font-weight: 300;
+        }
+
+        .gs-btn {
+            padding: 5px 13px;
+            border-radius: 14px;
+            font-size: 10.5px;
+            font-weight: 400;
+            cursor: pointer;
+            white-space: nowrap;
+            border: none;
+            outline: none;
+            flex-shrink: 0;
+        }
+
+        .gs-btn.g {
+            background: rgba(100, 160, 255, .2);
+            color: rgba(180, 220, 255, .9);
+            border: 1px solid rgba(100, 160, 255, .2);
+        }
+
+        .gs-btn.o {
+            background: rgba(255, 255, 255, .07);
+            color: rgba(255, 255, 255, .5);
+            border: 1px solid rgba(255, 255, 255, .08);
+        }
+
+        /* ══ OUTRO ══ */
+        #s_out {
+            background: #000;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .out-l {
+            font-weight: 100;
+            font-size: clamp(60px, 11vw, 160px);
+            letter-spacing: .15em;
+            color: rgba(255, 255, 255, 0);
+            text-align: center;
+            transition: color 1.6s ease, transform 1.6s ease;
+            transform: scale(.97);
+        }
+
+        .out-l.IN {
+            color: rgba(255, 255, 255, .9);
+            transform: scale(1);
+        }
+
+        .out-sep {
+            width: 0;
+            height: 1px;
+            margin: 0 auto;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, .25), transparent);
+            transition: width 1.2s ease .4s;
+        }
+
+        .out-sep.IN {
+            width: 120px;
+        }
+
+        .out-tag {
+            font-weight: 200;
+            font-size: clamp(9px, 1.2vw, 14px);
+            letter-spacing: .4em;
+            color: rgba(255, 255, 255, 0);
+            text-transform: uppercase;
+            text-align: center;
+            transition: color 1.2s ease .6s;
+        }
+
+        .out-tag.IN {
+            color: rgba(255, 255, 255, .28);
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Ambient orbs -->
+    <div id="ambient"></div>
+
+    <div id="stage">
+
+        <!-- S0: INTRO — visible dès le départ -->
+        <div class="sc ON" id="s0" onclick="GO()">
+            <div class="i-logo">AetherOS</div>
+            <div class="i-sep"></div>
+            <div class="i-sub">Official Trailer — 2025</div>
+            <div class="i-btn">
+                <svg viewBox="0 0 24 24">
+                    <polygon points="5,3 19,12 5,21" />
+                </svg>
+                Watch
+            </div>
+        </div>
+
+        <!-- S1: OUVERTURE — logo apparaît lentement sur fond noir -->
+        <div class="sc" id="s1" style="flex-direction:column;background:#000;gap:0;">
+            <div class="s1-word BIG" id="sw1">AetherOS</div>
+            <div class="s1-tagline" id="sw2">a new kind of operating system</div>
+        </div>
+
+        <!-- S2: "Something different" -->
+        <div class="sc wintxt" id="s2">
+            <div class="wt-lead" id="wt2">Something<br>different.</div>
+            <div class="wt-sub" id="ws2">not your average OS</div>
+        </div>
+
+        <!-- S3: START MENU TEXT -->
+        <div class="sc wintxt" id="s3">
+            <div class="wt-lead" id="wt3">A start menu<br>that feels right.</div>
+            <div class="wt-sub" id="ws3">fluid. instant. yours.</div>
+        </div>
+
+        <!-- S4: REAL START MENU — glisse lentement du bas -->
+        <div class="sc" id="s_sm">
+            <div class="sm-bg"></div>
+            <div class="smw" id="smw">
+                <div class="sm-close-pill"></div>
+                <div class="sm-search">
+                    <span style="opacity:.35;font-size:13px">🔍</span>
+                    Deep Search across nodes...
+                </div>
+                <div class="sm-section">
+                    <span style="display:flex;align-items:center;gap:7px;">
+                        <span
+                            style="width:7px;height:7px;border-radius:50%;background:rgba(100,160,255,.7);box-shadow:0 0 6px rgba(100,160,255,.4);display:inline-block"></span>
+                        Épinglé
+                    </span>
+                    <span>Library ›</span>
+                </div>
+                <div class="sm-grid">
+                    <div class="sm-app">
+                        <div class="sm-ico" style="background:linear-gradient(135deg,#0a2016,#061409)">🐍</div>
+                        <div class="sm-n">Snake</div>
+                    </div>
+                    <div class="sm-app">
+                        <div class="sm-ico" style="background:linear-gradient(135deg,#281005,#180902)">🧱</div>
+                        <div class="sm-n">Tetris Neon (beta)</div>
+                    </div>
+                    <div class="sm-app">
+                        <div class="sm-ico" style="background:linear-gradient(135deg,#180b24,#0e0716)">🐦</div>
+                        <div class="sm-n">Flappy Futur</div>
+                    </div>
+                    <div class="sm-app">
+                        <div class="sm-ico" style="background:linear-gradient(135deg,#241807,#181002)">⏰</div>
+                        <div class="sm-n">FocusBox</div>
+                    </div>
+                    <div class="sm-app">
+                        <div class="sm-ico" style="background:linear-gradient(135deg,#18182a,#0e0e1c)">🐰</div>
+                        <div class="sm-n">Bunny Girl Viewer</div>
+                    </div>
+                    <div class="sm-app">
+                        <div class="sm-ico" style="background:linear-gradient(135deg,#0a1022,#060916)">🎬</div>
+                        <div class="sm-n">Stremio Web</div>
+                    </div>
+                    <div class="sm-app">
+                        <div class="sm-ico" style="background:linear-gradient(135deg,#061522,#040e16)">📺</div>
+                        <div class="sm-n">YouTube Redux</div>
+                    </div>
+                    <div class="sm-app">
+                        <div class="sm-ico" style="background:linear-gradient(135deg,#120822,#0a0514)">🎹</div>
+                        <div class="sm-n">FunnyDAW Pro</div>
+                    </div>
+                    <div class="sm-app">
+                        <div class="sm-ico" style="background:linear-gradient(135deg,#061022,#040916)">🎞️</div>
+                        <div class="sm-n">FunnyVideo Pro</div>
+                    </div>
+                    <div class="sm-app">
+                        <div class="sm-ico" style="background:linear-gradient(135deg,#04180c,#020f07)">🖥️</div>
+                        <div class="sm-n">FunnyVM (x86)</div>
+                    </div>
+                    <div class="sm-app">
+                        <div class="sm-ico" style="background:linear-gradient(135deg,#1a1022,#100b16)">🧑‍💻</div>
+                        <div class="sm-n">FunnyStudio IDE</div>
+                    </div>
+                    <div class="sm-app">
+                        <div class="sm-ico" style="background:linear-gradient(135deg,#1c1206,#140e04)">📁</div>
+                        <div class="sm-n">Explorer</div>
+                    </div>
+                    <div class="sm-app">
+                        <div class="sm-ico" style="background:linear-gradient(135deg,#1c1206,#140e04)">💬</div>
+                        <div class="sm-n">Talky</div>
+                    </div>
+                    <div class="sm-app">
+                        <div class="sm-ico" style="background:linear-gradient(135deg,#1c1206,#140e04)">📝</div>
+                        <div class="sm-n">Word</div>
+                    </div>
+                </div>
+                <div class="sm-divider"></div>
+                <div class="sm-footer">
+                    <div class="sm-user">
+                        <div class="sm-av">M</div>
+                        <div class="sm-un">Milk</div>
+                    </div>
+                    <div class="sm-power">DÉCONNEXION ⏻</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- S5: FILE EXPLORER TEXT -->
+        <div class="sc wintxt" id="s5">
+            <div class="wt-lead" id="wt5">And the file explorer<br>is just as elegant.</div>
+            <div class="wt-sub" id="ws5">designed for clarity</div>
+        </div>
+
+        <!-- S6: REAL FILE EXPLORER -->
+        <div class="sc" id="s_fe" style="background:radial-gradient(ellipse at 50% 60%,rgba(10,20,50,.4) 0%,#000 70%);">
+            <div class="few-wrap" id="feww">
+                <div class="few">
+                    <div class="fe-tb">
+                        <div class="wb r"></div>
+                        <div class="wb y"></div>
+                        <div class="wb g"></div>
+                        <div class="fe-title">DeepFiles</div>
+                        <div class="fe-nav"><span>←</span><span>→</span><span>↑</span><span>⋯</span></div>
+                    </div>
+                    <div class="fe-addr">
+                        <div class="fe-path">
+                            <span>💻</span>
+                            <span class="fe-ps">AetherSystem</span>
+                            <span class="fe-ps">›</span>
+                            <span class="fe-pa">Bureau</span>
+                        </div>
+                        <div class="fe-search-b">🔍 Rechercher</div>
+                    </div>
+                    <div class="fe-tools">
+                        <div class="fe-tb2">📁 Nouveau</div>
+                        <div class="fe-tb2">📄 Fichier</div>
+                        <div class="fe-div"></div>
+                        <div class="fe-tb2" style="opacity:.25">✏️ Renommer</div>
+                        <div class="fe-tb2" style="opacity:.25">🗑️ Supprimer</div>
+                        <div class="fe-div"></div>
+                        <div class="fe-tb2 hl">ℹ️ Propriétés</div>
+                    </div>
+                    <div class="fe-body">
+                        <div class="fe-sb">
+                            <div class="fe-sec">Accès Rapide</div>
+                            <div class="fe-si a">🏠 Bureau</div>
+                            <div class="fe-si">📄 Documents</div>
+                            <div class="fe-si">🖼️ Images</div>
+                            <div class="fe-si">⬇️ Téléchargements</div>
+                            <div class="fe-sec" style="margin-top:14px">Ce PC</div>
+                            <div class="fe-si">💻 AetherSystem</div>
+                            <div class="fe-si">💾 AetherDrive</div>
+                            <div class="fe-si">🗑️ Corbeille</div>
+                        </div>
+                        <div class="fe-main">
+                            <div class="fe-file">
+                                <div class="fe-fi">📝</div>
+                                <div class="fe-fn">docuwu.fdoc</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- S7: DOCK TEXT -->
+        <div class="sc wintxt" id="s7">
+            <div class="wt-lead" id="wt7">The dock.<br>Always there.</div>
+            <div class="wt-sub" id="ws7">minimal by design</div>
+        </div>
+
+        <!-- S8: REAL DOCK -->
+        <div class="sc" id="s_dk"
+            style="background:radial-gradient(ellipse at 60% 50%,rgba(10,20,50,.35) 0%,#000 65%);">
+            <div class="dk-scene">
+                <div class="dk-copy">
+                    <div class="dk-headline" id="dkh">Right here.<br>Always.</div>
+                    <div class="dk-sub" id="dks">minimal · smooth · yours</div>
+                </div>
+                <div class="dkw" id="dkw">
+                    <div class="di" style="background:rgba(255,255,255,.04)" data-t="Système">⚙️</div>
+                    <div class="ddiv"></div>
+                    <div class="di" style="background:rgba(255,255,255,.04)" data-t="Explorer">📁</div>
+                    <div class="di" style="background:rgba(255,255,255,.04)" data-t="AetherNet">💠</div>
+                    <div class="ddiv"></div>
+                    <div class="di" style="background:rgba(255,255,255,.04)" data-t="Flappy Futur">🐦</div>
+                    <div class="di" style="background:rgba(255,255,255,.04)" data-t="Talky">📦</div>
+                    <div class="di" style="background:rgba(255,255,255,.04)" data-t="Explorer">📁</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- S9: TRANSITION "But why funny" -->
+        <div class="sc wintxt" id="s9">
+            <div class="wt-lead" id="wt9">But wait—<br>it's also funny.</div>
+            <div class="wt-sub" id="ws9">seriously</div>
+        </div>
+
+        <!-- S10: PARCE QUE — montée musicale -->
+        <div class="sc wintxt" id="s10" style="background:#000;">
+            <div class="wt-lead" id="wt10" style="font-size:clamp(42px,8vw,115px);">Because you can<br>do anything.
+            </div>
+            <div class="wt-sub" id="ws10">from games to tools to things that make no sense</div>
+        </div>
+
+        <!-- S11: GRIDSTORE — scroll lent + reveal progressif -->
+        <div class="sc" id="s_gs">
+            <div class="gs-bar">
+                <div class="gs-logo">GridStore</div>
+                <div class="gs-tabs">
+                    <div class="gs-tab a">Découvrir</div>
+                    <div class="gs-tab">Productivité</div>
+                    <div class="gs-tab">Online</div>
+                    <div class="gs-tab">Jeux</div>
+                </div>
+                <div class="gs-search">🔍 Rechercher...</div>
+            </div>
+            <div class="gs-scroll">
+                <div class="gs-inner" id="gsi"></div>
+            </div>
+        </div>
+
+        <!-- S12: OUTRO WINDOWS-STYLE -->
+        <div class="sc" id="s_out">
+            <div style="display:flex;flex-direction:column;align-items:center;gap:12px;">
+                <div class="out-l" id="oL">FunnyWEB</div>
+                <div class="out-sep" id="oSep"></div>
+                <div class="out-tag" id="oTag">The OS that doesn't take itself seriously.</div>
+            </div>
+        </div>
+
+    </div><!-- /stage -->
+
+    <!-- Overlays après le stage -->
+    <div id="vign"></div>
+    <div id="fl"></div>
+    <div id="fl2"></div>
+    <div id="pbar">
+        <div id="pfill"></div>
+    </div>
+
+    <script>
+        // ══════════════════════════
+        //  AUDIO — style Windows: doux, ambiant, orchestral
+        // ══════════════════════════
+        let AC = null;
+        function ia() { try { AC = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { } }
+        const sl = ms => new Promise(r => setTimeout(r, ms));
+
+        function tone(f, tp, dur, vol, delay, sweep) {
+            if (!AC) return;
+            vol = vol || .3; delay = delay || 0;
+            const o = AC.createOscillator(), g = AC.createGain(), rev = AC.createConvolver();
+            o.connect(g);
+            g.connect(AC.destination);
+            o.type = tp || 'sine';
+            o.frequency.setValueAtTime(f, AC.currentTime + delay);
+            if (sweep) o.frequency.exponentialRampToValueAtTime(sweep, AC.currentTime + delay + dur);
+            g.gain.setValueAtTime(0, AC.currentTime + delay);
+            g.gain.linearRampToValueAtTime(vol, AC.currentTime + delay + dur * .15);
+            g.gain.exponentialRampToValueAtTime(.001, AC.currentTime + delay + dur);
+            o.start(AC.currentTime + delay);
+            o.stop(AC.currentTime + delay + dur + .1);
+        }
+
+        function pad(f, dur, vol, delay) {
+            // Pad chord — style Windows ambient
+            if (!AC) return; vol = vol || .12; delay = delay || 0;
+            [1, 1.5, 2, 2.5].forEach((mult, i) => {
+                tone(f * mult, 'sine', dur, vol * (1 - i * .15), delay + i * .05);
+                tone(f * mult * 1.001, 'sine', dur, vol * .6 * (1 - i * .15), delay + i * .06); // léger chorus
+            });
+        }
+
+        function chime(delay) {
+            // Carillon doux style Windows
+            if (!AC) return;
+            [523, 659, 784, 1047].forEach((f, i) => {
+                tone(f, 'sine', .6, .15, delay + i * .08);
+            });
+        }
+
+        function softBoom(delay) {
+            if (!AC) return;
+            tone(55, 'sine', 3.5, .7, delay);
+            tone(42, 'sine', 4.5, .4, delay + .3);
+            pad(110, 4, .08, delay + .2);
+        }
+
+        function windowsRise() {
+            // La montée musicale signature Windows — douce puis forte
+            if (!AC) return;
+            pad(130, 6, .06);
+            pad(165, 5, .08, .3);
+            pad(196, 4, .1, .7);
+            chime(1.2);
+            pad(260, 3, .12, 1.5);
+            pad(330, 2.5, .14, 2.2);
+            softBoom(3);
+        }
+
+        function nz(dur, vol, lp, delay) {
+            if (!AC) return; vol = vol || .2; lp = lp || 8000; delay = delay || 0;
+            const b = AC.createBuffer(1, AC.sampleRate * dur, AC.sampleRate);
+            const d = b.getChannelData(0);
+            for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / d.length, 2);
+            const s = AC.createBufferSource(), f = AC.createBiquadFilter(), g = AC.createGain();
+            f.type = 'lowpass'; f.frequency.value = lp;
+            g.gain.setValueAtTime(0, AC.currentTime + delay);
+            g.gain.linearRampToValueAtTime(vol, AC.currentTime + delay + .02);
+            g.gain.exponentialRampToValueAtTime(.001, AC.currentTime + delay + dur);
+            s.connect(f); f.connect(g); g.connect(AC.destination);
+            s.start(AC.currentTime + delay);
+        }
+
+        // ══════════════════════════
+        //  AMBIENT ORBS
+        // ══════════════════════════
+        function mkOrbs() {
+            const c = document.getElementById('ambient');
+            const orbs = [
+                { w: 600, h: 400, x: 10, y: 20, col: 'rgba(30,80,180,.07)', dur: 18 },
+                { w: 500, h: 350, x: 60, y: 50, col: 'rgba(0,100,200,.05)', dur: 22 },
+                { w: 400, h: 300, x: 30, y: 60, col: 'rgba(50,150,255,.04)', dur: 15 },
+                { w: 700, h: 500, x: -10, y: 10, col: 'rgba(20,60,140,.06)', dur: 26 },
+            ];
+            orbs.forEach(o => {
+                const d = document.createElement('div');
+                d.className = 'amb-orb';
+                d.style.cssText = `width:${o.w}px;height:${o.h}px;left:${o.x}%;top:${o.y}%;
+      background:${o.col};animation-duration:${o.dur}s;`;
+                c.appendChild(d);
+            });
+        }
+
+        // ══════════════════════════
+        //  GRIDSTORE DATA
+        // ══════════════════════════
+        const APPS = [
+            { e: '⏰', n: 'FocusBox', d: 'Mouns', t: 'g' },
+            { e: '🐍', n: 'Snake', d: 'FunnyCorp', t: 'g' },
+            { e: '🧱', n: 'Tetris Neon (beta)', d: 'FunnyCorp', t: 'g' },
+            { e: '💬', n: 'Talky', d: 'Auto Discovery', t: 'o' },
+            { e: '📝', n: 'Word', d: 'Auto Discovery', t: 'o' },
+            { e: '📬', n: 'FunnyMail', d: 'FunnyCorp', t: 'o' },
+            { e: '🐰', n: 'Bunny Girl Viewer', d: 'Vasseta1', t: 'o' },
+            { e: '🎬', n: 'Stremio Web', d: 'Stremio Team', t: 'o' },
+            { e: '📺', n: 'YouTube Redux', d: 'Google / Invidious', t: 'o' },
+            { e: '🎹', n: 'FunnyDAW Pro', d: 'FunnyCorp', t: 'o' },
+            { e: '🎞️', n: 'FunnyVideo Pro', d: 'FunnyCorp', t: 'o' },
+            { e: '🖥️', n: 'FunnyVM (x86)', d: 'FunnyCorp', t: 'o' },
+            { e: '🧑‍💻', n: 'FunnyStudio IDE', d: 'FunnyCorp', t: 'o' },
+            { e: '🌐', n: 'AetherBrowser', d: 'FunnyCorp', t: 'g' },
+            { e: '🎮', n: 'GameHub', d: 'FunnyCorp', t: 'g' },
+            { e: '🤖', n: 'AI Launcher', d: 'FunnyCorp', t: 'g' },
+            { e: '📷', n: 'FunnySnap', d: 'FunnyCorp', t: 'g' },
+            { e: '⚡', n: 'QuickRun', d: 'FunnyCorp', t: 'g' },
+            { e: '🎵', n: 'FunnyTune', d: 'FunnyCorp', t: 'g' },
+            { e: '🔐', n: 'VaultKey', d: 'FunnyCorp', t: 'g' },
+            { e: '🗺️', n: 'AetherMaps', d: 'FunnyCorp', t: 'g' },
+        ];
+        const BG = ['rgba(255,255,255,.04)', 'rgba(255,255,255,.03)', 'rgba(255,255,255,.05)'];
+        function buildGrid() {
+            const g = document.getElementById('gsi'); g.innerHTML = '';
+            APPS.forEach((a, i) => {
+                const c = document.createElement('div'); c.className = 'gs-card';
+                c.innerHTML = `<div class="gs-ico" style="background:${BG[i % BG.length]}">${a.e}</div>
+    <div class="gs-info"><div class="gs-nm">${a.n}</div><div class="gs-dv">${a.d}</div></div>
+    <button class="gs-btn ${a.t === 'g' ? 'g' : 'o'}">${a.t === 'g' ? 'OBTENIR' : 'OUVRIR'}</button>`;
+                g.appendChild(c);
+            });
+        }
+
+        // ══════════════════════════
+        //  UTILS
+        // ══════════════════════════
+        const $ = id => document.getElementById(id);
+        function show(id) {
+            document.querySelectorAll('.sc').forEach(s => s.classList.remove('ON'));
+            $(id).classList.add('ON');
+        }
+        function fw(ms) {
+            ms = ms || 50;
+            const f = $('fl');
+            f.style.transition = 'none'; f.style.opacity = '1';
+            requestAnimationFrame(() => requestAnimationFrame(() => {
+                f.style.transition = 'opacity ' + (ms * 3) + 'ms ease'; f.style.opacity = '0';
+            }));
+        }
+        function fd(ms) {
+            // Fondu noir (cut sombre style Windows)
+            ms = ms || 300;
+            const f = $('fl2');
+            f.style.transition = 'none'; f.style.opacity = '1';
+            requestAnimationFrame(() => requestAnimationFrame(() => {
+                f.style.transition = 'opacity ' + ms + 'ms ease'; f.style.opacity = '0';
+            }));
+        }
+        // Fade to black then show scene
+        async function cutTo(id, fadeDur) {
+            fadeDur = fadeDur || 200;
+            const f = $('fl2');
+            f.style.transition = 'opacity ' + fadeDur + 'ms ease'; f.style.opacity = '1';
+            await sl(fadeDur + 30);
+            show(id);
+            f.style.transition = 'opacity ' + (fadeDur * 2) + 'ms ease'; f.style.opacity = '0';
+        }
+
+        // ══════════════════════════
+        //  PROGRESS BAR
+        // ══════════════════════════
+        function startProgress(totalMs) {
+            const pf = $('pfill');
+            pf.style.transition = 'none'; pf.style.width = '0';
+            requestAnimationFrame(() => requestAnimationFrame(() => {
+                pf.style.transition = 'width ' + totalMs + 'ms linear';
+                pf.style.width = '100%';
+            }));
+        }
+
+        // ══════════════════════════
+        //  MAIN
+        // ══════════════════════════
+        async function GO() {
+            ia();
+            $('s0').classList.remove('ON');
+            mkOrbs(); buildGrid();
+            // Active les orbs
+            document.querySelectorAll('.amb-orb').forEach((o, i) => {
+                o.style.opacity = '1';
+                o.style.transition = 'opacity 3s ease';
+            });
+            startProgress(52000);
+            windowsRise();
+            await TRAILER();
+        }
+
+        async function TRAILER() {
+
+            // ─── S1: Logo apparaît lentement — style Windows "Hello" ───
+            await cutTo('s1', 400);
+            await sl(400);
+            const sw1 = $('sw1'), sw2 = $('sw2');
+            sw1.classList.add('IN');
+            await sl(1200);
+            sw2.classList.add('IN');
+            await sl(2800); // On laisse respirer
+
+            // ─── S2: "Something different" ───
+            await cutTo('s2', 350);
+            await sl(200);
+            $('wt2').classList.add('IN');
+            await sl(700);
+            $('ws2').classList.add('IN');
+            await sl(2200);
+
+            // ─── S3: Start menu text ───
+            await cutTo('s3', 300);
+            await sl(200);
+            $('wt3').classList.add('IN');
+            await sl(600);
+            $('ws3').classList.add('IN');
+            await sl(1800);
+
+            // ─── S4: VRAI START MENU — slide lent depuis le bas ───
+            await cutTo('s_sm', 350);
+            const smw = $('smw');
+            smw.style.transition = 'transform 1.2s cubic-bezier(.16,1,.3,1)';
+            await sl(100);
+            smw.style.transform = 'translateY(0)';
+            await sl(800);
+            // Petite animation des icônes — subtile, pas agressive
+            const icos = smw.querySelectorAll('.sm-ico');
+            icos.forEach((ic, i) => {
+                setTimeout(() => {
+                    ic.style.transition = 'transform .4s cubic-bezier(.34,1.56,.64,1),opacity .4s';
+                    ic.style.transform = 'scale(1.06) translateY(-2px)';
+                    setTimeout(() => { ic.style.transform = ''; }, 380);
+                }, i * 40);
+            });
+            await sl(3000);
+
+            // ─── S5: Explorer text ───
+            await cutTo('s5', 300);
+            await sl(200);
+            $('wt5').classList.add('IN');
+            await sl(600);
+            $('ws5').classList.add('IN');
+            await sl(1800);
+
+            // ─── S6: VRAI EXPLORER — zoom doux, scale depuis légèrement petit ───
+            await cutTo('s_fe', 350);
+            await sl(200);
+            $('feww').classList.add('IN');
+            await sl(800);
+            // Highlight subtil du path actif
+            $('feww').querySelector('.fe-pa').style.color = 'rgba(140,190,255,.75)';
+            await sl(2800);
+
+            // ─── S7: Dock text ───
+            await cutTo('s7', 300);
+            await sl(200);
+            $('wt7').classList.add('IN');
+            await sl(600);
+            $('ws7').classList.add('IN');
+            await sl(1800);
+
+            // ─── S8: VRAI DOCK + headline ───
+            await cutTo('s_dk', 350);
+            await sl(300);
+            $('dkw').classList.add('IN');
+            await sl(400);
+            $('dkh').classList.add('IN');
+            await sl(500);
+            $('dks').classList.add('IN');
+            // Bounce icons — lent et élégant
+            await sl(600);
+            $('dkw').querySelectorAll('.di').forEach((d, i) => {
+                setTimeout(() => {
+                    d.style.transition = 'transform .35s cubic-bezier(.34,1.56,.64,1)';
+                    d.style.transform = 'scale(1.18) translateX(-5px)';
+                    setTimeout(() => { d.style.transform = ''; }, 340);
+                }, i * 120);
+            });
+            await sl(2600);
+
+            // ─── S9: "But wait — it's also funny" ───
+            await cutTo('s9', 300);
+            await sl(200);
+            $('wt9').classList.add('IN');
+            await sl(600);
+            $('ws9').classList.add('IN');
+            await sl(1800);
+
+            // ─── S10: "Because you can do anything" ───
+            // Léger flash blanc puis fondu — plus percutant que les autres cuts
+            fw(120);
+            await sl(120);
+            show('s10');
+            await sl(300);
+            $('wt10').classList.add('IN');
+            chime(0); pad(196, 4, .12);
+            await sl(700);
+            $('ws10').classList.add('IN');
+            await sl(2000);
+
+            // ─── S11: GRIDSTORE — cards entrent une par une, scroll lent ───
+            await cutTo('s_gs', 300);
+            const cards = document.querySelectorAll('.gs-card');
+            cards.forEach((c, i) => {
+                setTimeout(() => {
+                    c.style.transition = 'opacity .5s ease,transform .6s cubic-bezier(.16,1,.3,1)';
+                    c.style.opacity = '1'; c.style.transform = 'translateY(0)';
+                }, i * 45);
+            });
+            await sl(1200);
+
+            // Scroll progressif — rapide mais fluide, pas chaotique
+            const gsi = $('gsi');
+            let sy = 0;
+            const phases = [
+                { spd: 2, fr: 60 }, { spd: 5, fr: 50 }, { spd: 9, fr: 60 },
+                { spd: 13, fr: 50 }, { spd: 16, fr: 40 }, { spd: 10, fr: 35 }, { spd: 5, fr: 30 }, { spd: 2, fr: 20 },
+            ];
+            for (const ph of phases) {
+                for (let f = 0; f < ph.fr; f++) {
+                    sy += ph.spd;
+                    gsi.style.transform = `translateY(-${sy}px)`;
+                    gsi.style.filter = ph.spd > 10 ? `blur(${(ph.spd - 8) * .08}px)` : 'none';
+                    await sl(16);
+                }
+            }
+            gsi.style.filter = 'none';
+            await sl(400);
+
+            // ─── S12: OUTRO — très Windows 11 ───
+            await cutTo('s_out', 600); // fade plus long
+            await sl(400);
+            $('oL').classList.add('IN');
+            await sl(600);
+            $('oSep').classList.add('IN');
+            await sl(400);
+            $('oTag').classList.add('IN');
+            pad(130, 6, .1); pad(165, 5, .08, .5); softBoom(2);
+            await sl(4000);
+
+            // Fondu final lent
+            const stage = $('stage');
+            stage.style.transition = 'opacity 2s ease'; stage.style.opacity = '0';
+            $('pbar').style.transition = 'opacity 2s ease'; $('pbar').style.opacity = '0';
+            document.getElementById('ambient').style.transition = 'opacity 2s ease';
+            document.getElementById('ambient').style.opacity = '0';
+            await sl(2100);
+            RESET();
+        }
+
+        // ══════════════════════════
+        //  RESET
+        // ══════════════════════════
+        function RESET() {
+            const stage = $('stage');
+            stage.style.transition = 'none'; stage.style.opacity = '1';
+            $('pbar').style.cssText = 'position:fixed;bottom:0;left:0;right:0;height:2px;background:rgba(255,255,255,.06);z-index:80;opacity:1;';
+            $('pfill').style.cssText = 'height:100%;background:linear-gradient(90deg,rgba(255,255,255,.2),rgba(255,255,255,.5));width:0;transition:width linear;';
+            document.getElementById('ambient').style.opacity = '1';
+
+            document.querySelectorAll('.sc').forEach(s => s.classList.remove('ON'));
+
+            // S1
+            ['sw1', 'sw2'].forEach(id => { const e = $(id); e.classList.remove('IN'); });
+
+            // Texts
+            ['wt2', 'ws2', 'wt3', 'ws3', 'wt5', 'ws5', 'wt7', 'ws7', 'wt9', 'ws9', 'wt10', 'ws10'].forEach(id => {
+                const e = $(id); if (!e) return; e.classList.remove('IN');
+            });
+
+            // Start menu
+            $('smw').style.cssText = 'width:min(540px,94vw);background:rgba(12,14,22,.85);border:1px solid rgba(255,255,255,.08);border-radius:16px 16px 0 0;padding:20px 18px 18px;box-shadow:0 -2px 60px rgba(0,100,255,.06),0 -30px 80px rgba(0,0,0,.9),inset 0 1px 0 rgba(255,255,255,.05);backdrop-filter:blur(40px) saturate(1.4);transform:translateY(100%);';
+
+            // Explorer
+            $('feww').classList.remove('IN');
+            $('feww').querySelector('.fe-pa').style.color = 'rgba(255,255,255,.65)';
+
+            // Dock
+            ['dkw', 'dkh', 'dks'].forEach(id => { const e = $(id); e.classList.remove('IN'); });
+
+            // Grid
+            document.querySelectorAll('.gs-card').forEach(c => {
+                c.style.transition = 'none'; c.style.opacity = '0'; c.style.transform = 'translateY(14px)';
+            });
+            $('gsi').style.transform = 'translateY(0)'; $('gsi').style.filter = 'none';
+
+            // Outro
+            ['oL', 'oSep', 'oTag'].forEach(id => { const e = $(id); e.classList.remove('IN'); });
+
+            $('fl2').style.transition = 'none'; $('fl2').style.opacity = '0';
+
+            $('s0').classList.add('ON');
+        }
+    </script>
+</body>
+
+</html>

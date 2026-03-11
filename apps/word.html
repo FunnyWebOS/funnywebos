@@ -1,0 +1,1600 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AetherWord</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+:root {
+  --blue: #1a56db;
+  --blue-dark: #1341b0;
+  --blue-light: #e8f0fe;
+  --gray-50: #f8f9fa;
+  --gray-100: #f1f3f4;
+  --gray-200: #e8eaed;
+  --gray-300: #dadce0;
+  --gray-400: #bdc1c6;
+  --gray-500: #9aa0a6;
+  --gray-600: #80868b;
+  --gray-700: #5f6368;
+  --gray-800: #3c4043;
+  --gray-900: #202124;
+  --surface: #ffffff;
+  --ribbon-bg: #f8f9fa;
+  --border: #dadce0;
+  --text: #202124;
+  --text-muted: #5f6368;
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.12);
+  --shadow-md: 0 2px 8px rgba(0,0,0,0.15);
+  --shadow-lg: 0 8px 32px rgba(0,0,0,0.18);
+  --radius: 4px;
+  --font-ui: 'IBM Plex Sans', system-ui, sans-serif;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; overflow: hidden; }
+body {
+  font-family: var(--font-ui);
+  background: #e8eaed;
+  color: var(--text);
+  display: flex;
+  flex-direction: column;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+/* ─── TITLEBAR ─── */
+#titlebar {
+  background: var(--blue);
+  color: white;
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  height: 36px;
+  gap: 8px;
+  flex-shrink: 0;
+  user-select: none;
+}
+#titlebar .app-name { font-weight: 600; font-size: 14px; letter-spacing: -0.3px; }
+#titlebar .doc-name { opacity: 0.8; font-size: 12px; font-weight: 300; }
+#titlebar .spacer { flex: 1; }
+#titlebar .title-center {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 12px;
+  font-weight: 400;
+  opacity: 0.9;
+}
+#save-indicator {
+  font-size: 11px;
+  opacity: 0.7;
+  transition: opacity 0.3s;
+}
+
+/* ─── RIBBON ─── */
+#ribbon {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+  box-shadow: var(--shadow-sm);
+}
+.tab-bar {
+  display: flex;
+  align-items: flex-end;
+  border-bottom: 1px solid var(--border);
+  background: var(--ribbon-bg);
+  padding: 0 8px;
+}
+.tab-btn {
+  padding: 7px 14px 6px;
+  border: none;
+  background: none;
+  font-family: var(--font-ui);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-muted);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+.tab-btn:hover { color: var(--text); background: rgba(0,0,0,0.04); }
+.tab-btn.active { color: var(--blue); border-bottom-color: var(--blue); background: var(--surface); }
+
+.ribbon-panel { display: none; padding: 6px 8px; min-height: 74px; }
+.ribbon-panel.active { display: flex; align-items: flex-start; flex-wrap: wrap; gap: 0; }
+.rg {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  padding: 0 6px;
+  border-right: 1px solid var(--border);
+  gap: 2px;
+  min-width: fit-content;
+}
+.rg:last-child { border-right: none; }
+.rg-title {
+  font-size: 10px;
+  color: var(--text-muted);
+  text-align: center;
+  margin-top: auto;
+  padding-top: 2px;
+  white-space: nowrap;
+}
+.rg-row { display: flex; gap: 2px; align-items: center; }
+
+.rb {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 6px;
+  min-width: 36px;
+  height: 54px;
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  background: none;
+  cursor: pointer;
+  font-family: var(--font-ui);
+  font-size: 10px;
+  color: var(--text);
+  gap: 2px;
+  transition: all 0.12s;
+  white-space: nowrap;
+  line-height: 1.2;
+}
+.rb i { font-size: 18px; color: var(--gray-700); }
+.rb:hover { background: var(--gray-100); border-color: var(--gray-200); }
+.rb:active { background: var(--gray-200); }
+.rb.active, .rb.pressed { background: var(--blue-light); border-color: #b3c8f5; color: var(--blue); }
+.rb.active i, .rb.pressed i { color: var(--blue); }
+
+.rb-sm {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 24px;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  background: none;
+  cursor: pointer;
+  color: var(--gray-700);
+  font-size: 13px;
+  transition: all 0.1s;
+}
+.rb-sm:hover { background: var(--gray-100); border-color: var(--gray-300); }
+.rb-sm.active, .rb-sm.pressed { background: var(--blue-light); color: var(--blue); border-color: #b3c8f5; }
+
+/* Font controls in ribbon */
+.font-select, .font-size-select {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 3px 6px;
+  font-family: var(--font-ui);
+  font-size: 12px;
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+  outline: none;
+  height: 24px;
+}
+.font-select { width: 130px; }
+.font-size-select { width: 52px; }
+.font-select:focus, .font-size-select:focus { border-color: var(--blue); }
+
+.color-btn {
+  position: relative;
+  cursor: pointer;
+}
+.color-bar {
+  position: absolute;
+  bottom: 2px;
+  left: 4px;
+  right: 4px;
+  height: 3px;
+  border-radius: 2px;
+}
+
+/* ─── MAIN AREA ─── */
+#main {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+}
+#sidebar {
+  width: 220px;
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  flex-shrink: 0;
+  transition: width 0.2s;
+}
+#sidebar.collapsed { width: 0; overflow: hidden; }
+.sidebar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border);
+  font-weight: 600;
+  font-size: 12px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.sidebar-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--border);
+}
+.sidebar-tab {
+  flex: 1;
+  padding: 6px;
+  text-align: center;
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  color: var(--text-muted);
+  border-bottom: 2px solid transparent;
+  transition: all 0.15s;
+}
+.sidebar-tab.active { color: var(--blue); border-bottom-color: var(--blue); }
+.sidebar-content { flex: 1; overflow-y: auto; padding: 8px; }
+.sidebar-panel { display: none; }
+.sidebar-panel.active { display: block; }
+.sidebar-item {
+  padding: 6px 8px;
+  border-radius: var(--radius);
+  cursor: pointer;
+  font-size: 12px;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: background 0.1s;
+}
+.sidebar-item:hover { background: var(--gray-100); }
+.sidebar-item i { width: 14px; text-align: center; color: var(--text-muted); font-size: 12px; }
+.style-item {
+  padding: 4px 8px;
+  margin-bottom: 2px;
+  border-radius: var(--radius);
+  cursor: pointer;
+  font-size: 12px;
+  border: 1px solid transparent;
+  transition: all 0.1s;
+}
+.style-item:hover { background: var(--gray-100); border-color: var(--border); }
+.style-item.h1 { font-size: 16px; font-weight: 700; color: #1a1a2e; }
+.style-item.h2 { font-size: 14px; font-weight: 600; color: #16213e; }
+.style-item.h3 { font-size: 13px; font-weight: 600; color: #0f3460; }
+.style-item.normal { font-size: 12px; }
+.style-item.quote { font-style: italic; color: var(--text-muted); border-left: 3px solid var(--border); padding-left: 10px; }
+.style-item.code { font-family: 'IBM Plex Mono'; font-size: 11px; background: var(--gray-100); }
+
+#nav-outline { }
+.outline-item {
+  padding: 3px 8px;
+  font-size: 11px;
+  cursor: pointer;
+  color: var(--blue);
+  border-radius: 3px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.outline-item:hover { background: var(--blue-light); }
+.outline-item.h1 { font-weight: 600; margin-top: 4px; }
+.outline-item.h2 { padding-left: 16px; }
+.outline-item.h3 { padding-left: 24px; font-size: 11px; }
+
+/* ─── EDITOR ─── */
+#editor-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: #e8eaed;
+}
+#ruler {
+  height: 26px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  position: relative;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.ruler-inner {
+  position: absolute;
+  left: 0; right: 0; top: 0; bottom: 0;
+  display: flex;
+  align-items: flex-end;
+  padding-bottom: 2px;
+}
+.ruler-mark { position: absolute; bottom: 2px; display: flex; flex-direction: column; align-items: center; }
+.ruler-mark .line { width: 1px; background: var(--gray-400); }
+.ruler-mark .label { font-size: 9px; color: var(--gray-500); }
+.ruler-tab { position: absolute; bottom: 0; width: 10px; height: 10px; cursor: pointer; }
+.tab-stop { position: absolute; bottom: 0; width: 8px; height: 8px; }
+
+#scroll-container {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: auto;
+  padding: 24px 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.page {
+  width: 816px;
+  min-height: 1056px;
+  background: var(--surface);
+  box-shadow: 0 2px 12px rgba(0,0,0,0.18);
+  margin-bottom: 24px;
+  position: relative;
+  page-break-after: always;
+}
+.page-content {
+  padding: 96px 96px;
+  min-height: calc(1056px - 0px);
+  outline: none;
+}
+.page-content:focus { box-shadow: 0 0 0 2px rgba(26,86,219,0.2); }
+
+/* Header/Footer zones */
+.page-header-zone {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 72px;
+  border-bottom: 1px dashed var(--gray-300);
+  display: flex;
+  align-items: center;
+  padding: 0 96px;
+  cursor: text;
+  color: var(--text-muted);
+  font-size: 11px;
+}
+.page-footer-zone {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 72px;
+  border-top: 1px dashed var(--gray-300);
+  display: flex;
+  align-items: center;
+  padding: 0 96px;
+  cursor: text;
+  color: var(--text-muted);
+  font-size: 11px;
+}
+.header-footer-content {
+  outline: none;
+  min-width: 100%;
+}
+
+/* Document content styles */
+.page-content h1 { font-size: 24pt; font-weight: 700; color: #1a1a2e; margin: 0 0 12pt; line-height: 1.2; }
+.page-content h2 { font-size: 18pt; font-weight: 600; color: #16213e; margin: 16pt 0 8pt; line-height: 1.3; }
+.page-content h3 { font-size: 14pt; font-weight: 600; color: #0f3460; margin: 12pt 0 6pt; line-height: 1.3; }
+.page-content h4 { font-size: 12pt; font-weight: 600; margin: 10pt 0 4pt; }
+.page-content p { font-size: 11pt; margin: 0 0 8pt; line-height: 1.6; color: #202124; }
+.page-content ul, .page-content ol { margin: 0 0 8pt 20pt; }
+.page-content li { font-size: 11pt; line-height: 1.6; margin-bottom: 3pt; }
+.page-content table { border-collapse: collapse; margin: 8pt 0; width: 100%; }
+.page-content td, .page-content th { border: 1px solid var(--border); padding: 6pt 8pt; font-size: 10pt; }
+.page-content th { background: var(--gray-100); font-weight: 600; }
+.page-content blockquote { border-left: 3px solid var(--blue); margin: 12pt 0; padding: 6pt 16pt; color: var(--text-muted); font-style: italic; background: var(--gray-50); }
+.page-content pre { background: var(--gray-100); border: 1px solid var(--border); border-radius: var(--radius); padding: 10pt; font-family: 'IBM Plex Mono'; font-size: 9pt; overflow-x: auto; margin: 8pt 0; }
+.page-content code { font-family: 'IBM Plex Mono'; font-size: 0.9em; background: var(--gray-100); padding: 1px 4px; border-radius: 3px; }
+.page-content a { color: var(--blue); text-decoration: underline; }
+.page-content img { max-width: 100%; height: auto; display: block; margin: 8pt 0; }
+.page-content .page-break { page-break-before: always; border-top: 2px dashed var(--gray-300); margin: 16pt 0; padding-top: 4pt; text-align: center; font-size: 10pt; color: var(--text-muted); }
+.page-content .footnote-ref { vertical-align: super; font-size: 0.75em; color: var(--blue); cursor: pointer; }
+.page-content .comment-mark { background: rgba(255, 214, 0, 0.4); cursor: pointer; }
+.page-content .track-insert { background: rgba(0, 200, 100, 0.2); text-decoration: underline; text-decoration-color: green; }
+.page-content .track-delete { background: rgba(255, 0, 0, 0.1); text-decoration: line-through; color: red; }
+
+.highlight-yellow { background-color: #ffff00; }
+.highlight-green { background-color: #00ff88; }
+.highlight-pink { background-color: #ff88cc; }
+.highlight-blue { background-color: #88ccff; }
+.highlight-orange { background-color: #ffaa44; }
+
+/* ─── STATUS BAR ─── */
+#statusbar {
+  background: var(--blue);
+  color: rgba(255,255,255,0.9);
+  display: flex;
+  align-items: center;
+  height: 24px;
+  padding: 0 12px;
+  font-size: 11px;
+  gap: 16px;
+  flex-shrink: 0;
+  user-select: none;
+}
+#statusbar .sb-item { display: flex; align-items: center; gap: 4px; cursor: pointer; padding: 0 4px; border-radius: 3px; }
+#statusbar .sb-item:hover { background: rgba(255,255,255,0.15); }
+#statusbar .sb-sep { opacity: 0.4; }
+#statusbar .sb-right { margin-left: auto; display: flex; gap: 12px; align-items: center; }
+#zoom-slider { width: 80px; accent-color: white; }
+#lang-display { font-size: 11px; opacity: 0.9; }
+
+/* ─── MODALS ─── */
+.modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.45);
+  z-index: 2000;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(2px);
+}
+.modal-overlay.open { display: flex; }
+.modal-box {
+  background: var(--surface);
+  border-radius: 8px;
+  box-shadow: var(--shadow-lg);
+  min-width: 380px;
+  max-width: 640px;
+  width: 90%;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: modal-in 0.15s ease;
+}
+@keyframes modal-in {
+  from { opacity: 0; transform: scale(0.96) translateY(-8px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+.modal-header {
+  padding: 16px 20px 12px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.modal-title { font-size: 15px; font-weight: 600; }
+.modal-close { background: none; border: none; cursor: pointer; color: var(--text-muted); font-size: 18px; padding: 2px 6px; border-radius: var(--radius); }
+.modal-close:hover { background: var(--gray-100); }
+.modal-body { padding: 16px 20px; overflow-y: auto; flex: 1; }
+.modal-footer { padding: 12px 20px; border-top: 1px solid var(--border); display: flex; gap: 8px; justify-content: flex-end; }
+
+.form-group { margin-bottom: 14px; }
+.form-label { display: block; font-size: 12px; font-weight: 500; margin-bottom: 4px; color: var(--text); }
+.form-control {
+  width: 100%;
+  padding: 7px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-family: var(--font-ui);
+  font-size: 13px;
+  background: var(--surface);
+  color: var(--text);
+  outline: none;
+  transition: border-color 0.15s;
+}
+.form-control:focus { border-color: var(--blue); box-shadow: 0 0 0 2px rgba(26,86,219,0.12); }
+.form-check { display: flex; align-items: center; gap: 8px; font-size: 12px; cursor: pointer; margin-bottom: 6px; }
+.form-check input { width: 14px; height: 14px; accent-color: var(--blue); cursor: pointer; }
+.form-row { display: flex; gap: 12px; }
+.form-row .form-group { flex: 1; }
+
+.btn {
+  padding: 7px 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  cursor: pointer;
+  font-family: var(--font-ui);
+  font-size: 13px;
+  font-weight: 500;
+  transition: all 0.12s;
+  background: var(--surface);
+  color: var(--text);
+}
+.btn:hover { background: var(--gray-100); }
+.btn-primary { background: var(--blue); color: white; border-color: var(--blue); }
+.btn-primary:hover { background: var(--blue-dark); }
+.btn-danger { background: #d32f2f; color: white; border-color: #d32f2f; }
+.btn-danger:hover { background: #b71c1c; }
+.btn-sm { padding: 4px 10px; font-size: 12px; }
+
+/* ─── CONTEXT MENU ─── */
+#ctx-menu {
+  display: none;
+  position: fixed;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  box-shadow: var(--shadow-lg);
+  z-index: 3000;
+  min-width: 200px;
+  padding: 4px 0;
+  animation: ctx-in 0.1s ease;
+}
+@keyframes ctx-in { from { opacity: 0; transform: scale(0.97); } to { opacity: 1; transform: scale(1); } }
+#ctx-menu.open { display: block; }
+.ctx-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 14px;
+  cursor: pointer;
+  font-size: 12px;
+  color: var(--text);
+}
+.ctx-item:hover { background: var(--gray-100); }
+.ctx-item i { width: 14px; text-align: center; color: var(--text-muted); font-size: 12px; }
+.ctx-item .shortcut { margin-left: auto; font-size: 11px; color: var(--text-muted); }
+.ctx-item.disabled { opacity: 0.4; pointer-events: none; }
+.ctx-sep { height: 1px; background: var(--border); margin: 3px 0; }
+.ctx-submenu-arrow { margin-left: auto; font-size: 10px; }
+
+/* ─── MINI TOOLBAR ─── */
+#mini-toolbar {
+  display: none;
+  position: fixed;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  box-shadow: var(--shadow-md);
+  z-index: 1500;
+  padding: 4px;
+  gap: 2px;
+  align-items: center;
+}
+#mini-toolbar.open { display: flex; }
+.mt-btn {
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  border-radius: var(--radius);
+  color: var(--gray-700);
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.1s;
+}
+.mt-btn:hover { background: var(--gray-100); }
+.mt-sep { width: 1px; height: 18px; background: var(--border); margin: 0 2px; }
+
+/* ─── DROPDOWN MENUS ─── */
+.dropdown { position: relative; display: inline-block; }
+.dropdown-menu {
+  display: none;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  box-shadow: var(--shadow-lg);
+  z-index: 500;
+  min-width: 160px;
+  padding: 4px 0;
+}
+.dropdown-menu.right { left: auto; right: 0; }
+.dropdown-menu.open { display: block; }
+.dm-item {
+  padding: 6px 14px;
+  cursor: pointer;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.dm-item:hover { background: var(--gray-100); }
+.dm-sep { height: 1px; background: var(--border); margin: 3px 0; }
+
+/* ─── COLOR PICKER ─── */
+.color-grid {
+  display: grid;
+  grid-template-columns: repeat(10, 20px);
+  gap: 2px;
+  padding: 8px;
+}
+.color-swatch {
+  width: 20px;
+  height: 20px;
+  border-radius: 3px;
+  cursor: pointer;
+  border: 1px solid rgba(0,0,0,0.1);
+  transition: transform 0.1s;
+}
+.color-swatch:hover { transform: scale(1.2); z-index: 1; position: relative; }
+
+/* ─── COMMENT PANEL ─── */
+#comment-panel {
+  width: 220px;
+  background: var(--surface);
+  border-left: 1px solid var(--border);
+  display: none;
+  flex-direction: column;
+  overflow: hidden;
+}
+#comment-panel.open { display: flex; }
+.comment-header { padding: 8px 12px; border-bottom: 1px solid var(--border); font-weight: 600; font-size: 12px; }
+.comment-list { flex: 1; overflow-y: auto; padding: 8px; }
+.comment-card {
+  background: #fffde7;
+  border: 1px solid #f9a825;
+  border-radius: 6px;
+  padding: 8px;
+  margin-bottom: 8px;
+  font-size: 11px;
+}
+.comment-card .comment-meta { color: var(--text-muted); font-size: 10px; margin-bottom: 4px; }
+.comment-card .comment-text { line-height: 1.4; }
+.comment-card .comment-reply { color: var(--blue); cursor: pointer; margin-top: 4px; font-size: 10px; }
+
+/* ─── FIND/REPLACE PANEL ─── */
+#find-panel {
+  display: none;
+  position: absolute;
+  top: 0;
+  right: 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-top: none;
+  border-radius: 0 0 8px 8px;
+  box-shadow: var(--shadow-md);
+  padding: 12px;
+  z-index: 100;
+  width: 340px;
+}
+#find-panel.open { display: block; }
+#find-panel .panel-title { font-size: 12px; font-weight: 600; margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between; }
+#find-panel .panel-close { background: none; border: none; cursor: pointer; font-size: 16px; color: var(--text-muted); }
+#find-panel .find-row { display: flex; gap: 4px; margin-bottom: 6px; align-items: center; }
+#find-panel .find-input { flex: 1; padding: 5px 8px; border: 1px solid var(--border); border-radius: var(--radius); font-size: 12px; font-family: var(--font-ui); }
+#find-panel .find-input:focus { outline: none; border-color: var(--blue); }
+#find-panel .find-btn { padding: 4px 10px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); cursor: pointer; font-size: 11px; }
+#find-panel .find-btn:hover { background: var(--gray-100); }
+#find-panel .find-count { font-size: 11px; color: var(--text-muted); }
+
+/* ─── TABLE INSERT UI ─── */
+.table-picker { padding: 8px; }
+.table-grid { display: grid; grid-template-columns: repeat(10, 18px); gap: 2px; }
+.table-cell {
+  width: 18px;
+  height: 18px;
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  cursor: pointer;
+  transition: background 0.1s;
+}
+.table-cell.hover { background: var(--blue-light); border-color: var(--blue); }
+.table-label { font-size: 11px; color: var(--text-muted); text-align: center; margin-top: 4px; }
+
+/* ─── SMART PASTE ─── */
+.paste-notice {
+  position: fixed;
+  bottom: 40px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--gray-900);
+  color: white;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 12px;
+  z-index: 5000;
+  display: none;
+  gap: 12px;
+  align-items: center;
+  box-shadow: var(--shadow-lg);
+}
+.paste-notice.show { display: flex; }
+.paste-notice button { background: none; border: 1px solid rgba(255,255,255,0.4); color: white; padding: 2px 8px; border-radius: 3px; cursor: pointer; font-size: 11px; }
+
+/* ─── TOOLTIP ─── */
+.tooltip { position: relative; }
+.tooltip::after {
+  content: attr(data-tip);
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--gray-900);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s;
+  z-index: 9999;
+}
+.tooltip:hover::after { opacity: 1; }
+
+/* ─── PRINT STYLES ─── */
+@media print {
+  body > *:not(#scroll-container) { display: none; }
+  #scroll-container { padding: 0; }
+  .page { box-shadow: none; margin: 0; }
+  .page-header-zone, .page-footer-zone { border: none; }
+}
+
+/* ─── TABLE RESIZE ─── */
+.page-content table { table-layout: fixed; }
+.page-content td, .page-content th { position: relative; }
+.col-resize {
+  position: absolute;
+  right: -3px;
+  top: 0;
+  bottom: 0;
+  width: 6px;
+  cursor: col-resize;
+  z-index: 10;
+}
+
+/* ─── SPELL CHECK ─── */
+.spell-error { border-bottom: 2px solid #e53935; cursor: pointer; }
+.grammar-error { border-bottom: 2px solid #1565c0; cursor: pointer; }
+
+/* Scrollbar styling */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--gray-300); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: var(--gray-400); }
+</style>
+</head>
+<body>
+
+<!-- TITLEBAR -->
+<div id="titlebar">
+  <span class="app-name">✦ AetherWord</span>
+  <span class="doc-name" id="doc-title-display"> — Document1</span>
+  <div class="title-center" id="save-indicator">✓ Enregistré</div>
+  <div class="spacer"></div>
+  <span style="font-size:11px; opacity:0.7" id="zoom-display">100%</span>
+</div>
+
+<!-- RIBBON -->
+<div id="ribbon">
+  <div class="tab-bar">
+    <button class="tab-btn active" data-tab="home">Accueil</button>
+    <button class="tab-btn" data-tab="insert">Insertion</button>
+    <button class="tab-btn" data-tab="layout">Mise en page</button>
+    <button class="tab-btn" data-tab="references">Références</button>
+    <button class="tab-btn" data-tab="review">Révision</button>
+    <button class="tab-btn" data-tab="view">Affichage</button>
+    <button class="tab-btn" data-tab="table" id="table-tab-btn" style="display:none; color:#7c4dff">Tableau</button>
+  </div>
+
+  <!-- HOME -->
+  <div class="ribbon-panel active" id="panel-home">
+    <div class="rg">
+      <div class="rg-row">
+        <button class="rb tooltip" id="rb-bold" onclick="fmt('bold')" data-tip="Gras (Ctrl+B)"><i class="fa fa-bold"></i><span>Gras</span></button>
+        <button class="rb tooltip" id="rb-italic" onclick="fmt('italic')" data-tip="Italique (Ctrl+I)"><i class="fa fa-italic"></i><span>Italique</span></button>
+        <button class="rb tooltip" id="rb-underline" onclick="fmt('underline')" data-tip="Souligné (Ctrl+U)"><i class="fa fa-underline"></i><span>Souligné</span></button>
+        <button class="rb tooltip" id="rb-strike" onclick="fmt('strikeThrough')" data-tip="Barré"><i class="fa fa-strikethrough"></i><span>Barré</span></button>
+      </div>
+      <div class="rg-title">Style</div>
+    </div>
+
+    <div class="rg">
+      <div class="rg-row">
+        <div style="display:flex; flex-direction:column; gap:3px; padding: 4px 2px;">
+          <div class="rg-row">
+            <select class="font-select" id="fontFamily" onchange="applyFont()">
+              <option value="Georgia">Georgia</option>
+              <option value="'Times New Roman'">Times New Roman</option>
+              <option value="Calibri" selected>Calibri</option>
+              <option value="Arial">Arial</option>
+              <option value="Verdana">Verdana</option>
+              <option value="Garamond">Garamond</option>
+              <option value="'Courier New'">Courier New</option>
+              <option value="'IBM Plex Sans'">IBM Plex Sans</option>
+              <option value="'IBM Plex Mono'">IBM Plex Mono</option>
+              <option value="Tahoma">Tahoma</option>
+              <option value="'Trebuchet MS'">Trebuchet MS</option>
+              <option value="Palatino">Palatino</option>
+            </select>
+            <select class="font-size-select" id="fontSize" onchange="applyFontSize()">
+              <option>8</option><option>9</option><option>10</option>
+              <option selected>11</option><option>12</option><option>14</option>
+              <option>16</option><option>18</option><option>20</option>
+              <option>24</option><option>28</option><option>32</option>
+              <option>36</option><option>48</option><option>72</option>
+            </select>
+          </div>
+          <div class="rg-row">
+            <button class="rb-sm tooltip" onclick="fmt('superscript')" data-tip="Exposant"><i class="fa fa-superscript"></i></button>
+            <button class="rb-sm tooltip" onclick="fmt('subscript')" data-tip="Indice"><i class="fa fa-subscript"></i></button>
+            <div class="dropdown">
+              <button class="rb-sm color-btn tooltip" id="txt-color-btn" data-tip="Couleur texte" onclick="toggleDropdown('dd-text-color')">
+                <i class="fa fa-font"></i>
+                <div class="color-bar" id="txt-color-bar" style="background:#000000"></div>
+              </button>
+              <div class="dropdown-menu" id="dd-text-color">
+                <div class="color-grid" id="text-color-grid"></div>
+              </div>
+            </div>
+            <div class="dropdown">
+              <button class="rb-sm color-btn tooltip" id="bg-color-btn" data-tip="Surbrillance" onclick="toggleDropdown('dd-bg-color')">
+                <i class="fa fa-highlighter"></i>
+                <div class="color-bar" id="bg-color-bar" style="background:#ffff00"></div>
+              </button>
+              <div class="dropdown-menu" id="dd-bg-color">
+                <div class="color-grid" id="bg-color-grid"></div>
+              </div>
+            </div>
+            <button class="rb-sm tooltip" onclick="fmt('removeFormat')" data-tip="Effacer la mise en forme"><i class="fa fa-eraser"></i></button>
+          </div>
+        </div>
+      </div>
+      <div class="rg-title">Police</div>
+    </div>
+
+    <div class="rg">
+      <div class="rg-row">
+        <button class="rb tooltip" id="rb-alignLeft" onclick="fmt('justifyLeft')" data-tip="Aligner à gauche"><i class="fa fa-align-left"></i><span>Gauche</span></button>
+        <button class="rb tooltip" id="rb-alignCenter" onclick="fmt('justifyCenter')" data-tip="Centrer"><i class="fa fa-align-center"></i><span>Centre</span></button>
+        <button class="rb tooltip" id="rb-alignRight" onclick="fmt('justifyRight')" data-tip="Aligner à droite"><i class="fa fa-align-right"></i><span>Droite</span></button>
+        <button class="rb tooltip" id="rb-alignJustify" onclick="fmt('justifyFull')" data-tip="Justifier"><i class="fa fa-align-justify"></i><span>Justifié</span></button>
+      </div>
+      <div class="rg-title">Alignement</div>
+    </div>
+
+    <div class="rg">
+      <div class="rg-row">
+        <button class="rb tooltip" id="rb-ul" onclick="fmt('insertUnorderedList')" data-tip="Liste à puces"><i class="fa fa-list-ul"></i><span>Puces</span></button>
+        <button class="rb tooltip" id="rb-ol" onclick="fmt('insertOrderedList')" data-tip="Liste numérotée"><i class="fa fa-list-ol"></i><span>Numéros</span></button>
+        <button class="rb tooltip" onclick="indentText('indent')" data-tip="Augmenter le retrait"><i class="fa fa-indent"></i><span>Retrait+</span></button>
+        <button class="rb tooltip" onclick="indentText('outdent')" data-tip="Diminuer le retrait"><i class="fa fa-outdent"></i><span>Retrait-</span></button>
+      </div>
+      <div class="rg-title">Paragraphe</div>
+    </div>
+
+    <div class="rg">
+      <div class="rg-row">
+        <div class="dropdown">
+          <button class="rb tooltip" data-tip="Styles" onclick="toggleDropdown('dd-styles')"><i class="fa fa-paint-brush"></i><span>Styles</span></button>
+          <div class="dropdown-menu" id="dd-styles" style="min-width:200px">
+            <div class="dm-item" onclick="applyStyle('p')">Texte normal</div>
+            <div class="dm-item" onclick="applyStyle('h1')"><strong>Titre 1</strong></div>
+            <div class="dm-item" onclick="applyStyle('h2')"><strong style="font-size:14px">Titre 2</strong></div>
+            <div class="dm-item" onclick="applyStyle('h3')">Titre 3</div>
+            <div class="dm-item" onclick="applyStyle('h4')">Titre 4</div>
+            <div class="dm-sep"></div>
+            <div class="dm-item" onclick="applyBlockquote()"><em style="color:#888">Citation</em></div>
+            <div class="dm-item" onclick="applyCodeBlock()"><code>Code</code></div>
+          </div>
+        </div>
+        <div class="dropdown">
+          <button class="rb tooltip" data-tip="Espacement" onclick="toggleDropdown('dd-spacing')"><i class="fa fa-text-height"></i><span>Interligne</span></button>
+          <div class="dropdown-menu" id="dd-spacing">
+            <div class="dm-item" onclick="setLineHeight(1)">Simple (1.0)</div>
+            <div class="dm-item" onclick="setLineHeight(1.15)">1,15</div>
+            <div class="dm-item" onclick="setLineHeight(1.5)">1,5</div>
+            <div class="dm-item" onclick="setLineHeight(2)">Double (2.0)</div>
+            <div class="dm-sep"></div>
+            <div class="dm-item" onclick="setLineHeight(2.5)">2,5</div>
+            <div class="dm-item" onclick="setLineHeight(3)">Triple (3.0)</div>
+          </div>
+        </div>
+      </div>
+      <div class="rg-title">Styles</div>
+    </div>
+
+    <div class="rg">
+      <div class="rg-row">
+        <button class="rb tooltip" onclick="execUndo()" data-tip="Annuler (Ctrl+Z)"><i class="fa fa-undo"></i><span>Annuler</span></button>
+        <button class="rb tooltip" onclick="execRedo()" data-tip="Rétablir (Ctrl+Y)"><i class="fa fa-redo"></i><span>Rétablir</span></button>
+        <button class="rb tooltip" onclick="openFindPanel()" data-tip="Rechercher (Ctrl+F)"><i class="fa fa-search"></i><span>Chercher</span></button>
+      </div>
+      <div class="rg-title">Édition</div>
+    </div>
+  </div>
+
+  <!-- INSERT -->
+  <div class="ribbon-panel" id="panel-insert">
+    <div class="rg">
+      <div class="rg-row">
+        <div class="dropdown">
+          <button class="rb tooltip" data-tip="Insérer un tableau" onclick="toggleDropdown('dd-table-insert')"><i class="fa fa-table"></i><span>Tableau</span></button>
+          <div class="dropdown-menu" id="dd-table-insert">
+            <div class="table-picker">
+              <div style="font-size:11px; color:var(--text-muted); margin-bottom:6px;">Sélectionner les dimensions</div>
+              <div class="table-grid" id="table-grid"></div>
+              <div class="table-label" id="table-label">1×1</div>
+              <div class="dm-sep"></div>
+              <div class="dm-item" onclick="openInsertTableModal()"><i class="fa fa-table"></i> Dimensions personnalisées…</div>
+            </div>
+          </div>
+        </div>
+        <button class="rb tooltip" onclick="insertImage()" data-tip="Insérer une image"><i class="fa fa-image"></i><span>Image</span></button>
+        <button class="rb tooltip" onclick="insertLink()" data-tip="Insérer un lien (Ctrl+K)"><i class="fa fa-link"></i><span>Lien</span></button>
+      </div>
+      <div class="rg-title">Éléments</div>
+    </div>
+
+    <div class="rg">
+      <div class="rg-row">
+        <button class="rb tooltip" onclick="insertHeader(1)" data-tip="Titre 1"><i class="fa fa-heading"></i><span>Titre 1</span></button>
+        <button class="rb tooltip" onclick="insertHeader(2)" data-tip="Titre 2"><i class="fa fa-heading" style="font-size:14px"></i><span>Titre 2</span></button>
+        <button class="rb tooltip" onclick="insertHeader(3)" data-tip="Titre 3"><i class="fa fa-heading" style="font-size:11px"></i><span>Titre 3</span></button>
+      </div>
+      <div class="rg-title">En-têtes</div>
+    </div>
+
+    <div class="rg">
+      <div class="rg-row">
+        <button class="rb tooltip" onclick="insertPageBreak()" data-tip="Saut de page"><i class="fa fa-file-alt"></i><span>Saut page</span></button>
+        <button class="rb tooltip" onclick="insertHR()" data-tip="Ligne horizontale"><i class="fa fa-minus"></i><span>Séparateur</span></button>
+        <button class="rb tooltip" onclick="insertSpecialChar()" data-tip="Caractères spéciaux"><i class="fa fa-omega"></i><span>Symboles</span></button>
+      </div>
+      <div class="rg-title">Pages</div>
+    </div>
+
+    <div class="rg">
+      <div class="rg-row">
+        <button class="rb tooltip" onclick="insertFootnote()" data-tip="Note de bas de page"><i class="fa fa-superscript"></i><span>Note bas</span></button>
+        <button class="rb tooltip" onclick="insertEndnote()" data-tip="Note de fin"><i class="fa fa-subscript"></i><span>Note fin</span></button>
+        <button class="rb tooltip" onclick="insertTOC()" data-tip="Table des matières"><i class="fa fa-list"></i><span>Sommaire</span></button>
+      </div>
+      <div class="rg-title">Références</div>
+    </div>
+
+    <div class="rg">
+      <div class="rg-row">
+        <button class="rb tooltip" onclick="insertTextBox()" data-tip="Zone de texte"><i class="fa fa-square"></i><span>Zone texte</span></button>
+        <button class="rb tooltip" onclick="insertEquation()" data-tip="Equation"><i class="fa fa-square-root-alt"></i><span>Équation</span></button>
+        <button class="rb tooltip" onclick="insertDate()" data-tip="Date et heure"><i class="fa fa-calendar"></i><span>Date</span></button>
+      </div>
+      <div class="rg-title">Autres</div>
+    </div>
+  </div>
+
+  <!-- LAYOUT -->
+  <div class="ribbon-panel" id="panel-layout">
+    <div class="rg">
+      <div class="rg-row">
+        <div class="dropdown">
+          <button class="rb tooltip" data-tip="Marges" onclick="toggleDropdown('dd-margins')"><i class="fa fa-arrows-alt"></i><span>Marges</span></button>
+          <div class="dropdown-menu" id="dd-margins">
+            <div class="dm-item" onclick="setMargins('normal')"><b>Normales</b><br><small>2.54cm tous côtés</small></div>
+            <div class="dm-item" onclick="setMargins('narrow')"><b>Étroites</b><br><small>1.27cm tous côtés</small></div>
+            <div class="dm-item" onclick="setMargins('wide')"><b>Larges</b><br><small>5.08cm gauche/droite</small></div>
+            <div class="dm-item" onclick="setMargins('mirrored')"><b>En miroir</b><br><small>Intérieur/extérieur</small></div>
+          </div>
+        </div>
+        <div class="dropdown">
+          <button class="rb tooltip" data-tip="Orientation" onclick="toggleDropdown('dd-orient')"><i class="fa fa-file"></i><span>Orientation</span></button>
+          <div class="dropdown-menu" id="dd-orient">
+            <div class="dm-item" onclick="setOrientation('portrait')"><i class="fa fa-file"></i> Portrait</div>
+            <div class="dm-item" onclick="setOrientation('landscape')"><i class="fa fa-file" style="transform:rotate(90deg)"></i> Paysage</div>
+          </div>
+        </div>
+        <div class="dropdown">
+          <button class="rb tooltip" data-tip="Taille du papier" onclick="toggleDropdown('dd-paper')"><i class="fa fa-copy"></i><span>Taille</span></button>
+          <div class="dropdown-menu" id="dd-paper">
+            <div class="dm-item" onclick="setPaperSize('a4')">A4 (21×29.7cm)</div>
+            <div class="dm-item" onclick="setPaperSize('letter')">Lettre (21.6×27.9cm)</div>
+            <div class="dm-item" onclick="setPaperSize('legal')">Légal (21.6×35.6cm)</div>
+            <div class="dm-item" onclick="setPaperSize('a3')">A3 (29.7×42cm)</div>
+          </div>
+        </div>
+      </div>
+      <div class="rg-title">Page</div>
+    </div>
+    <div class="rg">
+      <div class="rg-row">
+        <div class="dropdown">
+          <button class="rb tooltip" data-tip="Colonnes" onclick="toggleDropdown('dd-cols')"><i class="fa fa-columns"></i><span>Colonnes</span></button>
+          <div class="dropdown-menu" id="dd-cols">
+            <div class="dm-item" onclick="setColumns(1)">1 colonne</div>
+            <div class="dm-item" onclick="setColumns(2)">2 colonnes</div>
+            <div class="dm-item" onclick="setColumns(3)">3 colonnes</div>
+          </div>
+        </div>
+        <button class="rb tooltip" onclick="insertPageBreak()" data-tip="Saut"><i class="fa fa-file-alt"></i><span>Saut</span></button>
+      </div>
+      <div class="rg-title">Mise en page</div>
+    </div>
+    <div class="rg">
+      <div class="rg-row">
+        <button class="rb tooltip" onclick="openPageSetupModal()" data-tip="Paramètres de page"><i class="fa fa-cog"></i><span>Paramètres</span></button>
+      </div>
+      <div class="rg-title">Paramètres</div>
+    </div>
+  </div>
+
+  <!-- REFERENCES -->
+  <div class="ribbon-panel" id="panel-references">
+    <div class="rg">
+      <div class="rg-row">
+        <button class="rb tooltip" onclick="insertTOC()" data-tip="Table des matières"><i class="fa fa-list-alt"></i><span>Sommaire</span></button>
+        <button class="rb tooltip" onclick="updateTOC()" data-tip="Actualiser la table"><i class="fa fa-sync"></i><span>Actualiser</span></button>
+      </div>
+      <div class="rg-title">Sommaire</div>
+    </div>
+    <div class="rg">
+      <div class="rg-row">
+        <button class="rb tooltip" onclick="insertFootnote()" data-tip="Note de bas de page"><i class="fa fa-superscript"></i><span>Note bas</span></button>
+        <button class="rb tooltip" onclick="insertEndnote()" data-tip="Note de fin"><i class="fa fa-subscript"></i><span>Note fin</span></button>
+      </div>
+      <div class="rg-title">Notes</div>
+    </div>
+    <div class="rg">
+      <div class="rg-row">
+        <button class="rb tooltip" onclick="insertCitation()" data-tip="Citation bibliographique"><i class="fa fa-quote-left"></i><span>Citation</span></button>
+        <button class="rb tooltip" onclick="insertCaption()" data-tip="Légende"><i class="fa fa-tags"></i><span>Légende</span></button>
+      </div>
+      <div class="rg-title">Citations</div>
+    </div>
+    <div class="rg">
+      <div class="rg-row">
+        <button class="rb tooltip" onclick="insertCrossRef()" data-tip="Renvoi"><i class="fa fa-external-link-alt"></i><span>Renvoi</span></button>
+        <button class="rb tooltip" onclick="insertBookmark()" data-tip="Signet"><i class="fa fa-bookmark"></i><span>Signet</span></button>
+      </div>
+      <div class="rg-title">Renvois</div>
+    </div>
+  </div>
+
+  <!-- REVIEW -->
+  <div class="ribbon-panel" id="panel-review">
+    <div class="rg">
+      <div class="rg-row">
+        <button class="rb tooltip" onclick="checkSpelling()" data-tip="Vérification orthographique (F7)"><i class="fa fa-spell-check"></i><span>Orthographe</span></button>
+        <button class="rb tooltip" onclick="thesaurus()" data-tip="Dictionnaire des synonymes"><i class="fa fa-book"></i><span>Synonymes</span></button>
+        <button class="rb tooltip" onclick="wordCount()" data-tip="Statistiques"><i class="fa fa-calculator"></i><span>Stats</span></button>
+      </div>
+      <div class="rg-title">Vérification</div>
+    </div>
+    <div class="rg">
+      <div class="rg-row">
+        <button class="rb tooltip" id="rb-track" onclick="toggleTrackChanges()" data-tip="Suivi des modifications"><i class="fa fa-edit"></i><span>Suivi</span></button>
+        <div class="dropdown">
+          <button class="rb tooltip" data-tip="Accepter/Refuser" onclick="toggleDropdown('dd-accept')"><i class="fa fa-check"></i><span>Accepter</span></button>
+          <div class="dropdown-menu" id="dd-accept">
+            <div class="dm-item" onclick="acceptChange()">Accepter cette modification</div>
+            <div class="dm-item" onclick="acceptAllChanges()">Accepter tout</div>
+            <div class="dm-sep"></div>
+            <div class="dm-item" onclick="rejectChange()">Refuser cette modification</div>
+            <div class="dm-item" onclick="rejectAllChanges()">Refuser tout</div>
+          </div>
+        </div>
+      </div>
+      <div class="rg-title">Suivi</div>
+    </div>
+    <div class="rg">
+      <div class="rg-row">
+        <button class="rb tooltip" onclick="addComment()" data-tip="Ajouter un commentaire"><i class="fa fa-comment"></i><span>Commentaire</span></button>
+        <button class="rb tooltip" onclick="toggleCommentPanel()" data-tip="Afficher commentaires"><i class="fa fa-comments"></i><span>Afficher</span></button>
+        <button class="rb tooltip" onclick="deleteComment()" data-tip="Supprimer commentaire"><i class="fa fa-comment-slash"></i><span>Supprimer</span></button>
+      </div>
+      <div class="rg-title">Commentaires</div>
+    </div>
+    <div class="rg">
+      <div class="rg-row">
+        <button class="rb tooltip" onclick="compareDocs()" data-tip="Comparer documents"><i class="fa fa-code-branch"></i><span>Comparer</span></button>
+        <button class="rb tooltip" onclick="protectDoc()" data-tip="Protéger le document"><i class="fa fa-lock"></i><span>Protéger</span></button>
+      </div>
+      <div class="rg-title">Comparer</div>
+    </div>
+  </div>
+
+  <!-- VIEW -->
+  <div class="ribbon-panel" id="panel-view">
+    <div class="rg">
+      <div class="rg-row">
+        <button class="rb tooltip" id="rb-view-print" onclick="setDocView('print')" data-tip="Mise en page"><i class="fa fa-print"></i><span>Page</span></button>
+        <button class="rb tooltip" id="rb-view-web" onclick="setDocView('web')" data-tip="Mode web"><i class="fa fa-globe"></i><span>Web</span></button>
+        <button class="rb tooltip" id="rb-view-read" onclick="setDocView('read')" data-tip="Mode lecture"><i class="fa fa-book-open"></i><span>Lecture</span></button>
+      </div>
+      <div class="rg-title">Vues</div>
+    </div>
+    <div class="rg">
+      <div class="rg-row">
+        <button class="rb tooltip" id="rb-ruler" onclick="toggleRuler()" data-tip="Règle"><i class="fa fa-ruler"></i><span>Règle</span></button>
+        <button class="rb tooltip" id="rb-sidebar" onclick="toggleSidebar()" data-tip="Volet navigation"><i class="fa fa-sidebar"></i><span>Navigation</span></button>
+        <button class="rb tooltip" id="rb-grid" onclick="toggleGridlines()" data-tip="Quadrillage"><i class="fa fa-th"></i><span>Grille</span></button>
+      </div>
+      <div class="rg-title">Afficher</div>
+    </div>
+    <div class="rg">
+      <div class="rg-row" style="align-items:center; gap:6px; padding:0 4px;">
+        <span style="font-size:11px; color:var(--text-muted)">Zoom</span>
+        <input type="range" id="zoom-range" min="50" max="200" value="100" step="10" style="width:80px; accent-color:var(--blue)" oninput="setZoom(this.value)">
+        <span style="font-size:11px; min-width:32px" id="zoom-value">100%</span>
+      </div>
+      <div class="rg-title">Zoom</div>
+    </div>
+    <div class="rg">
+      <div class="rg-row">
+        <button class="rb tooltip" onclick="toggleFullscreen()" data-tip="Plein écran"><i class="fa fa-expand"></i><span>Plein écran</span></button>
+        <button class="rb tooltip" onclick="splitWindow()" data-tip="Fractionner"><i class="fa fa-columns"></i><span>Fractionner</span></button>
+      </div>
+      <div class="rg-title">Fenêtre</div>
+    </div>
+  </div>
+
+  <!-- TABLE CONTEXTUAL -->
+  <div class="ribbon-panel" id="panel-table">
+    <div class="rg">
+      <div class="rg-row">
+        <button class="rb tooltip" onclick="tableAddRow('above')" data-tip="Insérer au-dessus"><i class="fa fa-arrow-up"></i><span>Ligne↑</span></button>
+        <button class="rb tooltip" onclick="tableAddRow('below')" data-tip="Insérer en dessous"><i class="fa fa-arrow-down"></i><span>Ligne↓</span></button>
+        <button class="rb tooltip" onclick="tableAddCol('left')" data-tip="Insérer à gauche"><i class="fa fa-arrow-left"></i><span>Col←</span></button>
+        <button class="rb tooltip" onclick="tableAddCol('right')" data-tip="Insérer à droite"><i class="fa fa-arrow-right"></i><span>Col→</span></button>
+      </div>
+      <div class="rg-title">Insérer</div>
+    </div>
+    <div class="rg">
+      <div class="rg-row">
+        <button class="rb tooltip" onclick="tableDeleteRow()" data-tip="Supprimer la ligne"><i class="fa fa-minus"></i><span>Sup ligne</span></button>
+        <button class="rb tooltip" onclick="tableDeleteCol()" data-tip="Supprimer la colonne"><i class="fa fa-minus"></i><span>Sup col</span></button>
+        <button class="rb tooltip" onclick="tableDelete()" data-tip="Supprimer le tableau" style="color:#d32f2f"><i class="fa fa-trash"></i><span>Supprimer</span></button>
+      </div>
+      <div class="rg-title">Supprimer</div>
+    </div>
+    <div class="rg">
+      <div class="rg-row">
+        <button class="rb tooltip" onclick="tableMerge()" data-tip="Fusionner les cellules"><i class="fa fa-compress"></i><span>Fusionner</span></button>
+        <button class="rb tooltip" onclick="tableSplit()" data-tip="Fractionner la cellule"><i class="fa fa-expand-alt"></i><span>Fractionner</span></button>
+      </div>
+      <div class="rg-title">Cellules</div>
+    </div>
+    <div class="rg">
+      <div class="rg-row">
+        <div class="dropdown">
+          <button class="rb tooltip" data-tip="Style de tableau" onclick="toggleDropdown('dd-table-style')"><i class="fa fa-paint-brush"></i><span>Style</span></button>
+          <div class="dropdown-menu" id="dd-table-style">
+            <div class="dm-item" onclick="applyTableStyle('plain')">Aucun style</div>
+            <div class="dm-item" onclick="applyTableStyle('grid')">Grille simple</div>
+            <div class="dm-item" onclick="applyTableStyle('colorful')">Coloré</div>
+            <div class="dm-item" onclick="applyTableStyle('dark')">Sombre</div>
+            <div class="dm-item" onclick="applyTableStyle('striped')">Rayé</div>
+          </div>
+        </div>
+        <button class="rb tooltip" onclick="tableAutoFit()" data-tip="Ajustement auto"><i class="fa fa-arrows-alt-h"></i><span>Ajuster</span></button>
+      </div>
+      <div class="rg-title">Style</div>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div id="main">
+  <!-- SIDEBAR -->
+  <div id="sidebar">
+    <div class="sidebar-tabs">
+      <div class="sidebar-tab active" data-stab="nav" onclick="switchSidebarTab('nav')">Navigation</div>
+      <div class="sidebar-tab" data-stab="styles" onclick="switchSidebarTab('styles')">Styles</div>
+      <div class="sidebar-tab" data-stab="outline" onclick="switchSidebarTab('outline')">Plan</div>
+    </div>
+    <div class="sidebar-content">
+      <!-- Navigation panel -->
+      <div class="sidebar-panel active" id="spanel-nav">
+        <div class="sidebar-item" onclick="newDocument()"><i class="fa fa-file"></i> Nouveau</div>
+        <div class="sidebar-item" onclick="openDocument()"><i class="fa fa-folder-open"></i> Ouvrir</div>
+        <div class="sidebar-item" onclick="saveDocument()"><i class="fa fa-save"></i> Enregistrer</div>
+        <div class="sidebar-item" onclick="saveDocumentAs()"><i class="fa fa-save"></i> Enreg. sous…</div>
+        <div class="sidebar-item" onclick="openExportModal()"><i class="fa fa-file-export"></i> Exporter</div>
+        <div class="sidebar-item" onclick="printDocument()"><i class="fa fa-print"></i> Imprimer</div>
+        <hr style="margin:8px 0; border-color:var(--border)">
+        <div class="sidebar-item" onclick="openFindPanel()"><i class="fa fa-search"></i> Rechercher</div>
+        <div class="sidebar-item" onclick="openFindReplace()"><i class="fa fa-exchange-alt"></i> Remplacer</div>
+        <hr style="margin:8px 0; border-color:var(--border)">
+        <div class="sidebar-item" onclick="openDocProperties()"><i class="fa fa-info-circle"></i> Propriétés</div>
+      </div>
+      <!-- Styles panel -->
+      <div class="sidebar-panel" id="spanel-styles">
+        <div class="style-item h1" onclick="applyStyle('h1')">Titre 1</div>
+        <div class="style-item h2" onclick="applyStyle('h2')">Titre 2</div>
+        <div class="style-item h3" onclick="applyStyle('h3')">Titre 3</div>
+        <div class="style-item h4" onclick="applyStyle('h4')">Titre 4</div>
+        <div class="style-item normal" onclick="applyStyle('p')">Normal</div>
+        <div class="style-item quote" onclick="applyBlockquote()">Citation</div>
+        <div class="style-item code" onclick="applyCodeBlock()">Code</div>
+      </div>
+      <!-- Outline panel -->
+      <div class="sidebar-panel" id="spanel-outline">
+        <div id="nav-outline"><em style="font-size:11px; color:var(--text-muted)">Aucun titre trouvé</em></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- EDITOR AREA -->
+  <div id="editor-area">
+    <!-- Find Panel -->
+    <div id="find-panel">
+      <div class="panel-title">
+        <span id="find-panel-title">Rechercher</span>
+        <button class="panel-close" onclick="closeFindPanel()">×</button>
+      </div>
+      <div class="find-row">
+        <input class="find-input" type="text" id="find-input" placeholder="Rechercher…" oninput="liveFind()">
+        <button class="find-btn" onclick="findPrev()">↑</button>
+        <button class="find-btn" onclick="findNext()">↓</button>
+        <span class="find-count" id="find-count"></span>
+      </div>
+      <div class="find-row" id="replace-row" style="display:none">
+        <input class="find-input" type="text" id="replace-input" placeholder="Remplacer par…">
+        <button class="find-btn" onclick="replaceOne()">1×</button>
+        <button class="find-btn" onclick="replaceAll()">Tout</button>
+      </div>
+      <div style="display:flex; gap:8px; align-items:center; margin-top:4px; flex-wrap:wrap">
+        <label class="form-check" style="margin:0; font-size:11px"><input type="checkbox" id="find-case"> Casse</label>
+        <label class="form-check" style="margin:0; font-size:11px"><input type="checkbox" id="find-whole"> Mot entier</label>
+        <label class="form-check" style="margin:0; font-size:11px"><input type="checkbox" id="find-regex"> Regex</label>
+        <button class="find-btn" onclick="toggleReplaceRow()" id="btn-show-replace">Remplacer ▾</button>
+      </div>
+    </div>
+
+    <div id="ruler">
+      <div class="ruler-inner" id="ruler-inner"></div>
+    </div>
+
+    <div id="scroll-container">
+      <div class="page" id="page-1">
+        <div class="page-header-zone" id="page-header" onclick="focusHeader()">
+          <span contenteditable="true" class="header-footer-content" id="header-content" placeholder="En-tête"></span>
+        </div>
+        <div class="page-content" id="doc" contenteditable="true" spellcheck="true"
+          onkeydown="handleKeyDown(event)"
+          onkeyup="updateFormatState()"
+          onmouseup="handleMouseUp(event)"
+          oncontextmenu="showCtxMenu(event)"
+          oninput="handleInput()"
+          onfocus="activeEditorFocus()"
+        >
+<h1>Document sans titre</h1>
+<p>Commencez à taper votre document ici. Utilisez le ruban pour mettre en forme votre texte.</p>
+        </div>
+        <div class="page-footer-zone" id="page-footer" onclick="focusFooter()">
+          <span contenteditable="true" class="header-footer-content" id="footer-content" placeholder="Pied de page"></span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- COMMENT PANEL -->
+  <div id="comment-panel">
+    <div class="comment-header">
+      <span>Commentaires</span>
+      <button onclick="toggleCommentPanel()" style="background:none;border:none;cursor:pointer;float:right;font-size:14px;color:var(--text-muted)">×</button>
+    </div>
+    <div class="comment-list" id="comment-list">
+      <div style="font-size:11px; color:var(--text-muted); padding:8px; text-align:center;">Aucun commentaire</div>
+    </div>
+  </div>
+</div>
+
+<!-- STATUS BAR -->
+<div id="statusbar">
+  <div class="sb-item" onclick="wordCount()"><span id="sb-words">0 mots</span></div>
+  <span class="sb-sep">|</span>
+  <div class="sb-item"><span id="sb-chars">0 caractères</span></div>
+  <span class="sb-sep">|</span>
+  <div class="sb-item"><span id="sb-pages">1 page</span></div>
+  <span class="sb-sep">|</span>
+  <div class="sb-item" id="sb-lang" onclick="changeLang()"><i class="fa fa-language"></i> <span>Français</span></div>
+  <div class="sb-right">
+    <div class="sb-item" id="sb-track-indicator" style="display:none; color:#ffcc00"><i class="fa fa-circle"></i> Suivi actif</div>
+    <div class="sb-item" onclick="setDocView('print')"><i class="fa fa-file-alt"></i></div>
+    <div class="sb-item" onclick="setDocView('web')"><i class="fa fa-globe"></i></div>
+    <div class="sb-item" onclick="setDocView('read')"><i class="fa fa-book-open"></i></div>
+    <span class="sb-sep">|</span>
+    <input type="range" id="zoom-slider" min="50" max="200" value="100" step="10" oninput="setZoom(this.value)">
+    <span id="zoom-display-bar">100%</span>
+  </div>
+</div>
+
+<!-- CONTEXT MENU -->
+<div id="ctx-menu">
+  <div class="ctx-item" onclick="ctxAction('cut')"><i class="fa fa-cut"></i> Couper <span class="shortcut">Ctrl+X</span></div>
+  <div class="ctx-item" onclick="ctxAction('copy')"><i class="fa fa-copy"></i> Copier <span class="shortcut">Ctrl+C</span></div>
+  <div class="ctx-item" onclick="ctxAction('paste')"><i class="fa fa-paste"></i> Coller <span class="shortcut">Ctrl+V</span></div>
+  <div class="ctx-item" onclick="ctxAction('pasteText')"><i class="fa fa-paste"></i> Coller sans mise en forme</div>
+  <div class="ctx-sep"></div>
+  <div class="ctx-item" onclick="ctxAction('bold')"><i class="fa fa-bold"></i> Gras <span class="shortcut">Ctrl+B</span></div>
+  <div class="ctx-item" onclick="ctxAction('italic')"><i class="fa fa-italic"></i> Italique <span class="shortcut">Ctrl+I</span></div>
+  <div class="ctx-item" onclick="ctxAction('underline')"><i class="fa fa-underline"></i> Souligner <span class="shortcut">Ctrl+U</span></div>
+  <div class="ctx-sep"></div>
+  <div class="ctx-item" id="ctx-link" onclick="ctxAction('link')"><i class="fa fa-link"></i> Insérer un lien…</div>
+  <div class="ctx-item" id="ctx-comment" onclick="ctxAction('comment')"><i class="fa fa-comment"></i> Ajouter un commentaire</div>
+  <div class="ctx-item" onclick="ctxAction('paragraph')"><i class="fa fa-paragraph"></i> Paragraphe…</div>
+  <div class="ctx-sep"></div>
+  <div class="ctx-item" onclick="ctxAction('selectAll')"><i class="fa fa-mouse-pointer"></i> Tout sélectionner <span class="shortcut">Ctrl+A</span></div>
+</div>
+
+<!-- MINI TOOLBAR -->
+<div id="mini-toolbar">
+  <button class="mt-btn" onclick="fmt('bold')" title="Gras"><i class="fa fa-bold"></i></button>
+  <button class="mt-btn" onclick="fmt('italic')" title="Italique"><i class="fa fa-italic"></i></button>
+  <button class="mt-btn" onclick="fmt('underline')" title="Souligner"><i class="fa fa-underline"></i></button>
+  <div class="mt-sep"></div>
+  <button class="mt-btn" onclick="fmt('justifyLeft')" title="Gauche"><i class="fa fa-align-left"></i></button>
+  <button class="mt-btn" onclick="fmt('justifyCenter')" title="Centre"><i class="fa fa-align-center"></i></button>
+  <button class="mt-btn" onclick="fmt('justifyRight')" title="Droite"><i class="fa fa-align-right"></i></button>
+  <div class="mt-sep"></div>
+  <button class="mt-btn" onclick="insertLink()" title="Lien"><i class="fa fa-link"></i></button>
+  <button class="mt-btn" onclick="addComment()" title="Commenter"><i class="fa fa-comment"></i></button>
+</div>
+
+<!-- ─── MODALS ─── -->
+<!-- Export Modal -->
+<div class="modal-overlay" id="modal-export">
+  <div class="modal-box" style="max-width:500px">
+    <div class="modal-header">
+      <span class="modal-title" id="export-modal-title">Exporter le document</span>
+      <button class="modal-close" onclick="closeModal('modal-export')">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Format</label>
+        <select class="form-control" id="exp-format">
+          <option value="fdoc">Document AetherWord (.fdoc)</option>
+          <option value="html">HTML (.html)</option>
+          <option value="txt">Texte brut (.txt)</option>
+          <option value="rtf">Rich Text Format (.rtf)</option>
+          <option value="markdown">Markdown (.md)</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Nom du fichier</label>
+        <input class="form-control" type="text" id="exp-filename" value="document">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Répertoire</label>
+        <div style="display:flex; gap:8px; align-items:center;">
+          <input class="form-control" type="text" id="exp-directory" value="/Documents" placeholder="/Documents">
+          <button class="btn" type="button" onclick="pickExportDirectory()" title="Choisir dans l'explorateur">📁</button>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Options</label>
+        <label class="form-check"><input type="checkbox" id="exp-format-keep" checked> Conserver la mise en forme</label>
+        <label class="form-check"><input type="checkbox" id="exp-images" checked> Inclure les images</label>
+        <label class="form-check"><input type="checkbox" id="exp-comments"> Inclure les commentaires</label>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('modal-export')">Annuler</button>
+      <button class="btn btn-primary" id="export-modal-submit" onclick="doExport()">Exporter</button>
+    </div>
+  </div>
+</div>
+
+<!-- Link Modal -->
+<div class="modal-overlay" id="modal-link">
+  <div class="modal-box" style="max-width:420px">
+    <div class="modal-header">
+      <span class="modal-title">Insérer un lien</span>
+      <button class="modal-close" onclick="closeModal('modal-link')">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Texte du lien</label>
+        <input class="form-control" type="text" id="link-text" placeholder="Texte affiché">
+      </div>
+      <div class="form-group">
+        <label class="form-label">URL</label>
+        <input class="form-control" type="url" id="link-url" placeholder="https://…">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Ouvrir dans</label>
+        <select class="form-control" id="link-target">
+          <option value="_blank">Nouvel onglet</option>
+          <option value="_self">Même onglet</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('modal-link')">Annuler</button>
+      <button class="btn btn-primary" onclick="doInsertLink()">Insérer</button>
+    </div>
+  </div>
+</div>
+
+<!-- Table Modal -->
+<div class="modal-overlay" id="modal-table">
+  <div class="modal-box" style="max-width:360px">
+    <div class="modal-header">
+      <span class="modal-title">Insérer un tableau</span>
+      <button class="modal-close" onclick="closeModal('modal-table')">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Lignes</label>
+          <input class="form-control" type="number" id="table-rows" value="3" min="1" max="50">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Colonnes</label>
+          <input class="form-control" type="number" id="table-cols" value="3" min="1" max="20">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-check"><input type="checkbox" id="table-header" checked> Première ligne en en-tête</label>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Style</label>
+        <select class="form-control" id="table-style-select">
+          <option value="grid">Grille</option>
+          <option value="striped">Rayé</option>
+          <option value="plain">Sans bordures</option>
+          <option value="colorful">Coloré</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('modal-table')">Annuler</button>
+      <button class="btn btn-primary" onclick="doInsertTable()">Insérer</button>
+    </div>
+  </div>
+</div>
+
+<!-- Comment Modal -->
+<div class="modal-overlay" id="modal-comment">
+  <div class="modal-box" style="max-width:380px">
+    <div class="modal-header">
+      <span class="modal-title">Ajouter un commentaire</span>
+      <button class="modal-close" onclick="closeModal('modal-comment')">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Auteur</label>
+        <input class="form-control" type="text" id="comment-author" value="Utilisateur" placeholder="Votre nom">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Commentaire</label>
+        <textarea class="form-control" id="comment-text" rows="4" placeholder="Entrez votre commentaire…" style="resize:vertical"></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('modal-comment')">Annuler</button>
+      <button class="btn btn-primary" onclick="doAddComment()">Ajouter</button>
+    </div>
+  </div>
+</div>
+
+<!-- Word Count Modal -->
+<div class="modal-overlay" id="modal-wc">
+  <div class="modal-box" style="max-width:360px">
+    <div class="modal-header">
+      <span class="modal-title">Statistiques du document</span>
+      <button class="modal-close" onclick="closeModal('modal-wc')">×</button>
+    </div>
+    <div class="modal-body" id="wc-body">
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-primary" onclick="closeModal('modal-wc')">Fermer</button>
+    </div>
+  </div>
+</div>
+
+<!-- Paragraph Modal -->
+<div class="modal-overlay" id="modal-paragraph">
+  <div class="modal-box" style="max-width:420px">
+    <div class="modal-header">
+      <span class="modal-title">Paragraphe</span>
+      <button class="modal-close" onclick="closeModal('modal-paragraph')">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Alignement</label>
+        <select class="form-control" id="para-align">
+          <option value="left">Gauche</option>
+          <option value="center">Centre</option>
+          <option value="right">Droite</option>
+          <option value="justify">Justifié</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Retrait gauche (px)</label>
+          <input class="form-control" type="number" id="para-indent-left" value="0" min="0" step="4">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Retrait droite (px)</label>
+          <input class="form-control" type="number" id="para-indent-right" value="0" min="0" step="4">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Espace avant (px)</label>
+          <input class="form-control" type="number" id="para-space-before" value="0" min="0" step="2">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Espace après (px)</label>
+          <input class="form-control" type="number" id="para-space-after" value="8" min="0" step="2">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Interligne</label>
+        <select class="form-control" id="para-lh">
+          <option value="1">Simple</option>
+          <option value="1.15">1,15</option>
+          <option value="1.5" selected>1,5</option>
+          <option value="2">Double</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('modal-paragraph')">Annuler</button>
+      <button class="btn btn-primary" onclick="applyParagraphSettings()">Appliquer</button>
+    </div>
+  </div>
+</div>
+
+<!-- Special Chars Modal -->
+<div class="modal-overlay" id="modal-specials">
+  <div class="modal-box" style="max-width:500px">
+    <div class="modal-header">
+      <span class="modal-title">Insérer un symbole</span>
+      <button class="modal-close" onclick="closeModal('modal-specials')">×</button>
+    </div>
+    <div class="modal-body">
+      <div id="special-chars-grid" style="display:grid; grid-template-columns:repeat(12, 36px); gap:4px;"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-primary" onclick="closeModal('modal-specials')">Fermer</button>
+    </div>
+  </div>
+</div>
+
+<!-- Page Setup Modal -->
+<div class="modal-overlay" id="modal-pagesetup">
+  <div class="modal-box" style="max-width:420px">
+    <div class="modal-header">
+      <span class="modal-title">Mise en page</span>
+      <button class="modal-close" onclick="closeModal('modal-pagesetup')">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Marge haut (px)</label>
+          <input class="form-control" type="number" id="ps-mt" value="96">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Marge bas (px)</label>
+          <input class="form-control" type="number" id="ps-mb" value="96">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Marge gauche (px)</label>
+          <input class="form-control" type="number" id="ps-ml" value="96">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Marge droite (px)</label>
+          <input class="form-control" type="number" id="ps-mr" value="96">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Numérotation des pages</label>
+        <select class="form-control" id="ps-pagenum">
+          <option value="none">Aucune</option>
+          <option value="footer-center">Bas de page – Centre</option>
+          <option value="footer-right">Bas de page – Droite</option>
+          <option value="header-center">En-tête – Centre</option>
+          <option value="header-right">En-tête – Droite</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('modal-pagesetup')">Annuler</button>
+      <button class="btn btn-primary" onclick="applyPageSetup()">Appliquer</button>
+    </div>
+  </div>
+</div>
+
+<script src="word.js"></script>
+</body>
+</html>

@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Windows Subsystem</title>
+    <style>
+        body { margin: 0; padding: 0; background: #000; color: white; font-family: sans-serif; overflow: hidden; display: flex; flex-direction: column; height: 100vh; }
+        #toolbar { height: 30px; background: #333; display: flex; align-items: center; padding: 0 10px; border-bottom: 1px solid #555; font-size: 12px; }
+        #wine-container { flex: 1; position: relative; display: flex; align-items: center; justify-content: center; background: #111; }
+        canvas { max-width: 100%; max-height: 100%; box-shadow: 0 0 20px rgba(0,0,0,0.5); }
+        .error-msg { padding: 20px; text-align: center; color: #aaa; }
+        .loading-spinner { width: 30px; height: 30px; border: 3px solid rgba(255,255,255,0.1); border-top-color: #0A84FF; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 15px; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+    <div id="toolbar">
+        <span style="font-weight: bold; margin-right: 10px;">Windows Subsystem</span>
+        <span style="opacity: 0.6;">BoxedWine Environment</span>
+    </div>
+    <div id="wine-container">
+        <div class="error-msg" id="status">
+            <div class="loading-spinner"></div>
+            <div>Initialisation du sous-système...</div>
+        </div>
+    </div>
+
+    <!-- 
+        INSTRUCTIONS D'INSTALLATION BOXEDWINE :
+        1. Téléchargez BoxedWine (version emscripten) : https://github.com/danoon2/Boxedwine
+        2. Placez les fichiers suivants dans le dossier /apps/boxedwine/ :
+           - boxedwine.js
+           - boxedwine.wasm
+           - boxedwine.data
+           - browserfs.js (si nécessaire)
+           - jszip.js (si nécessaire)
+        3. Décommentez les scripts ci-dessous.
+    -->
+    <!--
+    <script src="boxedwine/browserfs.js"></script>
+    <script src="boxedwine/jszip.js"></script>
+    <script src="boxedwine/boxedwine.js"></script>
+    -->
+
+    <script>
+        const statusEl = document.getElementById('status');
+
+        window.addEventListener('message', (event) => {
+            const data = event.data;
+            if (data.type === 'open_file') {
+                const fileName = data.name;
+                const content = data.content; // Contenu du fichier (base64 ou string)
+                startWindowsApp(fileName, content);
+            }
+        });
+
+        function startWindowsApp(fileName, content) {
+            if (typeof BoxedWine !== 'undefined') {
+                statusEl.innerHTML = `<div class="loading-spinner"></div><div>Démarrage de ${fileName}...</div>`;
+                // Configuration BoxedWine (Exemple)
+                // BoxedWine.start({ executable: fileName, ... });
+            } else {
+                // Message d'aide si les fichiers ne sont pas installés
+                setTimeout(() => {
+                    statusEl.innerHTML = `
+                        <div style="background: #2a2a2a; padding: 25px; border-radius: 12px; max-width: 500px; border: 1px solid #444;">
+                            <h3 style="color: #ff5e57; margin-top: 0;">Noyau manquant</h3>
+                            <p>Le sous-système Windows nécessite les fichiers binaires BoxedWine.</p>
+                            <div style="font-size: 0.9em; color: #ccc; text-align: left; background: rgba(0,0,0,0.3); padding: 15px; border-radius: 6px; margin-top: 15px;">
+                                1. Téléchargez <b>BoxedWine (WebAssembly)</b><br>
+                                2. Placez les fichiers dans <code>/apps/boxedwine/</code><br>
+                                3. Modifiez <code>apps/exe_runner.html</code> pour activer les scripts.
+                            </div>
+                            <p style="margin-bottom: 0; margin-top: 15px; font-size: 0.8em; opacity: 0.7;">Cible : ${fileName}</p>
+                        </div>
+                    `;
+                }, 800);
+            }
+        }
+    </script>
+</body>
+</html>

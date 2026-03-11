@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Launchpad Icons</title>
+    <style>
+        body { background: #222; color: white; font-family: Arial; padding: 20px; }
+        .launchpad-icon { 
+            width: 48px; height: 48px; 
+            display: inline-flex; align-items: center; justify-content: center;
+            background: rgba(255,255,255,0.1); border-radius: 12px; margin: 5px;
+            font-size: 24px;
+        }
+        .test-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 15px; }
+        .test-item { text-align: center; padding: 10px; }
+    </style>
+</head>
+<body>
+    <h2>Test des icônes du registry</h2>
+    <div class="test-grid" id="test-grid"></div>
+
+    <script>
+        // Simulation des données du registry
+        const appsRegistry = [
+            { id: "wiki", title: "AetherWiki", icon: "📚" },
+            { id: "explorer", title: "Fichiers", icon: "📂" },
+            { id: "browser", title: "Zaluea Browser", icon: "🌐" },
+            { id: "word", title: "FunnyText", icon: "📝" },
+            { id: "excel", title: "FunnySheets", icon: "📊" },
+            { id: "powerpoint", title: "FunnySlides", icon: "📽️" },
+            { id: "talky", title: "Talky", icon: "💬" },
+            { id: "snake", title: "Snake OS", icon: "🕹️" },
+            { id: "tetris", title: "Tetris Neon", icon: "🧱" },
+            { id: "flappy", title: "Flappy Futur", icon: "🐦" }
+        ];
+
+        // Test de renderAppIconMarkup simplifié
+        function renderAppIconMarkup(iconValue, fallback = '📦') {
+            const icon = typeof iconValue === 'string' ? iconValue.trim() : '';
+            if (!icon) return fallback;
+            
+            // Si c'est une URL
+            if (/^(https?:\/\/|data:image\/)/i.test(icon)) {
+                return `<img src="${icon}" alt="" style="width:100%;height:100%;object-fit:cover;">`;
+            }
+            
+            // Sinon c'est un emoji
+            return icon || fallback;
+        }
+
+        // Affichage du test
+        const grid = document.getElementById('test-grid');
+        grid.innerHTML = appsRegistry.map(app => `
+            <div class="test-item">
+                <div class="launchpad-icon">${renderAppIconMarkup(app.icon)}</div>
+                <div>${app.title}</div>
+                <small>${app.icon}</small>
+            </div>
+        `).join('');
+    </script>
+</body>
+</html>

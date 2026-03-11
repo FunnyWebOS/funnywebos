@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <title>FocusBox - FunnyWEB</title>
+
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: 'SF Pro Display', -apple-system, sans-serif;
+            background: linear-gradient(135deg, #dfe9f3, #ffffff);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .glass {
+            backdrop-filter: blur(20px);
+            background: rgba(255, 255, 255, 0.6);
+            border-radius: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+            padding: 30px;
+            width: 100%;
+            max-width: 420px;
+            text-align: center;
+            transition: 0.3s ease;
+        }
+
+        .glass:hover {
+            transform: translateY(-5px);
+        }
+
+        h1 {
+            margin-top: 0;
+            font-size: 24px;
+        }
+
+        .timer {
+            font-size: 48px;
+            margin: 20px 0;
+            font-weight: bold;
+        }
+
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            background: #0A84FF;
+            color: white;
+            transition: 0.2s ease;
+        }
+
+        button:hover {
+            transform: scale(1.05);
+        }
+
+        button.secondary {
+            background: #ff3b30;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="glass">
+        <h1>FocusBox</h1>
+        <p>Timer Pomodoro stylé pour gens disciplinés (ou qui essaient).</p>
+
+        <div class="timer" id="timer">25:00</div>
+
+        <button onclick="startTimer()">Start</button>
+        <button class="secondary" onclick="resetTimer()">Reset</button>
+    </div>
+
+    <script>
+        let duration = 25 * 60;
+        let remaining = duration;
+        let interval = null;
+
+        function updateDisplay() {
+            const minutes = Math.floor(remaining / 60);
+            const seconds = remaining % 60;
+            document.getElementById("timer").textContent =
+                String(minutes).padStart(2, '0') + ":" +
+                String(seconds).padStart(2, '0');
+        }
+
+        function startTimer() {
+            if (interval) return;
+
+            interval = setInterval(() => {
+                remaining--;
+                updateDisplay();
+
+                if (remaining <= 0) {
+                    clearInterval(interval);
+                    interval = null;
+                    alert("Session terminée. Va toucher de l’herbe.");
+                }
+            }, 1000);
+        }
+
+        function resetTimer() {
+            clearInterval(interval);
+            interval = null;
+            remaining = duration;
+            updateDisplay();
+        }
+
+        updateDisplay();
+    </script>
+
+</body>
+
+</html>

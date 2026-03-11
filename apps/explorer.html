@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Explorateur de Fichiers</title>
+    <style>
+        :root {
+            --bg: rgba(20, 20, 20, 0.95);
+            --sidebar: rgba(30, 30, 30, 0.5);
+            --hover: rgba(255, 255, 255, 0.1);
+            --accent: #0A84FF;
+            --text: #fff;
+            --glass: rgba(30, 30, 30, 0.6);
+        }
+        body {
+            margin: 0; padding: 0;
+            font-family: 'Segoe UI', sans-serif;
+            color: var(--text);
+            background: transparent; /* Glass effect handled by window */
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            user-select: none;
+        }
+        .toolbar {
+            height: 40px;
+            background: var(--glass);
+            display: flex;
+            align-items: center;
+            padding: 0 15px;
+            gap: 10px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+        .btn {
+            background: transparent; border: none; color: white;
+            padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 13px;
+            display: flex; align-items: center; gap: 6px;
+        }
+        .btn:hover { background: var(--hover); }
+        .btn-primary { background: var(--accent); }
+        .btn-primary:hover { background: #0077ED; }
+
+        .main-layout { display: flex; flex: 1; overflow: hidden; }
+        
+        .sidebar {
+            width: 200px;
+            background: rgba(0,0,0,0.2);
+            padding: 10px 0;
+            display: flex; flex-direction: column; gap: 2px;
+            border-right: 1px solid rgba(255,255,255,0.05);
+        }
+        .nav-item {
+            padding: 8px 15px;
+            cursor: pointer;
+            font-size: 13px;
+            display: flex; align-items: center; gap: 10px;
+            color: rgba(255,255,255,0.8);
+        }
+        .nav-item:hover { background: var(--hover); color: white; }
+        .nav-item.active { background: rgba(10, 132, 255, 0.2); color: #4facfe; border-left: 3px solid #4facfe; }
+        .nav-sep { height: 1px; background: rgba(255,255,255,0.1); margin: 8px 15px; }
+        .nav-header { font-size: 11px; font-weight: bold; color: rgba(255,255,255,0.4); padding: 5px 15px; text-transform: uppercase; }
+
+        .content-area {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+        .path-bar { margin-bottom: 20px; font-size: 18px; font-weight: 600; display:flex; justify-content:space-between; align-items:center; }
+        .view-toggle { font-size:12px; background:rgba(255,255,255,0.1); padding:4px 8px; border-radius:4px; cursor:pointer; }
+        .picker-bar {
+            display: none;
+            margin-top: auto;
+            padding: 14px 16px;
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 14px;
+            background: rgba(18, 18, 24, 0.92);
+            box-shadow: 0 16px 32px rgba(0,0,0,0.28);
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            position: sticky;
+            bottom: 0;
+            z-index: 5;
+        }
+        .picker-bar.active { display: flex; }
+        .picker-actions { display: flex; gap: 8px; }
+        .picker-copy {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .picker-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #fff;
+        }
+        .picker-label {
+            font-size: 12px;
+            color: rgba(255,255,255,0.66);
+        }
+        
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+            gap: 15px;
+        }
+        .grid.gallery-mode {
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        }
+
+        .file-item {
+            display: flex; flex-direction: column; align-items: center;
+            padding: 10px; border-radius: 6px; cursor: pointer;
+            transition: 0.2s;
+            position: relative;
+        }
+        .file-item:hover { background: var(--hover); }
+        .file-icon { font-size: 32px; margin-bottom: 5px; }
+        .file-name { font-size: 12px; text-align: center; word-break: break-all; max-width: 100%; }
+
+        /* Gallery Styles */
+        .gallery-thumb {
+            width: 100%; height: 100px; object-fit: cover; border-radius: 6px; margin-bottom: 8px;
+            background: #000;
+        }
+        .gallery-mode .file-item {
+            background: rgba(255,255,255,0.03);
+            padding: 8px;
+        }
+        .gallery-mode .file-icon { font-size: 48px; }
+
+        /* Cloud Badge */
+        .cloud-badge { position:absolute; top:5px; right:5px; font-size:10px; background:#0A84FF; padding:2px 4px; border-radius:4px; }
+    </style>
+</head>
+<body>
+    <div class="toolbar">
+        <button class="btn btn-primary" onclick="document.getElementById('upload-input').click()">
+            <span>⬆️</span> Upload
+        </button>
+        <button class="btn" onclick="createFile()">
+            <span>📄</span> Nouveau fichier
+        </button>
+        <button class="btn" onclick="createFolder()">
+            <span>📁</span> Nouveau dossier
+        </button>
+        <div style="flex:1"></div>
+        <button class="btn" onclick="toggleView()" id="view-btn">🖼️ Galerie</button>
+        <input type="file" id="upload-input" style="display:none" multiple onchange="handleUpload(this)">
+    </div>
+
+    <div class="main-layout">
+        <div class="sidebar">
+            <div class="nav-header">Accès Rapide</div>
+            <div class="nav-item active" onclick="navigate('/Bureau')"><span>🖥️</span> Bureau</div>
+            <div class="nav-item" onclick="navigate('/Documents')"><span>📄</span> Documents</div>
+            <div class="nav-item" onclick="navigate('/Downloads')"><span>⬇️</span> Téléchargements</div>
+            <div class="nav-item" onclick="navigate('/Images')"><span>🖼️</span> Images</div>
+            
+            <div class="nav-sep"></div>
+            <div class="nav-header">Cloud</div>
+            <div class="nav-item" onclick="openCloud('onedrive')"><span>☁️</span> OneDrive</div>
+            <div class="nav-item" onclick="openCloud('gdrive')"><span>🔺</span> Google Drive</div>
+            
+            <div class="nav-sep"></div>
+            <div class="nav-header">Système</div>
+            <div class="nav-item" onclick="navigate('/')"><span>💿</span> Ce PC</div>
+        </div>
+
+        <div class="content-area">
+            <div class="path-bar"><span id="current-path">Bureau</span></div>
+            <div class="grid" id="file-grid">
+                <!-- Files go here -->
+            </div>
+            <div class="picker-bar" id="picker-bar">
+                <div class="picker-copy">
+                    <span class="picker-title">Sélectionner ce dossier</span>
+                    <span class="picker-label" id="picker-label">Choisissez un dossier puis cliquez sur Ouvrir</span>
+                </div>
+                <div class="picker-actions">
+                    <button class="btn" onclick="cancelPicker()">Annuler</button>
+                    <button class="btn btn-primary" onclick="confirmPicker()">Ouvrir</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const wm = window.parent.windowManager;
+        let currentPath = '/Bureau';
+        let viewMode = 'grid'; // 'grid' or 'gallery'
+        let pickerState = null;
+        let cloudState = { service: null, folderId: 'root', breadcrumb: [] };
+
+        function toggleView() {
+            viewMode = viewMode === 'grid' ? 'gallery' : 'grid';
+            document.getElementById('view-btn').textContent = viewMode === 'grid' ? '🖼️ Galerie' : '📄 Liste';
+            render();
+        }
+
+        function navigate(path) {
+            cloudState = { service: null, folderId: 'root', breadcrumb: [] };
+            currentPath = path;
+            document.getElementById('current-path').textContent = path === '/' ? 'Ce PC' : path.split('/').pop();
+            
+            // Update sidebar active state
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            // Simple heuristic for active state
+            const items = document.querySelectorAll('.nav-item');
+            for(let item of items) {
+                if(item.textContent.includes(path.split('/').pop())) item.classList.add('active');
+            }
+
+            render();
+        }
+
+        function updatePickerUI() {
+            const bar = document.getElementById('picker-bar');
+            const label = document.getElementById('picker-label');
+            if (!pickerState) {
+                bar.classList.remove('active');
+                return;
+            }
+            bar.classList.add('active');
+            label.textContent = pickerState.mode === 'file'
+                ? 'Choisissez un fichier puis cliquez sur Ouvrir'
+                : 'Choisissez un dossier puis cliquez sur Ouvrir';
+        }
+
+        function render() {
+            const grid = document.getElementById('file-grid');
+            grid.innerHTML = '';
+            grid.className = 'grid ' + (viewMode === 'gallery' ? 'gallery-mode' : '');
+            
+            const vfs = wm.vfs;
+            // Filter files in current path
+            // VFS structure is flat keys: "/Bureau/file.txt"
+            // We need to find direct children
+            
+            const files = Object.keys(vfs).filter(key => {
+                if (key === currentPath) return false; // Don't show self
+                const parent = key.substring(0, key.lastIndexOf('/')) || '/';
+                // Handle root special case
+                if (currentPath === '/' && parent === '') return true; 
+                return parent === currentPath;
+            });
+
+            if (files.length === 0) {
+                grid.innerHTML = '<div style="opacity:0.5; grid-column:1/-1; text-align:center; margin-top:50px;">Dossier vide</div>';
+                return;
+            }
+
+            files.forEach(path => {
+                const item = vfs[path];
+                const name = path.split('/').pop();
+                const isFolder = item.type === 'folder';
+                const icon = isFolder ? '📁' : wm.getFileIcon(name);
+                const isImage = /\.(png|jpg|jpeg|gif|webp)$/i.test(name);
+                
+                const el = document.createElement('div');
+                el.className = 'file-item';
+                
+                if (viewMode === 'gallery' && isImage && item.content && item.content.startsWith('data:')) {
+                    el.innerHTML = `<img src="${item.content}" class="gallery-thumb"><div class="file-name">${name}</div>`;
+                } else {
+                    el.innerHTML = `<div class="file-icon">${icon}</div><div class="file-name">${name}</div>`;
+                }
+
+                el.onclick = () => {
+                    if (pickerState) {
+                        if (isFolder) {
+                            navigate(path);
+                        } else if (pickerState.mode === 'file') {
+                            pickerState.selectedPath = path;
+                            render();
+                        }
+                        return;
+                    }
+                    if (isFolder) navigate(path);
+                    else wm.openFile(path);
+                };
+                if (pickerState) {
+                    const selected = pickerState.mode === 'file'
+                        ? pickerState.selectedPath === path
+                        : currentPath === path && isFolder;
+                    if (selected) el.style.outline = '2px solid #4facfe';
+                }
+                grid.appendChild(el);
+            });
+        }
+
+        async function renderGoogleDriveFolder(folderId = 'root') {
+            const grid = document.getElementById('file-grid');
+            const accounts = loadLinkedAccounts();
+            const drive = accounts.googledrive || {};
+            if (!drive.connected || !drive.accessToken) {
+                grid.innerHTML = "<div style=\"opacity:0.7; grid-column:1/-1; text-align:center; margin-top:50px;\">Google Drive n'est pas lié dans Paramètres.</div>";
+                return;
+            }
+            if (drive.expiresAt && Date.now() >= drive.expiresAt) {
+                grid.innerHTML = '<div style="opacity:0.7; grid-column:1/-1; text-align:center; margin-top:50px;">La session Google Drive a expiré. Renouvelez-la dans Paramètres.</div>';
+                return;
+            }
+
+            document.getElementById('current-path').textContent = cloudState.breadcrumb.length
+                ? `Google Drive / ${cloudState.breadcrumb.map(item => item.name).join(' / ')}`
+                : 'Google Drive';
+
+            grid.innerHTML = '<div style="opacity:0.7; grid-column:1/-1; text-align:center; margin-top:50px;">Chargement Google Drive…</div>';
+            try {
+                const q = encodeURIComponent(`'${folderId}' in parents and trashed = false`);
+                const fields = encodeURIComponent('files(id,name,mimeType,modifiedTime,size,iconLink,thumbnailLink,webViewLink,webContentLink),nextPageToken');
+                const response = await fetch(`https://www.googleapis.com/drive/v3/files?q=${q}&pageSize=100&fields=${fields}&orderBy=folder,name_natural`, {
+                    headers: { Authorization: `Bearer ${drive.accessToken}` }
+                });
+                if (!response.ok) throw new Error(await parseGoogleError(response));
+                const data = await response.json();
+                const files = Array.isArray(data.files) ? data.files : [];
+                grid.innerHTML = '';
+
+                if (cloudState.breadcrumb.length > 0) {
+                    const back = document.createElement('div');
+                    back.className = 'file-item';
+                    back.innerHTML = `<div class="file-icon">↩️</div><div class="file-name">Retour</div>`;
+                    back.onclick = () => {
+                        cloudState.breadcrumb.pop();
+                        const prev = cloudState.breadcrumb.length ? cloudState.breadcrumb[cloudState.breadcrumb.length - 1].id : 'root';
+                        cloudState.folderId = prev;
+                        renderGoogleDriveFolder(prev);
+                    };
+                    grid.appendChild(back);
+                }
+
+                if (!files.length) {
+                    grid.innerHTML += '<div style="opacity:0.5; grid-column:1/-1; text-align:center; margin-top:50px;">Dossier Drive vide</div>';
+                    return;
+                }
+
+                files.forEach(file => {
+                    const isFolder = file.mimeType === 'application/vnd.google-apps.folder';
+                    const el = document.createElement('div');
+                    el.className = 'file-item';
+                    const thumb = file.thumbnailLink || file.iconLink;
+                    if (thumb) {
+                        el.innerHTML = `<img src="${thumb}" class="gallery-thumb"><div class="file-name">${file.name}</div>`;
+                    } else {
+                        el.innerHTML = `<div class="file-icon">${isFolder ? '📁' : '📄'}</div><div class="file-name">${file.name}</div>`;
+                    }
+                    el.onclick = () => {
+                        if (isFolder) {
+                            cloudState.folderId = file.id;
+                            cloudState.breadcrumb.push({ id: file.id, name: file.name });
+                            renderGoogleDriveFolder(file.id);
+                        } else {
+                            const url = file.webViewLink || file.webContentLink;
+                            if (url) {
+                                wm.createWindow('browser', file.name, true);
+                                setTimeout(() => wm.windows.get('browser').iframe.contentWindow.postMessage({ type: 'open_url', url }, '*'), 700);
+                            }
+                        }
+                    };
+                    grid.appendChild(el);
+                });
+            } catch (error) {
+                grid.innerHTML = `<div style="opacity:0.8; grid-column:1/-1; text-align:center; margin-top:50px;">Erreur Google Drive: ${error.message}</div>`;
+            }
+        }
+
+        function confirmPicker() {
+            if (!pickerState) return;
+            const chosenPath = pickerState.mode === 'file'
+                ? pickerState.selectedPath
+                : currentPath;
+            if (!chosenPath) return;
+            window.parent.postMessage({
+                type: 'OS_RESOLVE_PATH_PICKER',
+                requestId: pickerState.requestId,
+                path: chosenPath
+            }, '*');
+            pickerState = null;
+            updatePickerUI();
+            render();
+        }
+
+        function cancelPicker() {
+            pickerState = null;
+            updatePickerUI();
+            render();
+        }
+
+        async function handleUpload(input) {
+            if (!input.files || !input.files.length) return;
+            try {
+                if (cloudState.service === 'googledrive') {
+                    for (const file of Array.from(input.files)) {
+                        await uploadGoogleDriveFile(file, cloudState.folderId || 'root');
+                    }
+                    await renderGoogleDriveFolder(cloudState.folderId || 'root');
+                    return;
+                }
+
+                Array.from(input.files).forEach(file => {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        const path = (currentPath === '/' ? '' : currentPath) + '/' + file.name;
+                        wm.vfs_write(path, e.target.result, 'binary');
+                        render();
+                    };
+                    reader.readAsDataURL(file);
+                });
+            } catch (error) {
+                alert(`Upload impossible : ${error.message}`);
+            } finally {
+                input.value = '';
+            }
+        }
+
+        async function createFolder() {
+            const name = prompt("Nom du dossier :");
+            if (!name) return;
+            try {
+                if (cloudState.service === 'googledrive') {
+                    await createGoogleDriveFolder(name, cloudState.folderId || 'root');
+                    await renderGoogleDriveFolder(cloudState.folderId || 'root');
+                    return;
+                }
+
+                const path = (currentPath === '/' ? '' : currentPath) + '/' + name;
+                wm.vfs_write(path, {}, 'folder');
+                render();
+            } catch (error) {
+                alert(`Création du dossier impossible : ${error.message}`);
+            }
+        }
+
+        async function createFile() {
+            const name = prompt("Nom du fichier :", "Nouveau fichier.txt");
+            if (!name) return;
+            try {
+                if (cloudState.service === 'googledrive') {
+                    await createGoogleDriveFile(name, cloudState.folderId || 'root');
+                    await renderGoogleDriveFolder(cloudState.folderId || 'root');
+                    return;
+                }
+
+                const path = (currentPath === '/' ? '' : currentPath) + '/' + name;
+                wm.vfs_write(path, '', 'file');
+                render();
+            } catch (error) {
+                alert(`Création du fichier impossible : ${error.message}`);
+            }
+        }
+
+        function loadLinkedAccounts() {
+            try {
+                const raw = JSON.parse(localStorage.getItem('aether_settings') || '{}');
+                return raw.accounts || {};
+            } catch (e) {
+                return {};
+            }
+        }
+
+        async function parseGoogleError(response) {
+            try {
+                const data = await response.json();
+                if (data && data.error) {
+                    if (typeof data.error === 'string') return data.error;
+                    if (data.error.message) return data.error.message;
+                    if (Array.isArray(data.error.errors) && data.error.errors.length) {
+                        return data.error.errors.map(err => err.message || err.reason).filter(Boolean).join(' | ');
+                    }
+                }
+            } catch (e) {}
+            return `HTTP ${response.status}`;
+        }
+
+        function getGoogleDriveSession() {
+            const accounts = loadLinkedAccounts();
+            const drive = accounts.googledrive || {};
+            if (!drive.connected || !drive.accessToken) {
+                throw new Error("Google Drive n'est pas lié dans Paramètres.");
+            }
+            if (drive.expiresAt && Date.now() >= drive.expiresAt) {
+                throw new Error("La session Google Drive a expiré. Renouvelez-la dans Paramètres.");
+            }
+            return drive;
+        }
+
+        async function createGoogleDriveFolder(name, parentId) {
+            const drive = getGoogleDriveSession();
+            const response = await fetch('https://www.googleapis.com/drive/v3/files', {
+                method: 'POST',
+                headers: {
+                    Authorization: `Bearer ${drive.accessToken}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    name,
+                    mimeType: 'application/vnd.google-apps.folder',
+                    parents: [parentId]
+                })
+            });
+            if (!response.ok) throw new Error(await parseGoogleError(response));
+            return response.json();
+        }
+
+        async function createGoogleDriveFile(name, parentId) {
+            const drive = getGoogleDriveSession();
+            const metadata = { name, parents: [parentId] };
+            const form = new FormData();
+            form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
+            form.append('file', new Blob([''], { type: 'text/plain' }), name);
+            const response = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,name', {
+                method: 'POST',
+                headers: {
+                    Authorization: `Bearer ${drive.accessToken}`
+                },
+                body: form
+            });
+            if (!response.ok) throw new Error(await parseGoogleError(response));
+            return response.json();
+        }
+
+        async function uploadGoogleDriveFile(file, parentId) {
+            const drive = getGoogleDriveSession();
+            const metadata = { name: file.name, parents: [parentId] };
+            const form = new FormData();
+            form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
+            form.append('file', file, file.name);
+            const response = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,name', {
+                method: 'POST',
+                headers: {
+                    Authorization: `Bearer ${drive.accessToken}`
+                },
+                body: form
+            });
+            if (!response.ok) throw new Error(await parseGoogleError(response));
+            return response.json();
+        }
+
+        function openCloud(service) {
+            const accounts = loadLinkedAccounts();
+            const key = service === 'onedrive' ? 'onedrive' : 'googledrive';
+            const linked = accounts[key] || {};
+            if (!linked.connected || !linked.driveUrl) {
+                alert(`Le compte ${service === 'onedrive' ? 'OneDrive' : 'Google Drive'} n'est pas encore lié dans Paramètres > Comptes.`);
+                return;
+            }
+
+            if (service === 'gdrive' || service === 'googledrive') {
+                cloudState = { service: 'googledrive', folderId: 'root', breadcrumb: [] };
+                renderGoogleDriveFolder('root');
+                return;
+            }
+
+            const url = linked.driveUrl;
+            wm.createWindow('browser', service === 'onedrive' ? 'OneDrive' : 'Google Drive', true);
+            setTimeout(() => wm.windows.get('browser').iframe.contentWindow.postMessage({type: 'open_url', url: url}, '*'), 1000);
+        }
+
+        // Initial render
+        render();
+        
+        // Listen for VFS changes from OS
+        window.addEventListener('message', (e) => {
+            if (e.data.type === 'funnyweb_vfs_update') {
+                render();
+            } else if (e.data.type === 'OS_PICK_PATH') {
+                pickerState = {
+                    requestId: e.data.requestId,
+                    mode: e.data.mode || 'folder',
+                    selectedPath: ''
+                };
+                navigate(e.data.startPath || '/Documents');
+                updatePickerUI();
+            }
+        });
+    </script>
+</body>
+</html>

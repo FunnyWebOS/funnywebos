@@ -1,0 +1,1334 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Paramètres - AetherOS</title>
+    <style>
+        :root {
+            --primary: #0078d4;
+            --primary-hover: #106ebe;
+            --secondary: #6c757d;
+            --success: #107c10;
+            --warning: #ff8c00;
+            --danger: #d13438;
+            --background-primary: #ffffff;
+            --background-secondary: #f3f2f1;
+            --background-tertiary: #e1dfdd;
+            --text-primary: #323130;
+            --text-secondary: #605e5c;
+            --text-tertiary: #a19f9d;
+            --border-primary: #d2d0ce;
+            --border-secondary: #e1dfdd;
+            --shadow-4: 0 4px 8px rgba(0, 0, 0, 0.12);
+            --spacing-xs: 4px;
+            --spacing-sm: 8px;
+            --spacing-md: 16px;
+            --spacing-lg: 24px;
+            --spacing-xl: 32px;
+            --radius-md: 8px;
+            --radius-lg: 12px;
+            --transition-fast: 150ms ease;
+            --transition-normal: 250ms ease;
+        }
+
+        [data-theme="dark"] {
+            --background-primary: #0f0f0f;
+            --background-secondary: #1a1a1a;
+            --background-tertiary: #252525;
+            --text-primary: #ffffff;
+            --text-secondary: #d2d0ce;
+            --text-tertiary: #a19f9d;
+            --border-primary: #3b3a39;
+            --border-secondary: #484644;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-size: 14px;
+            line-height: 1.5;
+            color: var(--text-primary);
+            background: var(--background-primary);
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .settings-container {
+            display: flex;
+            height: 100vh;
+        }
+
+        .sidebar {
+            width: 280px;
+            background: var(--background-secondary);
+            border-right: 1px solid var(--border-primary);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar-header {
+            padding: var(--spacing-lg);
+            border-bottom: 1px solid var(--border-primary);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-md);
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .logo i {
+            font-size: 24px;
+            color: var(--primary);
+        }
+
+        .sidebar-nav {
+            flex: 1;
+            padding: var(--spacing-md) 0;
+            overflow-y: auto;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-md);
+            padding: var(--spacing-md) var(--spacing-lg);
+            cursor: pointer;
+            border-radius: var(--radius-md);
+            margin: 0 var(--spacing-sm);
+            transition: all var(--transition-fast);
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .nav-item:hover {
+            background: rgba(0, 120, 212, 0.1);
+            color: var(--primary);
+        }
+
+        .nav-item.active {
+            background: var(--primary);
+            color: #ffffff;
+            border-radius: var(--radius-md);
+            margin: 0 var(--spacing-sm);
+        }
+
+        .nav-item i {
+            font-size: 18px;
+            width: 24px;
+            text-align: center;
+        }
+
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            background: var(--background-primary);
+        }
+
+        .content-header {
+            padding: var(--spacing-xl) var(--spacing-xl) var(--spacing-lg);
+            border-bottom: 1px solid var(--border-primary);
+        }
+
+        .content-header h1 {
+            font-size: 32px;
+            font-weight: 600;
+            margin-bottom: var(--spacing-xs);
+            color: var(--text-primary);
+        }
+
+        .content-header p {
+            font-size: 16px;
+            color: var(--text-secondary);
+        }
+
+        .content-body {
+            flex: 1;
+            padding: var(--spacing-xl);
+            overflow-y: auto;
+        }
+
+        .settings-card {
+            background: var(--background-primary);
+            border: 1px solid var(--border-primary);
+            border-radius: var(--radius-lg);
+            padding: var(--spacing-lg);
+            margin-bottom: var(--spacing-lg);
+            transition: all var(--transition-normal);
+        }
+
+        .settings-card:hover {
+            box-shadow: var(--shadow-4);
+        }
+
+        .settings-card-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+            margin-bottom: var(--spacing-md);
+        }
+
+        .settings-card-title i {
+            color: var(--primary);
+        }
+
+        .form-group {
+            margin-bottom: var(--spacing-lg);
+        }
+
+        .form-label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: var(--spacing-sm);
+            color: var(--text-primary);
+        }
+
+        .form-description {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-bottom: var(--spacing-md);
+        }
+
+        .form-input,
+        .form-select {
+            width: 100%;
+            padding: var(--spacing-md);
+            border: 1px solid var(--border-primary);
+            border-radius: var(--radius-md);
+            background: var(--background-primary);
+            color: var(--text-primary);
+            font-family: inherit;
+            font-size: 14px;
+            transition: all var(--transition-fast);
+        }
+
+        .form-input:focus,
+        .form-select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(0, 120, 212, 0.1);
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: var(--spacing-sm);
+            padding: var(--spacing-md) var(--spacing-lg);
+            border: none;
+            border-radius: var(--radius-md);
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all var(--transition-fast);
+            text-decoration: none;
+            min-height: 40px;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: #ffffff;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            background: var(--primary-hover);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-4);
+        }
+
+        .btn-secondary {
+            background: var(--background-tertiary);
+            color: var(--text-primary);
+        }
+
+        .btn-secondary:hover:not(:disabled) {
+            background: var(--border-primary);
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            color: #ffffff;
+        }
+
+        .btn-danger:hover:not(:disabled) {
+            background: #b91e1e;
+        }
+
+        .toggle {
+            position: relative;
+            display: inline-block;
+            width: 48px;
+            height: 24px;
+        }
+
+        .toggle input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: var(--border-primary);
+            transition: var(--transition-fast);
+            border-radius: 24px;
+        }
+
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background: white;
+            transition: var(--transition-fast);
+            border-radius: 50%;
+        }
+
+        input:checked + .toggle-slider {
+            background: var(--primary);
+        }
+
+        input:checked + .toggle-slider:before {
+            transform: translateX(24px);
+        }
+
+        .list-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: var(--spacing-lg);
+            border-bottom: 1px solid var(--border-secondary);
+            transition: background var(--transition-fast);
+        }
+
+        .list-item:hover {
+            background: var(--background-secondary);
+        }
+
+        .list-item:last-child {
+            border-bottom: none;
+        }
+
+        .list-item-title {
+            font-weight: 600;
+            margin-bottom: var(--spacing-xs);
+        }
+
+        .list-item-description {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .grid {
+            display: grid;
+            gap: var(--spacing-lg);
+        }
+
+        .grid-cols-2 { grid-template-columns: repeat(2, 1fr); }
+        .grid-cols-4 { grid-template-columns: repeat(4, 1fr); }
+
+        .text-secondary { color: var(--text-secondary); }
+        .text-center { text-align: center; }
+        .mb-4 { margin-bottom: var(--spacing-lg); }
+        .mt-4 { margin-top: var(--spacing-lg); }
+        .flex { display: flex; }
+        .items-center { align-items: center; }
+        .gap-2 { gap: var(--spacing-sm); }
+        .gap-3 { gap: var(--spacing-md); }
+        .gap-4 { gap: var(--spacing-lg); }
+
+        .color-option {
+            width: 60px;
+            height: 60px;
+            border-radius: 12px;
+            cursor: pointer;
+            border: 2px solid var(--border-primary);
+            position: relative;
+            transition: all var(--transition-fast);
+        }
+
+        .color-option:hover {
+            transform: scale(1.05);
+        }
+
+        .color-option.active {
+            border: 3px solid var(--text-primary);
+        }
+
+        .wallpaper-option {
+            width: 120px;
+            height: 80px;
+            border-radius: 8px;
+            cursor: pointer;
+            border: 2px solid var(--border-primary);
+            position: relative;
+            background-size: cover;
+            background-position: center;
+            transition: all var(--transition-fast);
+        }
+
+        .wallpaper-option:hover {
+            transform: scale(1.02);
+        }
+
+        .wallpaper-option.active {
+            border: 3px solid var(--primary);
+        }
+
+        .high-contrast {
+            --text-primary: #000000 !important;
+            --text-secondary: #000000 !important;
+            --background-primary: #FFFFFF !important;
+            --background-secondary: #F0F0F0 !important;
+            --border-primary: #000000 !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="settings-container">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <i class="fas fa-cog"></i>
+                    <span>Paramètres</span>
+                </div>
+            </div>
+            
+            <nav class="sidebar-nav">
+                <div class="nav-item active" data-category="apps" onclick="showCategory('apps')">
+                    <i class="fas fa-grid-2"></i>
+                    <span>Applications</span>
+                </div>
+                <div class="nav-item" data-category="personalization" onclick="showCategory('personalization')">
+                    <i class="fas fa-palette"></i>
+                    <span>Personnalisation</span>
+                </div>
+                <div class="nav-item" data-category="security" onclick="showCategory('security')">
+                    <i class="fas fa-shield-halved"></i>
+                    <span>Sécurité</span>
+                </div>
+                <div class="nav-item" data-category="accounts" onclick="showCategory('accounts')">
+                    <i class="fas fa-user-circle"></i>
+                    <span>Comptes</span>
+                </div>
+                <div class="nav-item" data-category="accessibility" onclick="showCategory('accessibility')">
+                    <i class="fas fa-universal-access"></i>
+                    <span>Accessibilité</span>
+                </div>
+                <div class="nav-item" data-category="notifications" onclick="showCategory('notifications')">
+                    <i class="fas fa-bell"></i>
+                    <span>Notifications</span>
+                </div>
+                <div class="nav-item" data-category="system" onclick="showCategory('system')">
+                    <i class="fas fa-desktop"></i>
+                    <span>Système</span>
+                </div>
+            </nav>
+        </aside>
+
+        <main class="main-content">
+            <header class="content-header">
+                <h1 id="category-title">Applications</h1>
+                <p id="category-description">Gérez vos applications et programmes par défaut</p>
+            </header>
+
+            <div class="content-body" id="settings-content">
+                <!-- Dynamic content will be loaded here -->
+            </div>
+</main>
+    </div>
+
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <script>
+        const wm = window.parent.windowManager;
+        let currentCategory = 'apps';
+        let settings = loadSettings();
+        let googleTokenClient = null;
+
+        function loadSettings() {
+            const runtimeTheme = (() => {
+                try {
+                    const fromWm = wm && wm.theme ? String(wm.theme) : '';
+                    if (fromWm === 'light' || fromWm === 'dark') return fromWm;
+                    const raw = localStorage.getItem('aether_theme');
+                    return raw === 'light' ? 'light' : 'dark';
+                } catch {
+                    return 'dark';
+                }
+            })();
+            const defaultSettings = {
+                theme: runtimeTheme,
+                accentColor: '#0078d4',
+                personalization: {
+                    wallpaper: 'default',
+                    uiScale: 100,
+                    animations: true
+                },
+                security: {
+                    level: 'normal',
+                    verifiedApps: [],
+                    warnings: true
+                },
+                accessibility: {
+                    highContrast: false,
+                    largeText: false,
+                    reducedMotion: false,
+                    fontSize: 'normal'
+                },
+                accounts: {
+                    onedrive: { connected: false, email: '', driveUrl: 'https://onedrive.live.com' },
+                    googledrive: {
+                        connected: false,
+                        email: '',
+                        driveUrl: 'https://drive.google.com',
+                        clientId: '',
+                        accessToken: '',
+                        expiresAt: 0
+                    }
+                },
+                taskbar: {
+                    position: 'left',
+                    style: 'floating',
+                    size: 'normal'
+                },
+                notifications: {
+                    enabled: true,
+                    durationMs: 5000,
+                    types: {
+                        system: true,
+                        settings_change: true,
+                        security: true,
+                        accounts: true,
+                        store: true,
+                        install: true,
+                        dock: true,
+                        immersive: true,
+                        file: true
+                    }
+                }
+            };
+
+            const saved = localStorage.getItem('aether_settings');
+            const parsed = saved ? JSON.parse(saved) : {};
+            const wmPrefs = wm && wm.uiPreferences ? wm.uiPreferences : {};
+            const wmNotif = (wmPrefs && typeof wmPrefs.notifications === 'object' && wmPrefs.notifications) ? wmPrefs.notifications : {};
+            return {
+                ...defaultSettings,
+                ...parsed,
+                accounts: {
+                    ...defaultSettings.accounts,
+                    ...(parsed.accounts || {}),
+                    onedrive: { ...defaultSettings.accounts.onedrive, ...((parsed.accounts && parsed.accounts.onedrive) || {}) },
+                    googledrive: { ...defaultSettings.accounts.googledrive, ...((parsed.accounts && parsed.accounts.googledrive) || {}) }
+                },
+                taskbar: {
+                    ...defaultSettings.taskbar,
+                    ...(parsed.taskbar || {}),
+                    position: wmPrefs.dockPosition || (parsed.taskbar && parsed.taskbar.position) || defaultSettings.taskbar.position,
+                    style: wmPrefs.trayStyle || (parsed.taskbar && parsed.taskbar.style) || defaultSettings.taskbar.style,
+                    size: wmPrefs.dockSize || (parsed.taskbar && parsed.taskbar.size) || defaultSettings.taskbar.size
+                },
+                notifications: {
+                    ...defaultSettings.notifications,
+                    ...((parsed.notifications || {})),
+                    ...wmNotif,
+                    types: {
+                        ...defaultSettings.notifications.types,
+                        ...((((parsed.notifications || {}).types) || {})),
+                        ...((wmNotif.types || {}))
+                    }
+                }
+            };
+        }
+
+        function saveSettings() {
+            localStorage.setItem('aether_settings', JSON.stringify(settings));
+            applyTheme();
+            applyPersonalization();
+            applyNotifications();
+            if (wm && wm.notify) {
+                wm.notify('Paramètres', 'Paramètres enregistrés avec succès', 'settings_change');
+            }
+        }
+
+        function applyTheme() {
+            document.documentElement.setAttribute('data-theme', settings.theme);
+            if (wm && wm.setTheme) {
+                wm.setTheme(settings.theme);
+            }
+            if (settings.accentColor) {
+                document.documentElement.style.setProperty('--primary', settings.accentColor);
+                if (wm && wm.setAccentColor) wm.setAccentColor(settings.accentColor);
+            }
+        }
+
+        function applyPersonalization() {
+            if (wm && wm.setWallpaper && settings.personalization.wallpaper) {
+                wm.setWallpaper(settings.personalization.wallpaper);
+            }
+            if (wm && wm.setUIScale && settings.personalization.uiScale) {
+                wm.setUIScale(settings.personalization.uiScale);
+            }
+            if (wm) {
+                wm.uiPreferences = wm.sanitizeUIPreferences ? wm.sanitizeUIPreferences({
+                    ...(wm.uiPreferences || {}),
+                    dockPosition: settings.taskbar.position,
+                    trayStyle: settings.taskbar.style,
+                    dockSize: settings.taskbar.size
+                }) : {
+                    ...(wm.uiPreferences || {}),
+                    dockPosition: settings.taskbar.position,
+                    trayStyle: settings.taskbar.style,
+                    dockSize: settings.taskbar.size
+                };
+                if (wm.applyUIPreferences) wm.applyUIPreferences();
+                if (wm.saveUserData) wm.saveUserData();
+            }
+        }
+
+        function applyNotifications() {
+            if (!wm) return;
+            if (wm.setNotificationPreferences) {
+                wm.setNotificationPreferences(settings.notifications || {});
+                return;
+            }
+            wm.uiPreferences = wm.sanitizeUIPreferences ? wm.sanitizeUIPreferences({
+                ...(wm.uiPreferences || {}),
+                notifications: settings.notifications || {}
+            }) : {
+                ...(wm.uiPreferences || {}),
+                notifications: settings.notifications || {}
+            };
+            if (wm.saveUserData) wm.saveUserData();
+        }
+
+        function getRuntimeGoogleClientId() {
+            const env = (window.parent && window.parent.AETHER_RUNTIME_ENV) || window.AETHER_RUNTIME_ENV || {};
+            return env.AETHER_GOOGLE_DRIVE_CLIENT_ID || env.AETHER_GOOGLE_CLIENT_ID || '';
+        }
+
+        function isGoogleDriveSessionValid() {
+            const account = settings.accounts.googledrive || {};
+            return !!(account.connected && account.accessToken && account.expiresAt && Date.now() < account.expiresAt);
+        }
+
+        function ensureGoogleTokenClient(clientId) {
+            if (!window.google || !window.google.accounts || !window.google.accounts.oauth2) return null;
+            if (googleTokenClient && googleTokenClient.__clientId === clientId) return googleTokenClient;
+            googleTokenClient = window.google.accounts.oauth2.initTokenClient({
+                client_id: clientId,
+                scope: 'https://www.googleapis.com/auth/drive https://www.googleapis.com/auth/userinfo.email',
+                callback: () => {}
+            });
+            googleTokenClient.__clientId = clientId;
+            return googleTokenClient;
+        }
+
+        function requestGoogleDriveToken(clientId, promptMode = 'consent') {
+            return new Promise((resolve, reject) => {
+                const tokenClient = ensureGoogleTokenClient(clientId);
+                if (!tokenClient) {
+                    reject(new Error('Google Identity Services indisponible'));
+                    return;
+                }
+                tokenClient.callback = (response) => {
+                    if (!response || response.error) {
+                        reject(new Error(response && response.error ? response.error : 'Token refusé'));
+                        return;
+                    }
+                    resolve(response);
+                };
+                tokenClient.requestAccessToken({ prompt: promptMode });
+            });
+        }
+
+        async function fetchGoogleAccountEmail(accessToken) {
+            const response = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+                headers: { Authorization: `Bearer ${accessToken}` }
+            });
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            const data = await response.json();
+            return data.email || '';
+        }
+
+        function showCategory(category) {
+            currentCategory = category;
+            
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            document.querySelector(`[data-category="${category}"]`).classList.add('active');
+            
+            const titles = {
+                apps: { title: 'Applications', description: 'Gérez vos applications et programmes par défaut' },
+                personalization: { title: 'Personnalisation', description: 'Personnalisez l\'apparence de votre système' },
+                security: { title: 'Sécurité', description: 'Protégez votre système avec Aether Security' },
+                accounts: { title: 'Comptes', description: 'Gérez vos comptes cloud et services' },
+                accessibility: { title: 'Accessibilité', description: 'Rendez votre système plus accessible' },
+                notifications: { title: 'Notifications', description: 'Contrôlez ce que le système peut vous notifier' },
+                system: { title: 'Système', description: 'Paramètres système avancés' }
+            };
+            
+            const info = titles[category];
+            document.getElementById('category-title').textContent = info.title;
+            document.getElementById('category-description').textContent = info.description;
+            
+            renderCategory(category);
+        }
+
+        function renderCategory(category) {
+            const content = document.getElementById('settings-content');
+            
+            switch(category) {
+                case 'apps':
+                    renderApps(content);
+                    break;
+                case 'personalization':
+                    renderPersonalization(content);
+                    break;
+                case 'security':
+                    renderSecurity(content);
+                    break;
+                case 'accounts':
+                    renderAccounts(content);
+                    break;
+                case 'accessibility':
+                    renderAccessibility(content);
+                    break;
+                case 'notifications':
+                    renderNotifications(content);
+                    break;
+                case 'system':
+                    renderSystem(content);
+                    break;
+            }
+        }
+
+        function renderApps(content) {
+            content.innerHTML = `
+                <div class="settings-card">
+                    <div class="settings-card-title">
+                        <i class="fas fa-rocket"></i>
+                        Applications au démarrage
+                    </div>
+                    <p class="text-secondary mb-4">Choisissez les applications qui se lancent automatiquement</p>
+                    <div class="form-group">
+                        <label class="form-label">Ajouter une application</label>
+                        <select class="form-select" id="startup-app">
+                            <option value="">Sélectionner une application...</option>
+                            <option value="browser">Navigateur Web</option>
+                            <option value="explorer">Explorateur de fichiers</option>
+                        </select>
+                        <button class="btn btn-primary mt-2" onclick="addStartupApp()">Ajouter</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderPersonalization(content) {
+            const themes = [
+                { id: 'light', name: 'Clair', preview: 'linear-gradient(135deg, #ffffff 0%, #f3f2f1 100%)' },
+                { id: 'dark', name: 'Sombre', preview: 'linear-gradient(135deg, #0f0f0f 0%, #1a1a1a 100%)' },
+                { id: 'auto', name: 'Auto', preview: 'linear-gradient(135deg, #ffffff 0%, #0f0f0f 100%)' }
+            ];
+
+            const colors = [
+                { name: 'Bleu', value: '#0078d4' },
+                { name: 'Vert', value: '#107c10' },
+                { name: 'Orange', value: '#ff8c00' },
+                { name: 'Rouge', value: '#d13438' },
+                { name: 'Violet', value: '#8764b8' },
+                { name: 'Turquoise', value: '#008272' }
+            ];
+
+            content.innerHTML = `
+                <div class="settings-card">
+                    <div class="settings-card-title">
+                        <i class="fas fa-palette"></i>
+                        Thème
+                    </div>
+                    <p class="text-secondary mb-4">Choisissez votre thème de couleur préféré</p>
+                    <div class="grid grid-cols-2 gap-4">
+                        ${themes.map(theme => `
+                            <div class="settings-card" style="cursor: pointer; border: ${settings.theme === theme.id ? '2px solid var(--primary)' : '1px solid var(--border-primary)'}" 
+                                 onclick="setTheme('${theme.id}')">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-12 h-12 rounded-lg" style="background: ${theme.preview}; border: 1px solid var(--border-primary);"></div>
+                                    <div>
+                                        <div style="font-weight: 600;">${theme.name}</div>
+                                        ${settings.theme === theme.id ? '<div style="color: var(--primary); font-size: 12px;">Actif</div>' : ''}
+                                    </div>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+
+                <div class="settings-card">
+                    <div class="settings-card-title">
+                        <i class="fas fa-paint-brush"></i>
+                        Couleurs
+                    </div>
+                    <p class="text-secondary mb-4">Personnalisez avec votre couleur préférée</p>
+                    <div class="flex gap-3 flex-wrap mb-4">
+                        ${colors.map(color => `
+                            <div class="color-option ${settings.accentColor === color.value ? 'active' : ''}" 
+                                 style="background: ${color.value};"
+                                 onclick="setAccentColor('${color.value}')"
+                                 title="${color.name}">
+                                ${settings.accentColor === color.value ? '<i class="fas fa-check" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: white; text-shadow: 0 0 4px rgba(0,0,0,0.8);"></i>' : ''}
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+
+                <div class="settings-card">
+                    <div class="settings-card-title">
+                        <i class="fas fa-desktop"></i>
+                        Affichage
+                    </div>
+                    <p class="text-secondary mb-4">Ajustez l'apparence et la taille des éléments</p>
+                    <div class="form-group">
+                        <label class="form-label">Échelle de l'interface</label>
+                        <div class="flex items-center gap-4">
+                            <input type="range" id="ui-scale" min="80" max="150" value="${settings.personalization.uiScale}" step="10" 
+                                   oninput="updateUIScale(this.value)" style="flex: 1;">
+                            <span id="ui-scale-value" style="min-width: 60px; text-align: center; font-weight: 600;">${settings.personalization.uiScale}%</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="settings-card">
+                    <div class="settings-card-title">
+                        <i class="fas fa-grip-horizontal"></i>
+                        Barre des tâches
+                    </div>
+                    <p class="text-secondary mb-4">Personnalisez complètement la taskbar de l'OS</p>
+                    <div class="form-group">
+                        <label class="form-label">Position</label>
+                        <select class="form-select" onchange="updateTaskbarPosition(this.value)">
+                            <option value="left" ${settings.taskbar.position === 'left' ? 'selected' : ''}>Gauche</option>
+                            <option value="right" ${settings.taskbar.position === 'right' ? 'selected' : ''}>Droite</option>
+                            <option value="bottom" ${settings.taskbar.position === 'bottom' ? 'selected' : ''}>Bas</option>
+                            <option value="top" ${settings.taskbar.position === 'top' ? 'selected' : ''}>Haut</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Style</label>
+                        <select class="form-select" onchange="updateTaskbarStyle(this.value)">
+                            <option value="floating" ${settings.taskbar.style === 'floating' ? 'selected' : ''}>Flottante</option>
+                            <option value="attached" ${settings.taskbar.style === 'attached' ? 'selected' : ''}>Attachée</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Taille</label>
+                        <select class="form-select" onchange="updateTaskbarSize(this.value)">
+                            <option value="compact" ${settings.taskbar.size === 'compact' ? 'selected' : ''}>Compacte</option>
+                            <option value="normal" ${settings.taskbar.size === 'normal' ? 'selected' : ''}>Normale</option>
+                            <option value="large" ${settings.taskbar.size === 'large' ? 'selected' : ''}>Grande</option>
+                        </select>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderSecurity(content) {
+            content.innerHTML = `
+                <div class="settings-card">
+                    <div class="settings-card-title">
+                        <i class="fas fa-shield-alt"></i>
+                        Niveau de sécurité Aether
+                    </div>
+                    <p class="text-secondary mb-4">Choisissez votre niveau de protection</p>
+                    <div class="form-group">
+                        <label class="form-label">Niveau de sécurité</label>
+                        <select class="form-select" onchange="setSecurityLevel(this.value)">
+                            <option value="low" ${settings.security.level === 'low' ? 'selected' : ''}>Faible</option>
+                            <option value="normal" ${settings.security.level === 'normal' ? 'selected' : ''}>Normal</option>
+                            <option value="high" ${settings.security.level === 'high' ? 'selected' : ''}>Élevé</option>
+                            <option value="strict" ${settings.security.level === 'strict' ? 'selected' : ''}>Strict</option>
+                        </select>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderAccounts(content) {
+            content.innerHTML = `
+                <div class="settings-card">
+                    <div class="settings-card-title">
+                        <i class="fas fa-cloud"></i>
+                        Services cloud
+                    </div>
+                    <p class="text-secondary mb-4">Connectez vos services cloud préférés</p>
+                    
+                    <div class="list-item">
+                        <div>
+                            <div class="list-item-title">
+                                <i class="fab fa-microsoft" style="color: #0078d4; margin-right: 8px;"></i>
+                                OneDrive
+                                ${settings.accounts.onedrive.connected ? '<span style="color: var(--success); margin-left: 8px;">✓ Connecté</span>' : ''}
+                            </div>
+                            <div class="list-item-description">
+                                ${settings.accounts.onedrive.connected ? 
+                                    `${settings.accounts.onedrive.email}<br><span style="font-size:12px;opacity:.75;">${settings.accounts.onedrive.driveUrl || 'https://onedrive.live.com'}</span>` : 
+                                    'Stockage cloud Microsoft'
+                                }
+                            </div>
+                        </div>
+                        <div>
+                            ${settings.accounts.onedrive.connected ? 
+                                `<button class="btn btn-sm btn-secondary" onclick="editAccountLink('onedrive')">Modifier</button> <button class="btn btn-sm btn-danger" onclick="disconnectAccount('onedrive')">Déconnecter</button>` :
+                                `<button class="btn btn-sm btn-primary" onclick="connectAccount('onedrive')">Lier</button>`
+                            }
+                        </div>
+                    </div>
+                    
+                    <div class="list-item">
+                        <div>
+                            <div class="list-item-title">
+                                <i class="fab fa-google-drive" style="color: #4285f4; margin-right: 8px;"></i>
+                                Google Drive
+                                ${settings.accounts.googledrive.connected ? '<span style="color: var(--success); margin-left: 8px;">✓ Connecté</span>' : ''}
+                            </div>
+                            <div class="list-item-description">
+                                ${settings.accounts.googledrive.connected ? 
+                                    `${settings.accounts.googledrive.email}<br><span style="font-size:12px;opacity:.75;">${settings.accounts.googledrive.driveUrl || 'https://drive.google.com'}</span>` : 
+                                    'Stockage cloud Google'
+                                }
+                            </div>
+                            <div style="margin-top:10px;">
+                                <label class="form-label" style="margin-bottom:6px;display:block;">Google OAuth Client ID</label>
+                                <input class="form-input" id="googledrive-client-id" value="${settings.accounts.googledrive.clientId || getRuntimeGoogleClientId() || ''}" placeholder="1234567890-xxxxx.apps.googleusercontent.com" onchange="updateGoogleDriveClientId(this.value)">
+                                <div class="form-description">Utilise un client OAuth Web Google autorisé pour ce domaine/origine.</div>
+                            </div>
+                        </div>
+                        <div>
+                            ${settings.accounts.googledrive.connected ? 
+                                `<button class="btn btn-sm btn-secondary" onclick="connectAccount('googledrive')">Renouveler</button> <button class="btn btn-sm btn-danger" onclick="disconnectAccount('googledrive')">Déconnecter</button>` :
+                                `<button class="btn btn-sm btn-primary" onclick="connectAccount('googledrive')">Lier</button>`
+                            }
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderAccessibility(content) {
+            content.innerHTML = `
+                <div class="settings-card">
+                    <div class="settings-card-title">
+                        <i class="fas fa-eye"></i>
+                        Accessibilité visuelle
+                    </div>
+                    <p class="text-secondary mb-4">Options pour les déficiences visuelles</p>
+                    <div class="form-group">
+                        <label class="form-label">
+                            <label class="toggle">
+                                <input type="checkbox" ${settings.accessibility.highContrast ? 'checked' : ''} onchange="toggleHighContrast()">
+                                <span class="toggle-slider"></span>
+                            </label>
+                            <span style="margin-left: 12px;">Contraste élevé</span>
+                        </label>
+                        <div class="form-description">Augmenter le contraste pour une meilleure visibilité</div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">
+                            <label class="toggle">
+                                <input type="checkbox" ${settings.accessibility.largeText ? 'checked' : ''} onchange="toggleLargeText()">
+                                <span class="toggle-slider"></span>
+                            </label>
+                            <span style="margin-left: 12px;">Texte agrandi</span>
+                        </label>
+                        <div class="form-description">Agrandir le texte pour une meilleure lisibilité</div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Taille du texte</label>
+                        <select class="form-select" onchange="setFontSize(this.value)">
+                            <option value="small" ${settings.accessibility.fontSize === 'small' ? 'selected' : ''}>Petit</option>
+                            <option value="normal" ${settings.accessibility.fontSize === 'normal' ? 'selected' : ''}>Normal</option>
+                            <option value="large" ${settings.accessibility.fontSize === 'large' ? 'selected' : ''}>Grand</option>
+                            <option value="extra-large" ${settings.accessibility.fontSize === 'extra-large' ? 'selected' : ''}>Très grand</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="settings-card">
+                    <div class="settings-card-title">
+                        <i class="fas fa-hand-pointer"></i>
+                        Interaction
+                    </div>
+                    <p class="text-secondary mb-4">Options pour les déficiences motrices</p>
+                    <div class="form-group">
+                        <label class="form-label">
+                            <label class="toggle">
+                                <input type="checkbox" ${settings.accessibility.reducedMotion ? 'checked' : ''} onchange="toggleReducedMotion()">
+                                <span class="toggle-slider"></span>
+                            </label>
+                            <span style="margin-left: 12px;">Mouvements réduits</span>
+                        </label>
+                        <div class="form-description">Minimiser les animations et transitions</div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderNotifications(content) {
+            const n = settings.notifications || {};
+            const types = (n.types || {});
+            const typeList = [
+                { key: 'system', title: 'Système', desc: 'Alertes générales (erreurs, statut, messages OS)' },
+                { key: 'settings_change', title: 'Changements de paramètres', desc: 'Quand un paramètre est modifié (thème, dock, accessibilité...)' },
+                { key: 'security', title: 'Sécurité', desc: 'Avertissements et actions de sécurité' },
+                { key: 'accounts', title: 'Comptes', desc: 'Connexion / déconnexion cloud (Drive, etc.)' },
+                { key: 'store', title: 'Store', desc: 'Infos liées au store et au registre' },
+                { key: 'install', title: 'Installation', desc: 'Installation / suppression d\'applications' },
+                { key: 'dock', title: 'Dock', desc: 'Actions liées au dock' },
+                { key: 'immersive', title: 'Mode immersif', desc: 'Plein écran / immersion' },
+                { key: 'file', title: 'Fichiers', desc: 'Ouvertures, imports/exports, erreurs VFS' }
+            ];
+            const seconds = Math.round((Number(n.durationMs) || 5000) / 1000);
+            const disabled = !n.enabled;
+            content.innerHTML = `
+                <div class="settings-card">
+                    <div class="settings-card-title">
+                        <i class="fas fa-bell"></i>
+                        Notifications
+                    </div>
+                    <p class="text-secondary mb-4">Activez, désactivez, ou personnalisez les notifications de l'OS.</p>
+
+                    <div class="list-item">
+                        <div>
+                            <div class="list-item-title">Autoriser les notifications</div>
+                            <div class="list-item-description">Désactiver ici coupe toutes les notifications du système.</div>
+                        </div>
+                        <label class="toggle">
+                            <input type="checkbox" ${n.enabled ? 'checked' : ''} onchange="toggleNotificationsEnabled()">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+
+                    <div class="list-item" style="${disabled ? 'opacity:0.75;' : ''}">
+                        <div>
+                            <div class="list-item-title">Durée d'affichage</div>
+                            <div class="list-item-description">Combien de temps une notification reste visible (en secondes).</div>
+                        </div>
+                        <div style="min-width: 220px; display:flex; align-items:center; gap:12px; justify-content:flex-end;">
+                            <input type="range" min="2" max="15" step="1" value="${seconds}" ${disabled ? 'disabled' : ''} onchange="setNotificationDuration(this.value)">
+                            <div style="width:42px; text-align:right; font-weight:600;">${seconds}s</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="settings-card">
+                    <div class="settings-card-title">
+                        <i class="fas fa-sliders"></i>
+                        Types de notifications
+                    </div>
+                    <p class="text-secondary mb-4">Choisissez ce que vous souhaitez recevoir.</p>
+                    ${typeList.map(t => `
+                        <div class="list-item" style="${disabled ? 'opacity:0.7;' : ''}">
+                            <div>
+                                <div class="list-item-title">${t.title}</div>
+                                <div class="list-item-description">${t.desc}</div>
+                            </div>
+                            <label class="toggle">
+                                <input type="checkbox" ${types[t.key] !== false ? 'checked' : ''} ${disabled ? 'disabled' : ''} onchange="toggleNotificationType('${t.key}')">
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+                    `).join('')}
+                </div>
+
+                <div class="settings-card">
+                    <div class="settings-card-title">
+                        <i class="fas fa-flask"></i>
+                        Test
+                    </div>
+                    <p class="text-secondary mb-4">Envoyez une notification de test pour valider la configuration.</p>
+                    <button class="btn btn-primary" ${disabled ? 'disabled' : ''} onclick="sendTestNotification()">Envoyer une notification</button>
+                </div>
+            `;
+        }
+
+        function renderSystem(content) {
+            content.innerHTML = `
+                <div class="settings-card">
+                    <div class="settings-card-title">
+                        <i class="fas fa-info-circle"></i>
+                        Informations système
+                    </div>
+                    <p class="text-secondary mb-4">Détails sur votre système AetherOS</p>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="p-3" style="background: var(--background-secondary); border-radius: 8px;">
+                            <div class="text-secondary" style="font-size: 12px; margin-bottom: 4px;">Version</div>
+                            <div style="font-weight: 600;">AetherOS v3.0</div>
+                        </div>
+                        <div class="p-3" style="background: var(--background-secondary); border-radius: 8px;">
+                            <div class="text-secondary" style="font-size: 12px; margin-bottom: 4px;">Build</div>
+                            <div style="font-weight: 600;">3.0.0.20240115</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Action functions
+        function setTheme(theme) {
+            settings.theme = theme;
+            saveSettings();
+            showCategory('personalization');
+        }
+
+        function setAccentColor(color) {
+            settings.accentColor = color;
+            saveSettings();
+        }
+
+        function updateUIScale(value) {
+            document.getElementById('ui-scale-value').textContent = value + '%';
+            settings.personalization.uiScale = parseInt(value);
+            saveSettings();
+        }
+
+        function updateTaskbarPosition(value) {
+            settings.taskbar.position = value;
+            saveSettings();
+            showCategory('personalization');
+        }
+
+        function updateTaskbarStyle(value) {
+            settings.taskbar.style = value;
+            saveSettings();
+            showCategory('personalization');
+        }
+
+        function updateTaskbarSize(value) {
+            settings.taskbar.size = value;
+            saveSettings();
+            showCategory('personalization');
+        }
+
+        function updateGoogleDriveClientId(value) {
+            settings.accounts.googledrive = settings.accounts.googledrive || {};
+            settings.accounts.googledrive.clientId = (value || '').trim();
+            saveSettings();
+        }
+
+        function setSecurityLevel(level) {
+            settings.security.level = level;
+            saveSettings();
+        }
+
+        function connectAccount(service) {
+            if (service === 'googledrive') {
+                connectGoogleDrive();
+                return;
+            }
+            const defaultUrl = service === 'onedrive' ? 'https://onedrive.live.com' : 'https://drive.google.com';
+            const label = service === 'onedrive' ? 'OneDrive' : 'Google Drive';
+            const email = prompt(`Adresse du compte ${label} :`, settings.accounts[service]?.email || '');
+            if (!email) return;
+            const driveUrl = prompt(`URL de votre espace ${label} :`, settings.accounts[service]?.driveUrl || defaultUrl);
+            if (!driveUrl) return;
+            settings.accounts[service] = {
+                connected: true,
+                email: email.trim(),
+                driveUrl: driveUrl.trim()
+            };
+            saveSettings();
+            if (wm && wm.notify) wm.notify('Comptes', `${label} lié avec succès`, 'accounts');
+            showCategory('accounts');
+        }
+
+        function editAccountLink(service) {
+            connectAccount(service);
+        }
+
+        async function connectGoogleDrive() {
+            const clientId = (settings.accounts.googledrive && settings.accounts.googledrive.clientId) || getRuntimeGoogleClientId();
+            if (!clientId) {
+                alert("Renseigne d'abord un Google OAuth Client ID pour Google Drive.");
+                return;
+            }
+            try {
+                if (wm && wm.notify) wm.notify('Comptes', 'Connexion à Google Drive...', 'accounts');
+                const token = await requestGoogleDriveToken(clientId, 'consent');
+                const accessToken = token.access_token;
+                const email = await fetchGoogleAccountEmail(accessToken);
+                settings.accounts.googledrive = {
+                    connected: true,
+                    email: email || settings.accounts.googledrive.email || '',
+                    driveUrl: 'googledrive://root',
+                    clientId,
+                    accessToken,
+                    expiresAt: Date.now() + ((token.expires_in || 3600) * 1000)
+                };
+                saveSettings();
+                if (wm && wm.notify) wm.notify('Comptes', 'Google Drive lié avec succès', 'accounts');
+                showCategory('accounts');
+            } catch (error) {
+                alert(`Connexion Google Drive impossible: ${error.message}`);
+            }
+        }
+
+        function disconnectAccount(service) {
+            if (confirm(`Déconnecter de ${service}?`)) {
+                settings.accounts[service] = service === 'googledrive'
+                    ? { connected: false, email: '', driveUrl: 'https://drive.google.com', clientId: settings.accounts.googledrive?.clientId || '', accessToken: '', expiresAt: 0 }
+                    : { connected: false, email: '', driveUrl: 'https://onedrive.live.com' };
+                saveSettings();
+                if (wm && wm.notify) {
+                    wm.notify('Comptes', `Déconnecté de ${service}`, 'accounts');
+                }
+                showCategory('accounts');
+            }
+        }
+
+        function toggleNotificationsEnabled() {
+            settings.notifications.enabled = !settings.notifications.enabled;
+            saveSettings();
+            showCategory('notifications');
+        }
+
+        function toggleNotificationType(typeKey) {
+            const types = settings.notifications.types || (settings.notifications.types = {});
+            const current = types[typeKey] !== false;
+            types[typeKey] = !current;
+            saveSettings();
+            showCategory('notifications');
+        }
+
+        function setNotificationDuration(seconds) {
+            const sec = Math.max(2, Math.min(15, parseInt(seconds, 10) || 5));
+            settings.notifications.durationMs = sec * 1000;
+            saveSettings();
+            showCategory('notifications');
+        }
+
+        function sendTestNotification() {
+            if (wm && wm.notify) {
+                wm.notify('Notification', 'Ceci est une notification de test.', 'system', { durationMs: settings.notifications.durationMs || 5000 });
+            }
+        }
+
+        function toggleHighContrast() {
+            settings.accessibility.highContrast = !settings.accessibility.highContrast;
+            saveSettings();
+            if (wm && wm.accessibility) {
+                wm.accessibility.highContrast = settings.accessibility.highContrast;
+                if (wm.applyAccessibilitySettings) wm.applyAccessibilitySettings();
+            }
+            
+            if (settings.accessibility.highContrast) {
+                document.documentElement.classList.add('high-contrast');
+                if (wm && wm.notify) {
+                    wm.notify('Accessibilité', 'Contraste élevé activé', 'settings_change');
+                }
+            } else {
+                document.documentElement.classList.remove('high-contrast');
+                if (wm && wm.notify) {
+                    wm.notify('Accessibilité', 'Contraste élevé désactivé', 'settings_change');
+                }
+            }
+        }
+
+        function toggleLargeText() {
+            settings.accessibility.largeText = !settings.accessibility.largeText;
+            saveSettings();
+            if (wm && wm.accessibility) {
+                wm.accessibility.fontSize = settings.accessibility.largeText ? '18px' : '14px';
+                if (wm.applyAccessibilitySettings) wm.applyAccessibilitySettings();
+            }
+            
+            if (settings.accessibility.largeText) {
+                document.documentElement.style.fontSize = '18px';
+                if (wm && wm.notify) {
+                    wm.notify('Accessibilité', 'Texte agrandi activé', 'settings_change');
+                }
+            } else {
+                document.documentElement.style.fontSize = '14px';
+                if (wm && wm.notify) {
+                    wm.notify('Accessibilité', 'Texte agrandi désactivé', 'settings_change');
+                }
+            }
+        }
+
+        function toggleReducedMotion() {
+            settings.accessibility.reducedMotion = !settings.accessibility.reducedMotion;
+            saveSettings();
+            
+            if (settings.accessibility.reducedMotion) {
+                document.documentElement.style.setProperty('--transition-fast', '0s');
+                document.documentElement.style.setProperty('--transition-normal', '0s');
+                if (wm && wm.notify) {
+                    wm.notify('Accessibilité', 'Mouvements réduits activés', 'settings_change');
+                }
+            } else {
+                document.documentElement.style.setProperty('--transition-fast', '150ms ease');
+                document.documentElement.style.setProperty('--transition-normal', '250ms ease');
+                if (wm && wm.notify) {
+                    wm.notify('Accessibilité', 'Mouvements réduits désactivés', 'settings_change');
+                }
+            }
+        }
+
+        function setFontSize(size) {
+            settings.accessibility.fontSize = size;
+            saveSettings();
+            
+            const fontSizes = {
+                small: '12px',
+                normal: '14px',
+                large: '16px',
+                'extra-large': '18px'
+            };
+            
+            document.documentElement.style.fontSize = fontSizes[size];
+            if (wm && wm.notify) {
+                wm.notify('Accessibilité', `Taille du texte: ${size}`, 'settings_change');
+            }
+        }
+
+        function addStartupApp() {
+            if (wm && wm.notify) {
+                wm.notify('Applications', 'Application ajoutée au démarrage', 'settings_change');
+            }
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('Settings app initialized');
+            applyTheme();
+            applyPersonalization();
+            applyNotifications();
+            showCategory('apps');
+        });
+    </script>
+</body>
+</html>

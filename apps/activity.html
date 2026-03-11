@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <style>
+        :root {
+            --bg: #111111;
+            --card: #1c1c1e;
+            --accent: #0A84FF;
+            --text: #ffffff;
+            --text-dim: #8e8e93;
+            --border: rgba(255, 255, 255, 0.1);
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: -apple-system, system-ui, sans-serif;
+            margin: 0;
+            padding: 24px;
+            user-select: none;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .header h1 {
+            font-size: 20px;
+            font-weight: 600;
+            margin: 0;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .card {
+            background: var(--card);
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid var(--border);
+        }
+
+        .card-label {
+            font-size: 13px;
+            color: var(--text-dim);
+            margin-bottom: 12px;
+        }
+
+        .card-value {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .bar-container {
+            height: 6px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .bar-fill {
+            height: 100%;
+            background: var(--accent);
+            width: 0%;
+            transition: 1s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .proc-list {
+            background: var(--card);
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            overflow: hidden;
+        }
+
+        .proc-header {
+            display: flex;
+            padding: 12px 20px;
+            background: rgba(255, 255, 255, 0.02);
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            color: var(--text-dim);
+            letter-spacing: 0.5px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .proc-item {
+            display: flex;
+            padding: 10px 20px;
+            font-size: 13px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+            align-items: center;
+        }
+
+        .proc-item:last-child {
+            border-bottom: none;
+        }
+
+        .col-name {
+            flex: 1;
+            font-weight: 500;
+        }
+
+        .col-stat {
+            width: 80px;
+            text-align: right;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="header">
+        <h1>Moniteur d'Activité</h1>
+        <div style="font-size: 12px; color: var(--accent);">Système AetherOS v11.0</div>
+    </div>
+
+    <div class="grid">
+        <div class="card">
+            <div class="card-label">PROCESSEUR (CPU)</div>
+            <div id="cpu-val" class="card-value">0%</div>
+            <div class="bar-container">
+                <div id="cpu-bar" class="bar-fill"></div>
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-label">MÉMOIRE (RAM)</div>
+            <div id="ram-val" class="card-value">0 Mo</div>
+            <div class="bar-container">
+                <div id="ram-bar" class="bar-fill" style="background: #30d158;"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="proc-list">
+        <div class="proc-header">
+            <div class="col-name">Nom du processus</div>
+            <div class="col-stat">CPU</div>
+            <div class="col-stat">Rang</div>
+        </div>
+        <div id="proc-container">
+            <!-- List will be injected -->
+        </div>
+    </div>
+
+    <script>
+        const wm = window.parent.windowManager;
+
+        function updateStats() {
+            // Simulated stats but reactive to browser reality
+            const cpu = Math.floor(Math.random() * 8) + 1;
+            const ram = 512 + Math.floor(Math.random() * 200);
+
+            document.getElementById('cpu-val').textContent = cpu + '%';
+            document.getElementById('cpu-bar').style.width = (cpu * 5) + '%';
+
+            document.getElementById('ram-val').textContent = ram + ' Mo';
+            document.getElementById('ram-bar').style.width = (ram / 16) + '%';
+
+            const windows = Array.from(window.parent.document.querySelectorAll('.window'));
+            const container = document.getElementById('proc-container');
+
+            let html = '';
+            // Kernel process
+            html += `
+                <div class="proc-item">
+                    <div class="col-name">Aether Kernel</div>
+                    <div class="col-stat">${(Math.random() * 0.5).toFixed(1)}%</div>
+                    <div class="col-stat">0</div>
+                </div>
+            `;
+
+            windows.forEach((win, i) => {
+                const title = win.querySelector('.window-title')?.textContent || 'App';
+                html += `
+                    <div class="proc-item">
+                        <div class="col-name">${title}</div>
+                        <div class="col-stat">${(Math.random() * 2).toFixed(1)}%</div>
+                        <div class="col-stat">${i + 1}</div>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+        }
+
+        setInterval(updateStats, 2000);
+        updateStats();
+    </script>
+</body>
+
+</html>

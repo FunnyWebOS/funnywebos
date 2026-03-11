@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Paramètres - AetherOS</title>
+    <style>
+        :root {
+            --accent: #0A84FF;
+            --panel: rgba(15, 25, 45, 0.68);
+            --card: rgba(255, 255, 255, 0.05);
+            --border: rgba(255, 255, 255, 0.12);
+            --text-dim: rgba(255, 255, 255, 0.65);
+            --danger: #ff3b30;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            overflow: hidden;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            color: #fff;
+            background: transparent;
+        }
+
+        .sidebar {
+            width: 270px;
+            background: var(--panel);
+            backdrop-filter: blur(45px);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            padding: 18px 0;
+        }
+
+        .brand {
+            padding: 0 20px 18px;
+            font-weight: 800;
+            font-size: 20px;
+            letter-spacing: 0.3px;
+        }
+
+        .sidebar-item {
+            padding: 12px 20px;
+            cursor: pointer;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border-left: 3px solid transparent;
+            transition: 0.18s;
+        }
+
+        .sidebar-item:hover {
+            background: rgba(255, 255, 255, 0.06);
+        }
+
+        .sidebar-item.active {
+            border-left-color: var(--accent);
+            background: rgba(10, 132, 255, 0.15);
+            color: #a8d1ff;
+        }
+
+        .main {
+            flex: 1;
+            overflow-y: auto;
+            padding: 32px;
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 16px;
+        }
+
+        .card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+
+        h1 {
+            margin: 0 0 18px;
+            font-size: 30px;
+            letter-spacing: -0.4px;
+        }
+
+        h3 {
+            margin: 0 0 10px;
+            font-size: 15px;
+        }
+
+        label {
+            display: block;
+            font-size: 12px;
+            color: var(--text-dim);
+            margin-bottom: 5px;
+        }
+
+        input,
+        select,
+        textarea {
+            width: 100%;
+            padding: 9px 11px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: rgba(0, 0, 0, 0.25);
+            color: #fff;
+            margin-bottom: 12px;
+            font-family: inherit;
+        }
+
+        textarea {
+            min-height: 130px;
+            resize: vertical;
+        }
+
+        .btn {
+            border: none;
+            background: var(--accent);
+            color: #fff;
+            border-radius: 8px;
+            padding: 8px 14px;
+            font-weight: 700;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .btn:hover {
+            filter: brightness(1.08);
+        }
+
+        .btn.secondary {
+            background: rgba(255, 255, 255, 0.14);
+        }
+
+        .btn.danger {
+            background: var(--danger);
+        }
+
+        .row {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .theme-chip {
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 12px;
+            cursor: pointer;
+            min-width: 130px;
+            text-align: center;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .theme-chip:hover {
+            border-color: var(--accent);
+            transform: translateY(-1px);
+        }
+
+        .id-badge {
+            font-family: ui-monospace, "Cascadia Code", Consolas, monospace;
+            background: rgba(0, 0, 0, 0.32);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 6px 10px;
+            display: inline-block;
+        }
+
+        .app-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .small {
+            color: var(--text-dim);
+            font-size: 12px;
+        }
+    </style>
+</head>
+
+<body>
+    <aside class="sidebar">
+        <div class="brand">Paramètres</div>
+        <div class="sidebar-item active" onclick="showTab('profile', this)">👤 Profil</div>
+        <div class="sidebar-item" onclick="showTab('personalization', this)">🎨 Personnalisation</div>
+        <div class="sidebar-item" onclick="showTab('taskbar', this)">🧰 Barre des tâches</div>
+        <div class="sidebar-item" onclick="showTab('apps', this)">📦 Applications</div>
+        <div class="sidebar-item" onclick="showTab('time', this)">🕒 Heure & Langue</div>
+        <div class="sidebar-item" onclick="showTab('accessibility', this)">♿ Accessibilité</div>
+        <div class="sidebar-item" onclick="showTab('security', this)">🔐 Sécurité</div>
+        <div class="sidebar-item" onclick="showTab('dev', this)">🛠️ Développeur</div>
+        <div class="sidebar-item" onclick="showTab('about', this)">ℹ️ À propos</div>
+        <div style="margin-top:auto; padding:16px 20px;">
+            <button class="btn danger" style="width:100%;" onclick="logout()">Déconnexion</button>
+        </div>
+    </aside>
+
+    <main class="main" id="content"></main>
+
+    <input type="file" id="profile-upload" accept="image/*" style="display:none" onchange="wm.handleProfilePicUpload(event)">
+
+    <script>
+        const wm = window.parent.windowManager;
+        let currentTab = 'profile';
+        let userData = {};
+
+        function defaults() {
+            return {
+                userName: 'Utilisateur',
+                pin: '0000',
+                sessionID: '...',
+                profilePic: '',
+                timeZone: 'Europe/Paris',
+                timeFormat: '24h',
+                accessibility: { fontSize: '14px', highContrast: false },
+                uiPreferences: { dockPosition: 'left', dockSize: 'normal', trayStyle: 'floating', clockSeconds: false },
+                installedApps: []
+            };
+        }
+
+        function pullUserData() {
+            const base = defaults();
+            if (!wm) return base;
+            const installed = Array.isArray(wm.installedApps)
+                ? wm.installedApps
+                : Array.from(window.parent.document.querySelectorAll('#installed-apps .dock-item')).map(item => item.getAttribute('data-id'));
+            return {
+                ...base,
+                userName: wm.userName || base.userName,
+                pin: wm.pin || base.pin,
+                sessionID: wm.sessionID || base.sessionID,
+                profilePic: wm.profilePic || '',
+                timeZone: wm.timeZone || base.timeZone,
+                timeFormat: wm.timeFormat || base.timeFormat,
+                accessibility: { ...base.accessibility, ...(wm.accessibility || {}) },
+                uiPreferences: { ...base.uiPreferences, ...(wm.uiPreferences || {}) },
+                installedApps: installed
+            };
+        }
+
+        function showTab(tab, element) {
+            currentTab = tab;
+            document.querySelectorAll('.sidebar-item').forEach(item => item.classList.remove('active'));
+            if (element) element.classList.add('active');
+            render();
+        }
+
+        function render() {
+            userData = pullUserData();
+            const container = document.getElementById('content');
+            if (!container) return;
+
+            if (currentTab === 'profile') {
+                container.innerHTML = `
+                    <h1>Mon Profil</h1>
+                    <div class="grid">
+                        <div class="card">
+                            <h3>Compte</h3>
+                            <div style="display:flex; gap:14px; align-items:center; margin-bottom:10px;">
+                                <img src="${userData.profilePic || 'https://www.gravatar.com/avatar/000?d=mp&f=y'}" style="width:72px; height:72px; border-radius:50%; object-fit:cover; border:2px solid var(--accent);">
+                                <div>
+                                    <button class="btn secondary" onclick="document.getElementById('profile-upload').click()">Changer la photo</button>
+                                    <div class="small" style="margin-top:8px;">Utilisateur actif: ${userData.userName}</div>
+                                </div>
+                            </div>
+                            <label>Nom d'utilisateur</label>
+                            <input id="profile-username" value="${escapeAttr(userData.userName)}">
+                            <label>Nouveau PIN</label>
+                            <input id="profile-pin" type="password" value="${escapeAttr(userData.pin)}">
+                            <button class="btn" onclick="saveProfile()">Enregistrer le profil</button>
+                        </div>
+                        <div class="card">
+                            <h3>Identifiant du compte</h3>
+                            <div class="id-badge">${userData.sessionID}</div>
+                            <div class="small" style="margin-top:10px;">ID utilisé dans Talky et les sessions P2P.</div>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+
+            if (currentTab === 'personalization') {
+                container.innerHTML = `
+                    <h1>Personnalisation</h1>
+                    <div class="card">
+                        <h3>Fond d'écran</h3>
+                        <div class="row">
+                            <button class="btn" onclick="window.parent.document.getElementById('wallpaper-upload').click()">Importer une image</button>
+                            <button class="btn secondary" onclick="wm.setWallpaper('default')">Réinitialiser</button>
+                        </div>
+                        <div class="small" style="margin-top:10px;">Le fond couvre maintenant tout l'écran (bureau + verrouillage).</div>
+                    </div>
+                    <div class="card">
+                        <h3>Thèmes rapides</h3>
+                        <div class="row">
+                            <div class="theme-chip" style="background:linear-gradient(135deg,#12c2e9,#c471ed);" onclick="wm.setWallpaper('gradient')">Bleu Fusion</div>
+                            <div class="theme-chip" style="background:#0f172a;" onclick="wm.setWallpaper('blue')">Espace Profond</div>
+                            <div class="theme-chip" style="background:#020617;" onclick="wm.setWallpaper('dark')">Nuit OLED</div>
+                            <div class="theme-chip" style="background:linear-gradient(135deg,#f64f59,#12c2e9);" onclick="wm.setWallpaper('sunset')">Sunset</div>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+
+            if (currentTab === 'taskbar') {
+                const prefs = userData.uiPreferences;
+                container.innerHTML = `
+                    <h1>Barre des tâches</h1>
+                    <div class="card">
+                        <label>Position du dock</label>
+                        <select id="dock-position">
+                            <option value="left" ${prefs.dockPosition === 'left' ? 'selected' : ''}>Gauche (vertical)</option>
+                            <option value="bottom" ${prefs.dockPosition === 'bottom' ? 'selected' : ''}>Bas (horizontal)</option>
+                            <option value="right" ${prefs.dockPosition === 'right' ? 'selected' : ''}>Droite (vertical)</option>
+                        </select>
+                        <label>Taille des icônes</label>
+                        <select id="dock-size">
+                            <option value="compact" ${prefs.dockSize === 'compact' ? 'selected' : ''}>Compact</option>
+                            <option value="normal" ${prefs.dockSize === 'normal' ? 'selected' : ''}>Normal</option>
+                            <option value="large" ${prefs.dockSize === 'large' ? 'selected' : ''}>Large</option>
+                        </select>
+                        <label>Position de l'horloge</label>
+                        <select id="tray-style">
+                            <option value="floating" ${prefs.trayStyle === 'floating' ? 'selected' : ''}>Flottante</option>
+                            <option value="attached" ${prefs.trayStyle === 'attached' ? 'selected' : ''}>Attachée au dock</option>
+                        </select>
+                        <label>Affichage de l'heure</label>
+                        <select id="clock-seconds">
+                            <option value="false" ${!prefs.clockSeconds ? 'selected' : ''}>Heure + minutes</option>
+                            <option value="true" ${prefs.clockSeconds ? 'selected' : ''}>Heure + minutes + secondes</option>
+                        </select>
+                        <div class="row">
+                            <button class="btn" onclick="saveTaskbar()">Appliquer</button>
+                            <button class="btn secondary" onclick="resetTaskbar()">Valeurs par défaut</button>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+
+            if (currentTab === 'apps') {
+                const lines = userData.installedApps.map(id => {
+                    const info = wm.appsRegistry?.find(app => app.id === id);
+                    const title = info?.title || id;
+                    return `
+                        <div class="app-row">
+                            <div>
+                                <div><strong>${title}</strong></div>
+                                <div class="small">${id}</div>
+                            </div>
+                            <div class="row">
+                                <button class="btn secondary" onclick="wm.installApp('${id}')">Ouvrir</button>
+                                <button class="btn danger" onclick="uninstall('${id}')">Désinstaller</button>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+                container.innerHTML = `
+                    <h1>Applications installées</h1>
+                    <div class="card">
+                        ${lines || '<div class="small">Aucune application installée.</div>'}
+                    </div>
+                `;
+                return;
+            }
+
+            if (currentTab === 'time') {
+                container.innerHTML = `
+                    <h1>Heure & Langue</h1>
+                    <div class="card">
+                        <label>Fuseau horaire</label>
+                        <select id="tz">
+                            <option value="Europe/Paris" ${userData.timeZone === 'Europe/Paris' ? 'selected' : ''}>Europe/Paris</option>
+                            <option value="UTC" ${userData.timeZone === 'UTC' ? 'selected' : ''}>UTC</option>
+                            <option value="America/New_York" ${userData.timeZone === 'America/New_York' ? 'selected' : ''}>America/New_York</option>
+                            <option value="Asia/Tokyo" ${userData.timeZone === 'Asia/Tokyo' ? 'selected' : ''}>Asia/Tokyo</option>
+                        </select>
+                        <label>Format de l'heure</label>
+                        <select id="tf">
+                            <option value="24h" ${userData.timeFormat === '24h' ? 'selected' : ''}>24h</option>
+                            <option value="12h" ${userData.timeFormat === '12h' ? 'selected' : ''}>12h</option>
+                        </select>
+                        <button class="btn" onclick="saveTime()">Appliquer</button>
+                    </div>
+                `;
+                return;
+            }
+
+            if (currentTab === 'accessibility') {
+                container.innerHTML = `
+                    <h1>Accessibilité</h1>
+                    <div class="card">
+                        <label>Taille de police globale</label>
+                        <select id="font-size">
+                            <option value="14px" ${userData.accessibility.fontSize === '14px' ? 'selected' : ''}>Normal</option>
+                            <option value="17px" ${userData.accessibility.fontSize === '17px' ? 'selected' : ''}>Moyen+</option>
+                            <option value="20px" ${userData.accessibility.fontSize === '20px' ? 'selected' : ''}>Grand</option>
+                            <option value="23px" ${userData.accessibility.fontSize === '23px' ? 'selected' : ''}>Très grand</option>
+                        </select>
+                        <label>Contraste</label>
+                        <select id="high-contrast">
+                            <option value="false" ${!userData.accessibility.highContrast ? 'selected' : ''}>Standard</option>
+                            <option value="true" ${userData.accessibility.highContrast ? 'selected' : ''}>Contraste renforcé</option>
+                        </select>
+                        <button class="btn" onclick="saveAccessibility()">Appliquer</button>
+                    </div>
+                `;
+                return;
+            }
+
+            if (currentTab === 'security') {
+                container.innerHTML = `
+                    <h1>Sécurité</h1>
+                    <div class="card">
+                        <h3>Code PIN</h3>
+                        <label>PIN actuel</label>
+                        <input id="sec-old-pin" type="password">
+                        <label>Nouveau PIN</label>
+                        <input id="sec-new-pin" type="password">
+                        <button class="btn" onclick="changePin()">Mettre à jour</button>
+                    </div>
+                `;
+                return;
+            }
+
+            if (currentTab === 'dev') {
+                container.innerHTML = `
+                    <h1>Mode Développeur</h1>
+                    <div class="card">
+                        <h3>Lancer une app HTML instantanément</h3>
+                        <textarea id="dev-code" placeholder="<html>...</html>"></textarea>
+                        <div class="row">
+                            <button class="btn" onclick="launchDevHtml()">Lancer l'app</button>
+                            <button class="btn secondary" onclick="document.getElementById('dev-code').value=''">Effacer</button>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <h3>Lancer un site en app</h3>
+                        <input id="dev-url" placeholder="https://example.com">
+                        <button class="btn" onclick="launchDevUrl()">Ouvrir le site</button>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = `
+                <h1>À propos</h1>
+                <div class="card">
+                    <h3>AetherOS</h3>
+                    <div class="small">Version: ${wm.sysVersion || 'AetherOS v11'}</div>
+                    <div class="small">Utilisateur: ${userData.userName}</div>
+                    <div class="small">Apps installées: ${userData.installedApps.length}</div>
+                </div>
+                <div class="card">
+                    <h3>Maintenance rapide</h3>
+                    <div class="row">
+                        <button class="btn secondary" onclick="wm.renderDesktop()">Rafraîchir le bureau</button>
+                        <button class="btn secondary" onclick="wm.fetchAppsRegistry()">Recharger le registre</button>
+                        <button class="btn danger" onclick="resetWorkspace()">Réinitialiser le workspace</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function saveProfile() {
+            const nextName = document.getElementById('profile-username').value.trim();
+            const nextPin = document.getElementById('profile-pin').value.trim();
+            if (!nextName) return wm.notify('Profil', 'Nom utilisateur invalide.');
+            if (!nextPin) return wm.notify('Profil', 'PIN invalide.');
+
+            const oldName = wm.currentAccount;
+            if (nextName !== oldName) {
+                if (wm.accounts[nextName]) {
+                    wm.notify('Profil', 'Ce nom existe déjà.');
+                    return;
+                }
+                wm.accounts[nextName] = wm.accounts[oldName] || {};
+                delete wm.accounts[oldName];
+                wm.currentAccount = nextName;
+                wm.userName = nextName;
+                localStorage.setItem('aether_last_user', nextName);
+            }
+
+            wm.pin = nextPin;
+            wm.saveUserData();
+            wm.notify('Profil', 'Profil mis à jour.');
+            render();
+        }
+
+        function saveTaskbar() {
+            wm.uiPreferences = {
+                dockPosition: document.getElementById('dock-position').value,
+                dockSize: document.getElementById('dock-size').value,
+                trayStyle: document.getElementById('tray-style').value,
+                clockSeconds: document.getElementById('clock-seconds').value === 'true'
+            };
+            wm.applyUIPreferences();
+            wm.saveUserData();
+            wm.notify('Barre des tâches', 'Paramètres appliqués.');
+        }
+
+        function resetTaskbar() {
+            wm.uiPreferences = { dockPosition: 'left', dockSize: 'normal', trayStyle: 'floating', clockSeconds: false };
+            wm.applyUIPreferences();
+            wm.saveUserData();
+            render();
+        }
+
+        function uninstall(id) {
+            wm.uninstallApp(id);
+            render();
+        }
+
+        function saveTime() {
+            wm.timeZone = document.getElementById('tz').value;
+            wm.timeFormat = document.getElementById('tf').value;
+            wm.saveUserData();
+            if (window.parent.updateClock) window.parent.updateClock();
+            wm.notify('Date & Heure', 'Configuration mise à jour.');
+        }
+
+        function saveAccessibility() {
+            wm.accessibility = wm.accessibility || {};
+            wm.accessibility.fontSize = document.getElementById('font-size').value;
+            wm.accessibility.highContrast = document.getElementById('high-contrast').value === 'true';
+            wm.applyAccessibilitySettings();
+            wm.saveUserData();
+            wm.notify('Accessibilité', 'Préférences appliquées.');
+        }
+
+        function changePin() {
+            const oldPin = document.getElementById('sec-old-pin').value.trim();
+            const newPin = document.getElementById('sec-new-pin').value.trim();
+            if (oldPin !== wm.pin) return wm.notify('Sécurité', 'PIN actuel incorrect.');
+            if (!newPin) return wm.notify('Sécurité', 'Nouveau PIN invalide.');
+            wm.pin = newPin;
+            wm.saveUserData();
+            wm.notify('Sécurité', 'PIN mis à jour.');
+            render();
+        }
+
+        function launchDevHtml() {
+            const code = document.getElementById('dev-code').value.trim();
+            if (!code) return wm.notify('Dev', 'Code HTML manquant.');
+            const appId = `dev_app_${Date.now()}`;
+            wm.devApps = wm.devApps || {};
+            wm.devApps[appId] = code;
+            wm.createWindow(appId, 'Custom App (Dev)', true);
+            wm.notify('Dev', 'Application HTML lancée.');
+        }
+
+        function launchDevUrl() {
+            const raw = document.getElementById('dev-url').value.trim();
+            if (!raw) return wm.notify('Dev', 'URL manquante.');
+            const formatted = /^https?:\/\//i.test(raw) ? raw : `https://${raw}`;
+            try {
+                const url = new URL(formatted);
+                if (!['http:', 'https:'].includes(url.protocol)) throw new Error('bad protocol');
+                const appId = `dev_url_${Date.now()}`;
+                wm.devUrls = wm.devUrls || {};
+                wm.devUrls[appId] = url.href;
+                wm.createWindow(appId, 'Site App (Dev)', true);
+                wm.notify('Dev', 'Site lancé en app.');
+            } catch (err) {
+                wm.notify('Dev', 'URL invalide.');
+            }
+        }
+
+        function resetWorkspace() {
+            if (!confirm('Réinitialiser le VFS utilisateur ?')) return;
+            wm.vfs = wm.getDefaultVFS();
+            wm.saveUserData();
+            wm.syncAllIframes();
+            wm.renderDesktop();
+            wm.notify('Maintenance', 'Workspace réinitialisé.');
+        }
+
+        function logout() {
+            if (!confirm("Se déconnecter de AetherOS ?")) return;
+            window.parent.localStorage.removeItem('aether_last_user');
+            window.parent.location.reload();
+        }
+
+        function escapeAttr(value) {
+            return String(value || '')
+                .replace(/&/g, '&amp;')
+                .replace(/"/g, '&quot;')
+                .replace(/</g, '&lt;');
+        }
+
+        window.addEventListener('message', (event) => {
+            if (event.data.type === 'funnyweb_user_sync' || event.data.type === 'funnyweb_vfs_update') {
+                render();
+            }
+        });
+
+        setTimeout(render, 150);
+    </script>
+</body>
+
+</html>

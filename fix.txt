@@ -1,0 +1,29 @@
+Fixer recherche ( en mode beh ca recherche pas l'app qu'on veut c'est comme si on écrivais juste )
+
+explorateur de fichier ( affichage des fichiers ) 
+
+faut que  application soit étiré en mode fenêtré ( en mode sur certain apps comme settings beh les paramètres sont genre juste au milieu meme en fenêtre agrandi faut que ca soit étiré )
+
+Dans section profil dans settings rajouter son id ( le même que dans talky c l'id de notre compte en gros )
+
+Dans personnalisation rajouter son thème souvenez vous avant y'avais 3 thèmes différents
+
+Les fond d'écran de bureau et de verrouillage doit prendre toute la page ( pas se dupliquer en plusieurs images )
+
+l'heure sur la taskbar qui est absolument pas au bon endroit ( genre elle est au dessus des icones a droites c le bordel mais la a droite de la taskbar pas sur les icones )
+
+Si possible enlever la transparence ( par exemple sur l'app store je peut voir mon fond d'ecran a travers beh faut pas faut juste un effet glass bleu )
+
+Rendre les apps universelle ( c'est a dire que elle doivent tout avoir le meme design bleu glass , tu mettras aussi a jour le template.md pour que y'a le style prédéfini )
+
+Malgré le fait que dans les paramètres j'ai désinstallé mes apps cela n'as pas sauvegardé quand j'ai refresh
+
+Faire que chaque apps même les apps par défaut ont leur html comme ca je peut tout modifier style script html tout ( genre meme l'app store vraiment toute les apps que ca soit bien trié )
+
+Facultatif :
+-Rajouter un bouton Add your app ( page ou dedans tu remplieras tout ton formulaire sur quelle version de funnyOS! l'app est des images une description et celui sera envoyé aux modérateurs pour tester si c'est safe ou non )
+
+Rajouter qlq sites en app ( stremio , mon site BGS )
+
+Chercher un site alternative a YouTube qui reprend les vidéos a YouTube pour le mettre en app
+

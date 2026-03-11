@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Debug Menu Démarrer</title>
+    <style>
+        body { 
+            background: #1a1a2e; 
+            color: white; 
+            font-family: 'Segoe UI', sans-serif; 
+            padding: 20px; 
+        }
+        .launchpad-icon { 
+            width: 48px; height: 48px; 
+            display: inline-flex; align-items: center; justify-content: center;
+            background: rgba(255,255,255,0.1); border-radius: 12px; margin: 5px;
+            font-size: 24px;
+        }
+        .test-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 15px; }
+        .test-item { text-align: center; padding: 10px; background: rgba(255,255,255,0.05); border-radius: 12px; }
+        .debug { background: rgba(255,0,0,0.1); padding: 10px; margin: 10px 0; border-radius: 8px; }
+    </style>
+</head>
+<body>
+    <h1>🔍 Test du Menu Démarrer</h1>
+    
+    <div class="debug" id="debug-info">
+        Chargement des données...
+    </div>
+
+    <h2>Applications installées par défaut</h2>
+    <div class="test-grid" id="installed-grid"></div>
+
+    <h2>Toutes les applications du registry</h2>
+    <div class="test-grid" id="registry-grid"></div>
+
+    <script>
+        // Simulation des données
+        const defaultInstalledApps = ["word", "excel", "powerpoint", "store", "explorer", "wiki"];
+        
+        const appsRegistry = [
+            { id: "wiki", title: "AetherWiki", icon: "📚" },
+            { id: "explorer", title: "Fichiers", icon: "📂" },
+            { id: "browser", title: "Zaluea Browser", icon: "🌐" },
+            { id: "word", title: "FunnyText", icon: "📝" },
+            { id: "excel", title: "FunnySheets", icon: "📊" },
+            { id: "powerpoint", title: "FunnySlides", icon: "📽️" },
+            { id: "store", title: "GridStore", icon: "📦" },
+            { id: "talky", title: "Talky", icon: "💬" },
+            { id: "snake", title: "Snake OS", icon: "🕹️" },
+            { id: "tetris", title: "Tetris Neon", icon: "🧱" }
+        ];
+
+        const appIcons = {
+            search: '🎯', explorer: '📂', settings: '💠', store: '📦',
+            word: '📝', excel: '📊', powerpoint: '📽️', wiki: '📚'
+        };
+
+        function renderAppIconMarkup(iconValue, fallback = '📦') {
+            const icon = typeof iconValue === 'string' ? iconValue.trim() : '';
+            if (!icon) return fallback;
+            
+            // Si c'est une URL
+            if (/^(https?:\/\/|data:image\/)/i.test(icon)) {
+                return `<img src="${icon}" alt="" style="width:100%;height:100%;object-fit:cover;">`;
+            }
+            
+            // Sinon c'est un emoji
+            return icon || fallback;
+        }
+
+        function resolveAppCatalogEntry(id) {
+            if (!id) return null;
+
+            const registryApp = appsRegistry.find(app => app && app.id === id);
+            if (registryApp) {
+                return {
+                    id,
+                    title: registryApp.title || id,
+                    icon: registryApp.icon || appIcons[id] || '📦',
+                    description: registryApp.description || '',
+                    category: registryApp.category || 'productivity'
+                };
+            }
+
+            // Fallback
+            return {
+                id,
+                title: id,
+                icon: appIcons[id] || '📦',
+                description: 'Application système',
+                category: 'system'
+            };
+        }
+
+        function getInstalledLaunchpadApps() {
+            const apps = defaultInstalledApps
+                .map(id => resolveAppCatalogEntry(id))
+                .filter(Boolean);
+            
+            return apps;
+        }
+
+        // Affichage
+        document.addEventListener('DOMContentLoaded', () => {
+            const debugInfo = document.getElementById('debug-info');
+            const installedGrid = document.getElementById('installed-grid');
+            const registryGrid = document.getElementById('registry-grid');
+
+            const installedApps = getInstalledLaunchpadApps();
+            
+            debugInfo.innerHTML = `
+                <strong>Debug Info:</strong><br>
+                installedApps: ${JSON.stringify(defaultInstalledApps)}<br>
+                appsRegistry length: ${appsRegistry.length}<br>
+                Résolved installed apps: ${installedApps.length}
+            `;
+
+            installedGrid.innerHTML = installedApps.map(app => `
+                <div class="test-item">
+                    <div class="launchpad-icon">${renderAppIconMarkup(app.icon)}</div>
+                    <div>${app.title}</div>
+                    <small>ID: ${app.id}<br>Icon: ${app.icon}</small>
+                </div>
+            `).join('');
+
+            registryGrid.innerHTML = appsRegistry.map(app => `
+                <div class="test-item">
+                    <div class="launchpad-icon">${renderAppIconMarkup(app.icon)}</div>
+                    <div>${app.title}</div>
+                    <small>ID: ${app.id}<br>Icon: ${app.icon}</small>
+                </div>
+            `).join('');
+        });
+    </script>
+</body>
+</html>

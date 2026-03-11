@@ -1,0 +1,952 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>AetherSheets</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<style>
+:root {
+  --green: #1e7e45;
+  --green-dark: #155c32;
+  --green-light: #e6f4ec;
+  --gray-50: #f8f9fa;
+  --gray-100: #f1f3f4;
+  --gray-200: #e8eaed;
+  --gray-300: #dadce0;
+  --gray-400: #bdc1c6;
+  --gray-500: #9aa0a6;
+  --gray-600: #80868b;
+  --gray-700: #5f6368;
+  --gray-800: #3c4043;
+  --gray-900: #202124;
+  --surface: #fff;
+  --border: #dadce0;
+  --cell-border: #d0d7de;
+  --sel-bg: rgba(30,126,69,0.12);
+  --sel-border: #1e7e45;
+  --header-bg: #f1f3f4;
+  --font: 'IBM Plex Sans', system-ui, sans-serif;
+  --mono: 'IBM Plex Mono', monospace;
+  --row-h: 22px;
+  --col-w: 100px;
+  --row-num-w: 46px;
+  --col-header-h: 24px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;overflow:hidden;}
+body{font-family:var(--font);background:#e8eaed;color:var(--gray-900);display:flex;flex-direction:column;font-size:13px;}
+
+/* ─── TITLEBAR ─── */
+#titlebar{background:var(--green);color:white;display:flex;align-items:center;padding:0 12px;height:36px;gap:8px;flex-shrink:0;user-select:none;}
+#titlebar .app{font-weight:600;font-size:14px;letter-spacing:-0.3px;}
+#titlebar .docname{opacity:.8;font-size:12px;font-weight:300;}
+#titlebar .spacer{flex:1;}
+#save-ind{font-size:11px;opacity:.7;transition:opacity .3s;}
+
+/* ─── RIBBON ─── */
+#ribbon{background:var(--surface);border-bottom:1px solid var(--border);flex-shrink:0;box-shadow:0 1px 3px rgba(0,0,0,.1);}
+.tab-bar{display:flex;align-items:flex-end;border-bottom:1px solid var(--border);background:var(--gray-100);padding:0 8px;}
+.tab-btn{padding:7px 14px 6px;border:none;background:none;font-family:var(--font);font-size:12px;font-weight:500;color:var(--gray-600);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .15s;white-space:nowrap;}
+.tab-btn:hover{color:var(--gray-900);background:rgba(0,0,0,.04);}
+.tab-btn.active{color:var(--green);border-bottom-color:var(--green);background:var(--surface);}
+.ribbon-panel{display:none;padding:5px 8px;min-height:68px;align-items:flex-start;flex-wrap:wrap;gap:0;}
+.ribbon-panel.active{display:flex;}
+.rg{display:flex;flex-direction:column;padding:0 6px;border-right:1px solid var(--border);min-width:fit-content;}
+.rg:last-child{border-right:none;}
+.rg-title{font-size:10px;color:var(--gray-500);text-align:center;margin-top:auto;padding-top:2px;white-space:nowrap;}
+.rg-row{display:flex;gap:1px;align-items:center;}
+.rb{display:inline-flex;flex-direction:column;align-items:center;justify-content:center;padding:3px 6px;min-width:34px;height:50px;border:1px solid transparent;border-radius:3px;background:none;cursor:pointer;font-family:var(--font);font-size:10px;color:var(--gray-800);gap:2px;transition:all .1s;white-space:nowrap;}
+.rb i{font-size:16px;color:var(--gray-600);}
+.rb:hover{background:var(--gray-100);border-color:var(--gray-200);}
+.rb.pressed{background:var(--green-light);border-color:#a8d5ba;color:var(--green);}
+.rb.pressed i{color:var(--green);}
+.rb-sm{display:inline-flex;align-items:center;justify-content:center;width:24px;height:22px;border:1px solid transparent;border-radius:3px;background:none;cursor:pointer;color:var(--gray-700);font-size:12px;transition:all .1s;}
+.rb-sm:hover{background:var(--gray-100);border-color:var(--gray-300);}
+.rb-sm.pressed{background:var(--green-light);color:var(--green);}
+.sep-v{width:1px;height:40px;background:var(--border);margin:0 4px;}
+.font-sel,.sz-sel{border:1px solid var(--border);border-radius:3px;padding:2px 5px;font-family:var(--font);font-size:11px;background:var(--surface);color:var(--gray-900);height:22px;cursor:pointer;outline:none;}
+.font-sel{width:110px;}.sz-sel{width:46px;}
+.font-sel:focus,.sz-sel:focus{border-color:var(--green);}
+.color-strip{position:absolute;bottom:2px;left:3px;right:3px;height:3px;border-radius:2px;}
+
+/* ─── FORMULA BAR ─── */
+#formula-bar{display:flex;align-items:center;gap:6px;padding:4px 8px;border-bottom:1px solid var(--border);background:var(--surface);flex-shrink:0;height:30px;}
+#name-box{font-family:var(--mono);font-size:12px;font-weight:500;width:72px;border:1px solid var(--border);border-radius:3px;padding:2px 6px;text-align:center;cursor:pointer;background:var(--surface);outline:none;}
+#name-box:focus{border-color:var(--green);}
+#fx-btn{padding:2px 8px;border:1px solid var(--border);border-radius:3px;background:var(--surface);cursor:pointer;font-family:var(--mono);font-size:12px;color:var(--green);font-weight:500;}
+#fx-btn:hover{background:var(--gray-100);}
+#formula-input{flex:1;border:1px solid var(--border);border-radius:3px;padding:2px 8px;font-family:var(--mono);font-size:12px;background:var(--surface);color:var(--gray-900);outline:none;}
+#formula-input:focus{border-color:var(--green);box-shadow:0 0 0 2px rgba(30,126,69,.1);}
+
+/* ─── MAIN LAYOUT ─── */
+#main{flex:1;display:flex;overflow:hidden;}
+#sidebar{width:180px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;overflow:hidden;transition:width .2s;}
+#sidebar.collapsed{width:0;}
+.sb-section{padding:6px 0;border-bottom:1px solid var(--border);}
+.sb-title{font-size:10px;font-weight:600;color:var(--gray-500);text-transform:uppercase;padding:4px 12px 2px;letter-spacing:.5px;}
+.sb-item{padding:5px 12px;font-size:12px;cursor:pointer;color:var(--gray-800);display:flex;align-items:center;gap:6px;transition:background .1s;}
+.sb-item:hover{background:var(--gray-100);}
+.sb-item i{width:13px;text-align:center;font-size:11px;color:var(--gray-500);}
+
+/* Sheet tabs at bottom */
+#sheet-tabs-area{flex-shrink:0;background:var(--surface);border-top:1px solid var(--border);display:flex;align-items:center;padding:0 6px;height:28px;gap:2px;overflow-x:auto;}
+.sheet-tab{padding:4px 12px;font-size:11px;font-weight:500;cursor:pointer;border:1px solid var(--border);border-bottom:none;border-radius:4px 4px 0 0;background:var(--gray-100);color:var(--gray-600);white-space:nowrap;transition:all .1s;position:relative;}
+.sheet-tab:hover{background:var(--gray-200);}
+.sheet-tab.active{background:var(--surface);color:var(--green);border-color:var(--border);border-bottom:1px solid var(--surface);margin-bottom:-1px;}
+.sheet-tab .close-tab{margin-left:4px;font-size:11px;opacity:0;transition:opacity .1s;color:var(--gray-500);}
+.sheet-tab:hover .close-tab{opacity:1;}
+#add-sheet-btn{padding:3px 8px;font-size:13px;cursor:pointer;color:var(--gray-500);background:none;border:none;border-radius:3px;}
+#add-sheet-btn:hover{background:var(--gray-200);color:var(--gray-800);}
+
+/* ─── GRID ─── */
+#grid-wrapper{flex:1;display:flex;flex-direction:column;overflow:hidden;position:relative;}
+#grid-scroll{flex:1;overflow:auto;position:relative;}
+#grid-scroll::-webkit-scrollbar{width:10px;height:10px;}
+#grid-scroll::-webkit-scrollbar-track{background:var(--gray-100);}
+#grid-scroll::-webkit-scrollbar-thumb{background:var(--gray-300);border-radius:5px;}
+#grid-scroll::-webkit-scrollbar-corner{background:var(--gray-100);}
+
+#grid-container{position:relative;display:inline-block;min-width:100%;}
+#col-headers{display:flex;position:sticky;top:0;z-index:20;background:var(--header-bg);}
+#row-col-corner{width:var(--row-num-w);min-width:var(--row-num-w);height:var(--col-header-h);border-right:2px solid var(--border);border-bottom:2px solid var(--border);background:var(--header-bg);flex-shrink:0;cursor:pointer;}
+#row-col-corner:hover{background:var(--gray-200);}
+.col-header{height:var(--col-header-h);min-width:var(--col-w);border-right:1px solid var(--cell-border);border-bottom:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:var(--gray-600);cursor:pointer;user-select:none;position:relative;background:var(--header-bg);transition:background .1s;}
+.col-header:hover,.col-header.sel{background:var(--green-light);color:var(--green);}
+.col-header .col-resize{position:absolute;right:-3px;top:0;bottom:0;width:6px;cursor:col-resize;z-index:5;}
+
+#rows-container{position:relative;}
+.grid-row{display:flex;height:var(--row-h);position:relative;}
+.row-num{width:var(--row-num-w);min-width:var(--row-num-w);height:var(--row-h);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:var(--gray-600);border-right:2px solid var(--border);border-bottom:1px solid var(--cell-border);background:var(--header-bg);cursor:pointer;user-select:none;flex-shrink:0;transition:background .1s;}
+.row-num:hover,.row-num.sel{background:var(--green-light);color:var(--green);}
+
+.cell{height:var(--row-h);min-width:var(--col-w);border-right:1px solid var(--cell-border);border-bottom:1px solid var(--cell-border);padding:0 4px;font-size:11px;font-family:var(--font);cursor:cell;outline:none;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;position:relative;background:var(--surface);transition:background .05s;display:flex;align-items:center;}
+.cell:hover{background:#f0f7f3;}
+.cell.selected{background:var(--sel-bg)!important;outline:2px solid var(--sel-border);outline-offset:-2px;z-index:5;}
+.cell.in-range{background:rgba(30,126,69,.07)!important;}
+.cell.col-sel{background:rgba(30,126,69,.05);}
+.cell.row-sel{background:rgba(30,126,69,.05);}
+.cell.editing{background:var(--surface)!important;outline:2px solid var(--sel-border);outline-offset:-2px;z-index:10;padding:0;}
+.cell.editing input{width:100%;height:100%;border:none;outline:none;padding:0 4px;font-size:11px;font-family:var(--mono);background:transparent;color:var(--gray-900);}
+.cell.formula-cell{color:#0b5394;}
+.cell.error-cell{color:#c0392b;background:#fef8f8!important;}
+.cell.number-cell{justify-content:flex-end;}
+.cell.bold-cell{font-weight:700;}
+.cell.italic-cell{font-style:italic;}
+.cell.underline-cell{text-decoration:underline;}
+.cell.wrap-cell{white-space:normal;overflow:visible;align-items:flex-start;padding-top:2px;}
+.cell.frozen{position:sticky;left:var(--row-num-w);z-index:10;}
+
+/* Selection box overlay */
+#sel-box{position:absolute;border:2px solid var(--green);pointer-events:none;z-index:15;box-shadow:0 0 0 1px rgba(30,126,69,.3);}
+#copy-dash{position:absolute;border:2px dashed var(--green);pointer-events:none;z-index:14;animation:march .5s linear infinite;}
+@keyframes march{to{stroke-dashoffset:-20px;}}
+#fill-handle{position:absolute;width:8px;height:8px;background:var(--green);border:1px solid white;cursor:crosshair;z-index:16;right:-4px;bottom:-4px;}
+
+/* ─── STATUS BAR ─── */
+#statusbar{background:var(--green);color:rgba(255,255,255,.9);display:flex;align-items:center;height:22px;padding:0 10px;font-size:11px;gap:12px;flex-shrink:0;user-select:none;}
+#statusbar .sb-it{display:flex;align-items:center;gap:4px;cursor:pointer;padding:0 3px;border-radius:2px;}
+#statusbar .sb-it:hover{background:rgba(255,255,255,.15);}
+.sb-sep{opacity:.4;}
+#sb-right{margin-left:auto;display:flex;gap:10px;align-items:center;}
+#zoom-range{width:70px;accent-color:white;}
+#zoom-disp{font-size:11px;min-width:32px;}
+
+/* ─── MODALS ─── */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:2000;align-items:center;justify-content:center;backdrop-filter:blur(2px);}
+.modal-overlay.open{display:flex;}
+.modal-box{background:var(--surface);border-radius:8px;box-shadow:0 8px 32px rgba(0,0,0,.2);min-width:360px;max-width:600px;width:90%;max-height:85vh;display:flex;flex-direction:column;overflow:hidden;animation:m-in .15s ease;}
+@keyframes m-in{from{opacity:0;transform:scale(.96) translateY(-8px);}to{opacity:1;transform:scale(1) translateY(0);}}
+.m-header{padding:14px 18px 10px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.m-title{font-size:14px;font-weight:600;}
+.m-close{background:none;border:none;cursor:pointer;color:var(--gray-500);font-size:17px;padding:2px 5px;border-radius:3px;}
+.m-close:hover{background:var(--gray-100);}
+.m-body{padding:14px 18px;overflow-y:auto;flex:1;}
+.m-footer{padding:10px 18px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end;}
+.fg{margin-bottom:12px;}
+.fl{display:block;font-size:11px;font-weight:500;margin-bottom:3px;}
+.fc{width:100%;padding:6px 9px;border:1px solid var(--border);border-radius:3px;font-family:var(--font);font-size:12px;background:var(--surface);color:var(--gray-900);outline:none;transition:border-color .15s;}
+.fc:focus{border-color:var(--green);box-shadow:0 0 0 2px rgba(30,126,69,.1);}
+.frow{display:flex;gap:10px;}.frow .fg{flex:1;}
+.fcheck{display:flex;align-items:center;gap:7px;font-size:12px;cursor:pointer;margin-bottom:5px;}
+.fcheck input{width:13px;height:13px;accent-color:var(--green);cursor:pointer;}
+.btn{padding:6px 14px;border:1px solid var(--border);border-radius:3px;cursor:pointer;font-family:var(--font);font-size:12px;font-weight:500;background:var(--surface);color:var(--gray-900);transition:all .1s;}
+.btn:hover{background:var(--gray-100);}
+.btn-primary{background:var(--green);color:white;border-color:var(--green);}
+.btn-primary:hover{background:var(--green-dark);}
+.btn-danger{background:#d32f2f;color:white;border-color:#d32f2f;}
+.btn-sm{padding:3px 9px;font-size:11px;}
+
+/* ─── CONTEXT MENU ─── */
+#ctx{display:none;position:fixed;background:var(--surface);border:1px solid var(--border);border-radius:5px;box-shadow:0 4px 20px rgba(0,0,0,.15);z-index:3000;min-width:210px;padding:3px 0;animation:ctx-in .1s ease;}
+@keyframes ctx-in{from{opacity:0;transform:scale(.97);}to{opacity:1;transform:scale(1);}}
+#ctx.open{display:block;}
+.ctx-it{display:flex;align-items:center;gap:9px;padding:5px 13px;cursor:pointer;font-size:12px;color:var(--gray-900);}
+.ctx-it:hover{background:var(--gray-100);}
+.ctx-it i{width:13px;text-align:center;font-size:11px;color:var(--gray-500);}
+.ctx-it .ks{margin-left:auto;font-size:11px;color:var(--gray-400);}
+.ctx-it.disabled{opacity:.35;pointer-events:none;}
+.ctx-sep{height:1px;background:var(--border);margin:2px 0;}
+
+/* ─── DROPDOWN ─── */
+.dd{position:relative;display:inline-block;}
+.dd-menu{display:none;position:absolute;top:100%;left:0;background:var(--surface);border:1px solid var(--border);border-radius:5px;box-shadow:0 4px 20px rgba(0,0,0,.15);z-index:500;min-width:160px;padding:3px 0;}
+.dd-menu.right{left:auto;right:0;}
+.dd-menu.open{display:block;}
+.dd-it{padding:5px 13px;cursor:pointer;font-size:12px;display:flex;align-items:center;gap:8px;}
+.dd-it:hover{background:var(--gray-100);}
+.dd-sep{height:1px;background:var(--border);margin:2px 0;}
+
+/* ─── CHART POPUP ─── */
+.chart-win{position:absolute;background:var(--surface);border:1px solid var(--border);border-radius:6px;box-shadow:0 4px 20px rgba(0,0,0,.15);z-index:100;overflow:hidden;min-width:320px;min-height:240px;}
+.chart-titlebar{background:var(--green);color:white;padding:5px 10px;display:flex;align-items:center;justify-content:space-between;cursor:move;font-size:12px;font-weight:500;}
+.chart-body{padding:10px;}
+.chart-close-btn{background:none;border:none;color:white;cursor:pointer;font-size:16px;padding:0 3px;}
+
+/* ─── FILTER DROPDOWN ─── */
+.filter-dropdown{position:absolute;background:var(--surface);border:1px solid var(--border);border-radius:5px;box-shadow:0 4px 20px rgba(0,0,0,.15);z-index:200;min-width:200px;padding:8px;display:none;}
+.filter-dropdown.open{display:block;}
+
+/* ─── CELL FORMAT PREVIEW ─── */
+.fmt-preview{background:var(--gray-100);border:1px solid var(--border);border-radius:3px;padding:8px;font-size:14px;text-align:right;min-height:36px;margin-bottom:8px;}
+
+/* ─── FUNCTION HINT ─── */
+#fn-hint{display:none;position:fixed;background:var(--gray-900);color:white;border-radius:4px;padding:6px 10px;font-size:11px;font-family:var(--mono);z-index:1000;box-shadow:0 2px 10px rgba(0,0,0,.3);pointer-events:none;max-width:400px;}
+#fn-hint b{color:#81c784;}
+
+/* ─── CONDITIONAL FORMAT INDICATOR ─── */
+.cf-bar{position:absolute;bottom:1px;left:1px;right:1px;height:3px;border-radius:1px;}
+
+/* ─── FIND PANEL ─── */
+#find-panel{display:none;position:absolute;top:0;right:12px;background:var(--surface);border:1px solid var(--border);border-top:none;border-radius:0 0 6px 6px;box-shadow:0 2px 10px rgba(0,0,0,.1);padding:10px;z-index:100;width:320px;}
+#find-panel.open{display:block;}
+#find-panel .fp-row{display:flex;gap:4px;margin-bottom:6px;align-items:center;}
+#find-panel input{flex:1;padding:4px 7px;border:1px solid var(--border);border-radius:3px;font-size:12px;font-family:var(--font);outline:none;}
+#find-panel input:focus{border-color:var(--green);}
+#find-panel .fp-btn{padding:3px 9px;border:1px solid var(--border);border-radius:3px;background:var(--surface);cursor:pointer;font-size:11px;}
+#find-panel .fp-btn:hover{background:var(--gray-100);}
+
+/* Color grid */
+.color-grid{display:grid;grid-template-columns:repeat(10,18px);gap:2px;padding:6px;}
+.cs{width:18px;height:18px;border-radius:2px;cursor:pointer;border:1px solid rgba(0,0,0,.1);transition:transform .1s;}
+.cs:hover{transform:scale(1.25);z-index:1;position:relative;}
+
+/* Scrollbar */
+::-webkit-scrollbar{width:8px;height:8px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--gray-300);border-radius:4px;}
+::-webkit-scrollbar-thumb:hover{background:var(--gray-400);}
+</style>
+</head>
+<body>
+
+<!-- TITLEBAR -->
+<div id="titlebar">
+  <span class="app">✦ AetherSheets</span>
+  <span class="docname" id="doc-name"> — Classeur1</span>
+  <div class="spacer"></div>
+  <span id="save-ind">✓ Prêt</span>
+</div>
+
+<!-- RIBBON -->
+<div id="ribbon">
+  <div class="tab-bar">
+    <button class="tab-btn active" data-tab="home">Accueil</button>
+    <button class="tab-btn" data-tab="insert">Insertion</button>
+    <button class="tab-btn" data-tab="data">Données</button>
+    <button class="tab-btn" data-tab="formulas">Formules</button>
+    <button class="tab-btn" data-tab="review">Révision</button>
+    <button class="tab-btn" data-tab="view">Affichage</button>
+  </div>
+
+  <!-- HOME -->
+  <div class="ribbon-panel active" id="panel-home">
+    <div class="rg">
+      <div class="rg-row">
+        <button class="rb" onclick="undoAct()" title="Annuler Ctrl+Z"><i class="fa fa-undo"></i><span>Annuler</span></button>
+        <button class="rb" onclick="redoAct()" title="Rétablir Ctrl+Y"><i class="fa fa-redo"></i><span>Rétablir</span></button>
+      </div>
+      <div class="rg-title">Historique</div>
+    </div>
+    <div class="rg">
+      <div class="rg-row" style="padding:3px 2px;flex-direction:column;gap:3px;">
+        <div class="rg-row">
+          <select class="font-sel" id="r-font" onchange="applyFmt('font',this.value)">
+            <option value="IBM Plex Sans" selected>IBM Plex Sans</option>
+            <option value="Calibri">Calibri</option>
+            <option value="Arial">Arial</option>
+            <option value="Georgia">Georgia</option>
+            <option value="Times New Roman">Times New Roman</option>
+            <option value="Courier New">Courier New</option>
+            <option value="Verdana">Verdana</option>
+            <option value="Tahoma">Tahoma</option>
+          </select>
+          <select class="sz-sel" id="r-size" onchange="applyFmt('fontSize',this.value)">
+            <option>8</option><option>9</option><option>10</option>
+            <option selected>11</option><option>12</option><option>14</option>
+            <option>16</option><option>18</option><option>20</option>
+            <option>24</option><option>28</option><option>36</option><option>48</option>
+          </select>
+        </div>
+        <div class="rg-row">
+          <button class="rb-sm" id="rb-bold" onclick="applyFmt('bold')" title="Gras"><b>B</b></button>
+          <button class="rb-sm" id="rb-italic" onclick="applyFmt('italic')" title="Italique"><i>I</i></button>
+          <button class="rb-sm" id="rb-underline" onclick="applyFmt('underline')" title="Souligné"><u>U</u></button>
+          <button class="rb-sm" id="rb-strike" onclick="applyFmt('strike')" title="Barré" style="text-decoration:line-through">S</button>
+          <div class="dd">
+            <button class="rb-sm" onclick="toggleDD('dd-fc')" title="Couleur texte" style="position:relative">A<div class="color-strip" id="fc-strip" style="background:#000"></div></button>
+            <div class="dd-menu" id="dd-fc"><div class="color-grid" id="fc-grid"></div></div>
+          </div>
+          <div class="dd">
+            <button class="rb-sm" onclick="toggleDD('dd-bc')" title="Couleur fond" style="position:relative"><i class="fa fa-fill-drip" style="font-size:11px"></i><div class="color-strip" id="bc-strip" style="background:#ffff00"></div></button>
+            <div class="dd-menu" id="dd-bc"><div class="color-grid" id="bc-grid"></div></div>
+          </div>
+        </div>
+      </div>
+      <div class="rg-title">Police</div>
+    </div>
+    <div class="rg">
+      <div class="rg-row">
+        <button class="rb-sm" id="rb-al" onclick="applyFmt('align','left')" title="Gauche"><i class="fa fa-align-left"></i></button>
+        <button class="rb-sm" id="rb-ac" onclick="applyFmt('align','center')" title="Centre"><i class="fa fa-align-center"></i></button>
+        <button class="rb-sm" id="rb-ar" onclick="applyFmt('align','right')" title="Droite"><i class="fa fa-align-right"></i></button>
+        <button class="rb-sm" id="rb-wrap" onclick="applyFmt('wrap')" title="Renvoi auto"><i class="fa fa-text-width"></i></button>
+        <button class="rb-sm" onclick="mergeCells()" title="Fusionner"><i class="fa fa-compress"></i></button>
+      </div>
+      <div class="rg-row" style="margin-top:2px;">
+        <button class="rb-sm" onclick="applyFmt('valign','top')" title="Haut"><i class="fa fa-arrow-up"></i></button>
+        <button class="rb-sm" onclick="applyFmt('valign','middle')" title="Milieu"><i class="fa fa-equals"></i></button>
+        <button class="rb-sm" onclick="applyFmt('valign','bottom')" title="Bas"><i class="fa fa-arrow-down"></i></button>
+        <button class="rb-sm" onclick="incIndent()" title="Augmenter retrait"><i class="fa fa-indent"></i></button>
+        <button class="rb-sm" onclick="decIndent()" title="Réduire retrait"><i class="fa fa-outdent"></i></button>
+      </div>
+      <div class="rg-title">Alignement</div>
+    </div>
+    <div class="rg">
+      <div class="rg-row">
+        <div class="dd">
+          <button class="rb" onclick="toggleDD('dd-numfmt')" title="Format nombre"><i class="fa fa-hashtag"></i><span>Format</span></button>
+          <div class="dd-menu" id="dd-numfmt">
+            <div class="dd-it" onclick="applyNumFmt('general')">Général</div>
+            <div class="dd-it" onclick="applyNumFmt('number')">Nombre (1 234,00)</div>
+            <div class="dd-it" onclick="applyNumFmt('currency')">Monétaire (€)</div>
+            <div class="dd-it" onclick="applyNumFmt('percent')">Pourcentage (%)</div>
+            <div class="dd-it" onclick="applyNumFmt('scientific')">Scientifique</div>
+            <div class="dd-sep"></div>
+            <div class="dd-it" onclick="applyNumFmt('date')">Date</div>
+            <div class="dd-it" onclick="applyNumFmt('time')">Heure</div>
+            <div class="dd-it" onclick="applyNumFmt('datetime')">Date et heure</div>
+            <div class="dd-sep"></div>
+            <div class="dd-it" onclick="applyNumFmt('text')">Texte</div>
+            <div class="dd-it" onclick="openFmtCellModal()">Plus de formats…</div>
+          </div>
+        </div>
+        <button class="rb" onclick="applyNumFmt('currency')"><i class="fa fa-euro-sign"></i><span>Euro</span></button>
+        <button class="rb" onclick="applyNumFmt('percent')"><i class="fa fa-percent"></i><span>%</span></button>
+        <button class="rb" onclick="incDecimals()"><i class="fa fa-plus"></i><span>.00</span></button>
+        <button class="rb" onclick="decDecimals()"><i class="fa fa-minus"></i><span>.0</span></button>
+      </div>
+      <div class="rg-title">Nombre</div>
+    </div>
+    <div class="rg">
+      <div class="rg-row">
+        <div class="dd">
+          <button class="rb" onclick="toggleDD('dd-borders')"><i class="fa fa-border-all"></i><span>Bordures</span></button>
+          <div class="dd-menu" id="dd-borders">
+            <div class="dd-it" onclick="applyBorder('all')"><i class="fa fa-border-all"></i> Toutes</div>
+            <div class="dd-it" onclick="applyBorder('outside')"><i class="fa fa-border-outer"></i> Extérieures</div>
+            <div class="dd-it" onclick="applyBorder('thick')"><i class="fa fa-border-outer"></i> Épaisse ext.</div>
+            <div class="dd-sep"></div>
+            <div class="dd-it" onclick="applyBorder('none')"><i class="fa fa-times"></i> Aucune</div>
+            <div class="dd-it" onclick="applyBorder('bottom')">Bas</div>
+            <div class="dd-it" onclick="applyBorder('top')">Haut</div>
+            <div class="dd-it" onclick="applyBorder('left')">Gauche</div>
+            <div class="dd-it" onclick="applyBorder('right')">Droite</div>
+          </div>
+        </div>
+        <button class="rb" onclick="openCondFmtModal()"><i class="fa fa-palette"></i><span>Cond.</span></button>
+        <div class="dd">
+          <button class="rb" onclick="toggleDD('dd-style')"><i class="fa fa-paint-brush"></i><span>Style</span></button>
+          <div class="dd-menu" id="dd-style">
+            <div class="dd-it" onclick="applyStyle('good')">✓ Bon</div>
+            <div class="dd-it" onclick="applyStyle('bad')">✗ Mauvais</div>
+            <div class="dd-it" onclick="applyStyle('neutral')">~ Neutre</div>
+            <div class="dd-it" onclick="applyStyle('header')">En-tête</div>
+            <div class="dd-it" onclick="applyStyle('title')">Titre</div>
+            <div class="dd-it" onclick="applyStyle('total')">Total</div>
+          </div>
+        </div>
+      </div>
+      <div class="rg-title">Mise en forme</div>
+    </div>
+    <div class="rg">
+      <div class="rg-row">
+        <button class="rb" onclick="insertRowAbove()"><i class="fa fa-plus"></i><span>Ligne↑</span></button>
+        <button class="rb" onclick="insertColLeft()"><i class="fa fa-plus"></i><span>Col←</span></button>
+        <button class="rb" onclick="deleteSelectedRows()"><i class="fa fa-minus"></i><span>Sup ligne</span></button>
+        <button class="rb" onclick="deleteSelectedCols()"><i class="fa fa-minus"></i><span>Sup col</span></button>
+        <button class="rb" onclick="autoFitCol()"><i class="fa fa-arrows-alt-h"></i><span>Ajuster</span></button>
+      </div>
+      <div class="rg-title">Cellules</div>
+    </div>
+    <div class="rg">
+      <div class="rg-row">
+        <button class="rb" onclick="autoSum()"><i class="fa fa-sigma"></i><span>Somme</span></button>
+        <button class="rb" onclick="openFindPanel()"><i class="fa fa-search"></i><span>Chercher</span></button>
+        <button class="rb" onclick="clearCells()"><i class="fa fa-eraser"></i><span>Effacer</span></button>
+      </div>
+      <div class="rg-title">Édition</div>
+    </div>
+  </div>
+
+  <!-- INSERT -->
+  <div class="ribbon-panel" id="panel-insert">
+    <div class="rg">
+      <div class="rg-row">
+        <div class="dd">
+          <button class="rb" onclick="toggleDD('dd-chart-type')"><i class="fa fa-chart-bar"></i><span>Graphique</span></button>
+          <div class="dd-menu" id="dd-chart-type">
+            <div class="dd-it" onclick="insertChart('bar')"><i class="fa fa-chart-bar"></i> Barres</div>
+            <div class="dd-it" onclick="insertChart('line')"><i class="fa fa-chart-line"></i> Courbes</div>
+            <div class="dd-it" onclick="insertChart('pie')"><i class="fa fa-chart-pie"></i> Secteurs</div>
+            <div class="dd-it" onclick="insertChart('doughnut')"><i class="fa fa-circle"></i> Anneau</div>
+            <div class="dd-it" onclick="insertChart('scatter')"><i class="fa fa-braille"></i> Nuage</div>
+            <div class="dd-it" onclick="insertChart('area')"><i class="fa fa-chart-area"></i> Aires</div>
+            <div class="dd-it" onclick="insertChart('radar')"><i class="fa fa-star"></i> Radar</div>
+            <div class="dd-it" onclick="insertChart('polarArea')"><i class="fa fa-circle-notch"></i> Polaire</div>
+          </div>
+        </div>
+        <button class="rb" onclick="insertSparkline()"><i class="fa fa-wave-square"></i><span>Sparkline</span></button>
+      </div>
+      <div class="rg-title">Graphiques</div>
+    </div>
+    <div class="rg">
+      <div class="rg-row">
+        <button class="rb" onclick="insertPivotTable()"><i class="fa fa-table"></i><span>Tableau croisé</span></button>
+        <button class="rb" onclick="insertTable()"><i class="fa fa-border-all"></i><span>Tableau</span></button>
+        <button class="rb" onclick="insertDropdown()"><i class="fa fa-list"></i><span>Liste dér.</span></button>
+      </div>
+      <div class="rg-title">Tableaux</div>
+    </div>
+    <div class="rg">
+      <div class="rg-row">
+        <button class="rb" onclick="insertHyperlink()"><i class="fa fa-link"></i><span>Lien</span></button>
+        <button class="rb" onclick="insertComment()"><i class="fa fa-comment"></i><span>Commentaire</span></button>
+        <button class="rb" onclick="insertDate()"><i class="fa fa-calendar"></i><span>Date</span></button>
+      </div>
+      <div class="rg-title">Autres</div>
+    </div>
+  </div>
+
+  <!-- DATA -->
+  <div class="ribbon-panel" id="panel-data">
+    <div class="rg">
+      <div class="rg-row">
+        <button class="rb" onclick="sortRange('asc')"><i class="fa fa-sort-alpha-up"></i><span>A→Z</span></button>
+        <button class="rb" onclick="sortRange('desc')"><i class="fa fa-sort-alpha-down"></i><span>Z→A</span></button>
+        <button class="rb" onclick="openSortModal()"><i class="fa fa-sort"></i><span>Tri perso.</span></button>
+      </div>
+      <div class="rg-title">Trier</div>
+    </div>
+    <div class="rg">
+      <div class="rg-row">
+        <button class="rb" id="rb-filter" onclick="toggleAutoFilter()"><i class="fa fa-filter"></i><span>Filtre auto</span></button>
+        <button class="rb" onclick="clearFilters()"><i class="fa fa-times-circle"></i><span>Effacer</span></button>
+        <button class="rb" onclick="openAdvancedFilter()"><i class="fa fa-sliders-h"></i><span>Avancé</span></button>
+      </div>
+      <div class="rg-title">Filtrer</div>
+    </div>
+    <div class="rg">
+      <div class="rg-row">
+        <button class="rb" onclick="removeDuplicates()"><i class="fa fa-trash-alt"></i><span>Doublons</span></button>
+        <button class="rb" onclick="openDataValidationModal()"><i class="fa fa-check-circle"></i><span>Validation</span></button>
+        <button class="rb" onclick="textToColumns()"><i class="fa fa-columns"></i><span>Texte→Col</span></button>
+      </div>
+      <div class="rg-title">Outils données</div>
+    </div>
+    <div class="rg">
+      <div class="rg-row">
+        <button class="rb" onclick="groupRows()"><i class="fa fa-layer-group"></i><span>Grouper</span></button>
+        <button class="rb" onclick="ungroupRows()"><i class="fa fa-object-ungroup"></i><span>Dégrouper</span></button>
+        <button class="rb" onclick="subtotal()"><i class="fa fa-calculator"></i><span>Sous-total</span></button>
+      </div>
+      <div class="rg-title">Plan</div>
+    </div>
+    <div class="rg">
+      <div class="rg-row">
+        <button class="rb" onclick="importCSV()"><i class="fa fa-file-import"></i><span>Importer CSV</span></button>
+        <button class="rb" onclick="exportCSV()"><i class="fa fa-file-csv"></i><span>Export CSV</span></button>
+      </div>
+      <div class="rg-title">Import/Export</div>
+    </div>
+  </div>
+
+  <!-- FORMULAS -->
+  <div class="ribbon-panel" id="panel-formulas">
+    <div class="rg">
+      <div class="rg-row">
+        <button class="rb" onclick="insertFn('SUM')"><i class="fa fa-sigma"></i><span>SOMME</span></button>
+        <button class="rb" onclick="insertFn('AVERAGE')"><i class="fa fa-chart-line"></i><span>MOYENNE</span></button>
+        <button class="rb" onclick="insertFn('COUNT')"><i class="fa fa-hashtag"></i><span>NB</span></button>
+        <button class="rb" onclick="insertFn('MAX')"><i class="fa fa-arrow-up"></i><span>MAX</span></button>
+        <button class="rb" onclick="insertFn('MIN')"><i class="fa fa-arrow-down"></i><span>MIN</span></button>
+      </div>
+      <div class="rg-title">Statistiques</div>
+    </div>
+    <div class="rg">
+      <div class="rg-row">
+        <button class="rb" onclick="insertFn('IF')"><i class="fa fa-code-branch"></i><span>SI</span></button>
+        <button class="rb" onclick="insertFn('VLOOKUP')"><i class="fa fa-search"></i><span>RECHERCHEV</span></button>
+        <button class="rb" onclick="insertFn('HLOOKUP')"><i class="fa fa-search"></i><span>RECHERCHEH</span></button>
+        <button class="rb" onclick="insertFn('INDEX')"><i class="fa fa-crosshairs"></i><span>INDEX</span></button>
+        <button class="rb" onclick="insertFn('MATCH')"><i class="fa fa-equals"></i><span>EQUIV</span></button>
+      </div>
+      <div class="rg-title">Recherche</div>
+    </div>
+    <div class="rg">
+      <div class="rg-row">
+        <button class="rb" onclick="insertFn('CONCATENATE')"><i class="fa fa-link"></i><span>CONCAT</span></button>
+        <button class="rb" onclick="insertFn('LEFT')"><i class="fa fa-align-left"></i><span>GAUCHE</span></button>
+        <button class="rb" onclick="insertFn('RIGHT')"><i class="fa fa-align-right"></i><span>DROITE</span></button>
+        <button class="rb" onclick="insertFn('MID')"><i class="fa fa-align-center"></i><span>STXT</span></button>
+        <button class="rb" onclick="insertFn('LEN')"><i class="fa fa-ruler"></i><span>NBCAR</span></button>
+      </div>
+      <div class="rg-title">Texte</div>
+    </div>
+    <div class="rg">
+      <div class="rg-row">
+        <button class="rb" onclick="insertFn('TODAY')"><i class="fa fa-calendar-day"></i><span>AUJOURD'HUI</span></button>
+        <button class="rb" onclick="insertFn('NOW')"><i class="fa fa-clock"></i><span>MAINTENANT</span></button>
+        <button class="rb" onclick="insertFn('DATE')"><i class="fa fa-calendar"></i><span>DATE</span></button>
+        <button class="rb" onclick="insertFn('ROUND')"><i class="fa fa-circle"></i><span>ARRONDI</span></button>
+        <button class="rb" onclick="insertFn('ABS')"><i class="fa fa-balance-scale"></i><span>ABS</span></button>
+      </div>
+      <div class="rg-title">Math/Date</div>
+    </div>
+    <div class="rg">
+      <div class="rg-row">
+        <button class="rb" onclick="toggleShowFormulas()"><i class="fa fa-eye"></i><span>Afficher formules</span></button>
+        <button class="rb" onclick="recalcAll()"><i class="fa fa-sync"></i><span>Recalculer</span></button>
+        <button class="rb" onclick="traceError()"><i class="fa fa-exclamation-triangle"></i><span>Tracer erreur</span></button>
+      </div>
+      <div class="rg-title">Audit</div>
+    </div>
+  </div>
+
+  <!-- REVIEW -->
+  <div class="ribbon-panel" id="panel-review">
+    <div class="rg">
+      <div class="rg-row">
+        <button class="rb" onclick="protectSheet()"><i class="fa fa-lock"></i><span>Protéger</span></button>
+        <button class="rb" onclick="unprotectSheet()"><i class="fa fa-unlock"></i><span>Déprotéger</span></button>
+        <button class="rb" onclick="protectWorkbook()"><i class="fa fa-shield-alt"></i><span>Classeur</span></button>
+      </div>
+      <div class="rg-title">Protection</div>
+    </div>
+    <div class="rg">
+      <div class="rg-row">
+        <button class="rb" onclick="trackChanges()"><i class="fa fa-edit"></i><span>Suivi</span></button>
+        <button class="rb" onclick="addComment()"><i class="fa fa-comment"></i><span>Commentaire</span></button>
+        <button class="rb" onclick="showComments()"><i class="fa fa-comments"></i><span>Afficher</span></button>
+      </div>
+      <div class="rg-title">Révision</div>
+    </div>
+  </div>
+
+  <!-- VIEW -->
+  <div class="ribbon-panel" id="panel-view">
+    <div class="rg">
+      <div class="rg-row">
+        <button class="rb" id="rb-grid" onclick="toggleGridlines()" class="pressed"><i class="fa fa-border-all"></i><span>Grille</span></button>
+        <button class="rb" id="rb-heads" onclick="toggleHeaders()"><i class="fa fa-heading"></i><span>En-têtes</span></button>
+        <button class="rb" id="rb-fbar" onclick="toggleFormulaBar()"><i class="fa fa-function"></i><span>Barre formule</span></button>
+      </div>
+      <div class="rg-title">Afficher</div>
+    </div>
+    <div class="rg">
+      <div class="rg-row">
+        <button class="rb" onclick="freezeRow()"><i class="fa fa-snowflake"></i><span>Figer ligne</span></button>
+        <button class="rb" onclick="freezeCol()"><i class="fa fa-snowflake"></i><span>Figer col</span></button>
+        <button class="rb" onclick="unfreeze()"><i class="fa fa-sun"></i><span>Libérer</span></button>
+      </div>
+      <div class="rg-title">Figer</div>
+    </div>
+    <div class="rg">
+      <div class="rg-row" style="align-items:center; gap:6px; padding:0 4px;">
+        <input type="range" id="zoom-range" min="50" max="200" value="100" step="10" oninput="setZoom(this.value)">
+        <span id="zoom-disp">100%</span>
+      </div>
+      <div class="rg-title">Zoom</div>
+    </div>
+    <div class="rg">
+      <div class="rg-row">
+        <button class="rb" onclick="newWindow()"><i class="fa fa-clone"></i><span>Nouvelle fenêtre</span></button>
+        <button class="rb" onclick="fullscreen()"><i class="fa fa-expand"></i><span>Plein écran</span></button>
+      </div>
+      <div class="rg-title">Fenêtre</div>
+    </div>
+  </div>
+</div>
+
+<!-- FORMULA BAR -->
+<div id="formula-bar">
+  <input id="name-box" value="A1" onkeydown="nameBoxNav(event)" title="Référence de cellule">
+  <button id="fx-btn" onclick="openFnModal()" title="Insérer une fonction">fx</button>
+  <input id="formula-input" placeholder="Saisir une valeur ou formule (ex: =SOMME(A1:A10))" onkeydown="formulaKeydown(event)" oninput="formulaInput(event)">
+</div>
+
+<!-- MAIN -->
+<div id="main">
+  <!-- SIDEBAR -->
+  <div id="sidebar">
+    <div class="sb-section">
+      <div class="sb-title">Fichier</div>
+      <div class="sb-item" onclick="newWorkbook()"><i class="fa fa-file"></i> Nouveau</div>
+      <div class="sb-item" onclick="openFile()"><i class="fa fa-folder-open"></i> Ouvrir CSV</div>
+      <div class="sb-item" onclick="saveWorkbook()"><i class="fa fa-save"></i> Enregistrer</div>
+      <div class="sb-item" onclick="saveWorkbookAs()"><i class="fa fa-save"></i> Enreg. sous…</div>
+      <div class="sb-item" onclick="openExportModal()"><i class="fa fa-file-export"></i> Exporter</div>
+      <div class="sb-item" onclick="printSheet()"><i class="fa fa-print"></i> Imprimer</div>
+    </div>
+    <div class="sb-section">
+      <div class="sb-title">Outils</div>
+      <div class="sb-item" onclick="openFindPanel()"><i class="fa fa-search"></i> Rechercher</div>
+      <div class="sb-item" onclick="openFmtCellModal()"><i class="fa fa-palette"></i> Format cellule</div>
+      <div class="sb-item" onclick="openDataValidationModal()"><i class="fa fa-check-circle"></i> Validation</div>
+      <div class="sb-item" onclick="openFnModal()"><i class="fa fa-function"></i> Insérer fonction</div>
+    </div>
+    <div class="sb-section">
+      <div class="sb-title">Infos sélection</div>
+      <div style="padding:6px 12px;font-size:11px;color:var(--gray-600);" id="sel-info-panel">A1</div>
+    </div>
+  </div>
+
+  <!-- GRID WRAPPER -->
+  <div id="grid-wrapper">
+    <!-- FIND PANEL -->
+    <div id="find-panel">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+        <span style="font-size:12px;font-weight:600" id="fp-title">Rechercher</span>
+        <button style="background:none;border:none;cursor:pointer;font-size:16px;color:var(--gray-500);" onclick="closeFindPanel()">×</button>
+      </div>
+      <div class="fp-row">
+        <input id="fp-find" placeholder="Rechercher…" oninput="liveSearch()">
+        <button class="fp-btn" onclick="findNext()">↓</button>
+        <button class="fp-btn" onclick="findPrev()">↑</button>
+        <span style="font-size:11px;color:var(--gray-500);" id="fp-count"></span>
+      </div>
+      <div class="fp-row" id="fp-replace-row" style="display:none">
+        <input id="fp-replace" placeholder="Remplacer par…">
+        <button class="fp-btn" onclick="replaceOne()">1×</button>
+        <button class="fp-btn" onclick="replaceAll()">Tout</button>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px;">
+        <label class="fcheck" style="margin:0;font-size:11px"><input type="checkbox" id="fp-case"> Casse</label>
+        <label class="fcheck" style="margin:0;font-size:11px"><input type="checkbox" id="fp-exact"> Exacte</label>
+        <button class="fp-btn" onclick="toggleFpReplace()" id="fp-rep-btn">Remplacer ▾</button>
+      </div>
+    </div>
+
+    <div id="grid-scroll" onscroll="onGridScroll()">
+      <div id="grid-container">
+        <div id="col-headers">
+          <div id="row-col-corner" onclick="selectAll()"></div>
+          <!-- col headers generated by JS -->
+        </div>
+        <div id="rows-container">
+          <!-- rows generated by JS -->
+        </div>
+        <!-- Selection overlay -->
+        <div id="sel-box" style="display:none"></div>
+        <div id="copy-dash" style="display:none"></div>
+        <div id="fill-handle" style="display:none" onmousedown="startFillDrag(event)"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SHEET TABS -->
+<div id="sheet-tabs-area">
+  <div id="sheet-tabs"></div>
+  <button id="add-sheet-btn" onclick="addSheet()" title="Ajouter une feuille">＋</button>
+</div>
+
+<!-- STATUS BAR -->
+<div id="statusbar">
+  <div class="sb-it" id="sb-ready">Prêt</div>
+  <span class="sb-sep">|</span>
+  <div class="sb-it" id="sb-avg" style="display:none">Moy: <span id="sb-avg-val">0</span></div>
+  <div class="sb-it" id="sb-count" style="display:none">Nb: <span id="sb-count-val">0</span></div>
+  <div class="sb-it" id="sb-sum" style="display:none">Somme: <span id="sb-sum-val">0</span></div>
+  <div class="sb-it" id="sb-min" style="display:none">Min: <span id="sb-min-val">0</span></div>
+  <div class="sb-it" id="sb-max" style="display:none">Max: <span id="sb-max-val">0</span></div>
+  <div id="sb-right">
+    <span id="sb-sheets">1 feuille</span>
+    <span class="sb-sep">|</span>
+    <span id="sb-sel">A1</span>
+    <span class="sb-sep">|</span>
+    <input type="range" id="zoom-range" min="50" max="200" value="100" step="10" oninput="setZoom(this.value)">
+    <span id="zoom-disp-bar">100%</span>
+  </div>
+</div>
+
+<!-- CONTEXT MENU -->
+<div id="ctx">
+  <div class="ctx-it" onclick="ctxCut()"><i class="fa fa-cut"></i>Couper<span class="ks">Ctrl+X</span></div>
+  <div class="ctx-it" onclick="ctxCopy()"><i class="fa fa-copy"></i>Copier<span class="ks">Ctrl+C</span></div>
+  <div class="ctx-it" onclick="ctxPaste()"><i class="fa fa-paste"></i>Coller<span class="ks">Ctrl+V</span></div>
+  <div class="ctx-it" onclick="ctxPasteSpecial()"><i class="fa fa-paste"></i>Collage spécial…</div>
+  <div class="ctx-sep"></div>
+  <div class="ctx-it" onclick="insertRowAbove()"><i class="fa fa-plus"></i>Insérer ligne au-dessus</div>
+  <div class="ctx-it" onclick="insertRowBelow()"><i class="fa fa-plus"></i>Insérer ligne en dessous</div>
+  <div class="ctx-it" onclick="insertColLeft()"><i class="fa fa-plus"></i>Insérer colonne gauche</div>
+  <div class="ctx-it" onclick="insertColRight()"><i class="fa fa-plus"></i>Insérer colonne droite</div>
+  <div class="ctx-sep"></div>
+  <div class="ctx-it" onclick="deleteSelectedRows()"><i class="fa fa-trash"></i>Supprimer ligne(s)</div>
+  <div class="ctx-it" onclick="deleteSelectedCols()"><i class="fa fa-trash"></i>Supprimer colonne(s)</div>
+  <div class="ctx-sep"></div>
+  <div class="ctx-it" onclick="openFmtCellModal()"><i class="fa fa-palette"></i>Format de cellule…</div>
+  <div class="ctx-it" onclick="clearCells()"><i class="fa fa-eraser"></i>Effacer le contenu</div>
+  <div class="ctx-it" onclick="insertComment()"><i class="fa fa-comment"></i>Insérer commentaire</div>
+</div>
+
+<!-- FN HINT -->
+<div id="fn-hint"></div>
+
+<!-- ── MODALS ── -->
+<!-- Export -->
+<div class="modal-overlay" id="modal-export">
+  <div class="modal-box">
+    <div class="m-header"><span class="m-title" id="export-modal-title">Exporter le classeur</span><button class="m-close" onclick="closeModal('modal-export')">×</button></div>
+    <div class="m-body">
+      <div class="fg"><label class="fl">Format</label>
+        <select class="fc" id="exp-fmt">
+          <option value="fsheet">Classeur AetherSheets (.fsheet)</option>
+          <option value="csv">CSV (.csv)</option>
+          <option value="html">HTML (.html)</option>
+          <option value="txt">Texte tabulé (.txt)</option>
+          <option value="json">JSON (.json)</option>
+        </select>
+      </div>
+      <div class="fg"><label class="fl">Nom du fichier</label><input class="fc" id="exp-name" value="classeur"></div>
+      <div class="fg">
+        <label class="fl">Répertoire</label>
+        <div style="display:flex; gap:8px; align-items:center;">
+          <input class="fc" id="exp-dir" value="/Documents" placeholder="/Documents">
+          <button class="btn" type="button" onclick="pickExportDirectory()" title="Choisir dans l'explorateur">📁</button>
+        </div>
+      </div>
+      <div class="fg">
+        <label class="fcheck"><input type="checkbox" id="exp-all-sheets"> Toutes les feuilles</label>
+        <label class="fcheck"><input type="checkbox" id="exp-headers" checked> Inclure les en-têtes</label>
+      </div>
+    </div>
+    <div class="m-footer"><button class="btn" onclick="closeModal('modal-export')">Annuler</button><button class="btn btn-primary" id="export-modal-submit" onclick="doExport()">Exporter</button></div>
+  </div>
+</div>
+
+<!-- Format Cell -->
+<div class="modal-overlay" id="modal-fmtcell">
+  <div class="modal-box" style="max-width:500px">
+    <div class="m-header"><span class="m-title">Format de cellule</span><button class="m-close" onclick="closeModal('modal-fmtcell')">×</button></div>
+    <div class="m-body">
+      <div style="display:flex;gap:12px;margin-bottom:12px;border-bottom:1px solid var(--border);padding-bottom:8px;">
+        <button class="btn btn-sm" onclick="fmtTab('number')" id="ftab-number">Nombre</button>
+        <button class="btn btn-sm" onclick="fmtTab('alignment')" id="ftab-alignment">Alignement</button>
+        <button class="btn btn-sm" onclick="fmtTab('font')" id="ftab-font">Police</button>
+        <button class="btn btn-sm" onclick="fmtTab('border')" id="ftab-border">Bordure</button>
+        <button class="btn btn-sm" onclick="fmtTab('fill')" id="ftab-fill">Remplissage</button>
+      </div>
+      <div id="fmt-panel-number">
+        <div class="fmt-preview" id="fmt-preview">123,456.79</div>
+        <div class="fg"><label class="fl">Catégorie</label>
+          <select class="fc" id="fmt-cat" onchange="updateFmtPreview()">
+            <option value="general">Général</option>
+            <option value="number">Nombre</option>
+            <option value="currency">Monétaire</option>
+            <option value="percent">Pourcentage</option>
+            <option value="scientific">Scientifique</option>
+            <option value="date">Date</option>
+            <option value="time">Heure</option>
+            <option value="text">Texte</option>
+          </select>
+        </div>
+        <div class="frow">
+          <div class="fg"><label class="fl">Décimales</label><input class="fc" type="number" id="fmt-dec" value="2" min="0" max="15" onchange="updateFmtPreview()"></div>
+          <div class="fg"><label class="fl">Séparateur milliers</label><select class="fc" id="fmt-sep" onchange="updateFmtPreview()"><option value="yes">Oui</option><option value="no">Non</option></select></div>
+        </div>
+        <div class="fg"><label class="fl">Format personnalisé</label><input class="fc" id="fmt-custom" placeholder="ex: #,##0.00 €"></div>
+      </div>
+      <div id="fmt-panel-alignment" style="display:none">
+        <div class="frow">
+          <div class="fg"><label class="fl">Horizontal</label><select class="fc" id="fmt-halign"><option value="">Général</option><option value="left">Gauche</option><option value="center">Centre</option><option value="right">Droite</option><option value="justify">Justifié</option></select></div>
+          <div class="fg"><label class="fl">Vertical</label><select class="fc" id="fmt-valign"><option value="top">Haut</option><option value="middle" selected>Milieu</option><option value="bottom">Bas</option></select></div>
+        </div>
+        <label class="fcheck"><input type="checkbox" id="fmt-wrap"> Renvoi automatique</label>
+        <label class="fcheck"><input type="checkbox" id="fmt-merge"> Fusionner les cellules</label>
+      </div>
+      <div id="fmt-panel-font" style="display:none">
+        <div class="frow">
+          <div class="fg"><label class="fl">Police</label><select class="fc" id="fmt-ff"><option>IBM Plex Sans</option><option>Calibri</option><option>Arial</option><option>Georgia</option><option>Times New Roman</option><option>Courier New</option></select></div>
+          <div class="fg"><label class="fl">Taille</label><input class="fc" type="number" id="fmt-fs" value="11" min="6" max="72"></div>
+        </div>
+        <div class="frow">
+          <div class="fg"><label class="fcheck"><input type="checkbox" id="fmt-bold"> Gras</label></div>
+          <div class="fg"><label class="fcheck"><input type="checkbox" id="fmt-ital"> Italique</label></div>
+          <div class="fg"><label class="fcheck"><input type="checkbox" id="fmt-ul"> Souligné</label></div>
+        </div>
+        <div class="fg"><label class="fl">Couleur texte</label><input class="fc" type="color" id="fmt-fc" value="#000000"></div>
+      </div>
+      <div id="fmt-panel-border" style="display:none">
+        <div class="fg"><label class="fl">Style de bordure</label>
+          <select class="fc" id="fmt-border-style"><option value="1px solid">Fin</option><option value="2px solid">Épais</option><option value="1px dashed">Pointillé</option><option value="1px dotted">Tirets</option></select>
+        </div>
+        <div class="fg"><label class="fl">Couleur</label><input class="fc" type="color" id="fmt-border-color" value="#000000"></div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;">
+          <label class="fcheck"><input type="checkbox" id="fb-top"> Haut</label>
+          <label class="fcheck"><input type="checkbox" id="fb-mid"> Milieu</label>
+          <label class="fcheck"><input type="checkbox" id="fb-bot"> Bas</label>
+          <label class="fcheck"><input type="checkbox" id="fb-left"> Gauche</label>
+          <label class="fcheck"><input type="checkbox" id="fb-center"> Centre</label>
+          <label class="fcheck"><input type="checkbox" id="fb-right"> Droite</label>
+        </div>
+      </div>
+      <div id="fmt-panel-fill" style="display:none">
+        <div class="fg"><label class="fl">Couleur de fond</label><input class="fc" type="color" id="fmt-bg" value="#ffffff"></div>
+        <div class="color-grid" id="fill-preset-grid"></div>
+      </div>
+    </div>
+    <div class="m-footer"><button class="btn" onclick="closeModal('modal-fmtcell')">Annuler</button><button class="btn btn-primary" onclick="applyFmtCellModal()">OK</button></div>
+  </div>
+</div>
+
+<!-- Function Insert Modal -->
+<div class="modal-overlay" id="modal-fn">
+  <div class="modal-box" style="max-width:560px">
+    <div class="m-header"><span class="m-title">Insérer une fonction</span><button class="m-close" onclick="closeModal('modal-fn')">×</button></div>
+    <div class="m-body">
+      <div class="fg"><label class="fl">Catégorie</label>
+        <select class="fc" id="fn-cat" onchange="filterFns()">
+          <option value="all">Toutes</option>
+          <option value="math">Math / Trig</option>
+          <option value="stat">Statistiques</option>
+          <option value="text">Texte</option>
+          <option value="logic">Logique</option>
+          <option value="lookup">Recherche</option>
+          <option value="date">Date / Heure</option>
+          <option value="info">Information</option>
+        </select>
+      </div>
+      <div id="fn-list" style="max-height:220px;overflow-y:auto;border:1px solid var(--border);border-radius:3px;"></div>
+      <div id="fn-desc" style="margin-top:10px;padding:8px;background:var(--gray-100);border-radius:3px;font-size:11px;min-height:52px;"></div>
+    </div>
+    <div class="m-footer"><button class="btn" onclick="closeModal('modal-fn')">Annuler</button><button class="btn btn-primary" onclick="confirmFnInsert()">Insérer</button></div>
+  </div>
+</div>
+
+<!-- Sort Modal -->
+<div class="modal-overlay" id="modal-sort">
+  <div class="modal-box" style="max-width:420px">
+    <div class="m-header"><span class="m-title">Trier</span><button class="m-close" onclick="closeModal('modal-sort')">×</button></div>
+    <div class="m-body">
+      <label class="fcheck" style="margin-bottom:10px"><input type="checkbox" id="sort-header" checked> Ma plage de données contient des en-têtes</label>
+      <div id="sort-levels"></div>
+      <button class="btn btn-sm" onclick="addSortLevel()" style="margin-top:8px"><i class="fa fa-plus"></i> Ajouter un niveau</button>
+    </div>
+    <div class="m-footer"><button class="btn" onclick="closeModal('modal-sort')">Annuler</button><button class="btn btn-primary" onclick="doSort()">Trier</button></div>
+  </div>
+</div>
+
+<!-- Data Validation Modal -->
+<div class="modal-overlay" id="modal-dv">
+  <div class="modal-box" style="max-width:420px">
+    <div class="m-header"><span class="m-title">Validation des données</span><button class="m-close" onclick="closeModal('modal-dv')">×</button></div>
+    <div class="m-body">
+      <div class="fg"><label class="fl">Autoriser</label>
+        <select class="fc" id="dv-type" onchange="updateDVPanel()">
+          <option value="any">Toute valeur</option>
+          <option value="integer">Nombre entier</option>
+          <option value="decimal">Décimal</option>
+          <option value="list">Liste</option>
+          <option value="date">Date</option>
+          <option value="length">Longueur texte</option>
+        </select>
+      </div>
+      <div id="dv-panel">
+        <div class="fg"><label class="fl">Données</label>
+          <select class="fc" id="dv-cond"><option value="between">entre</option><option value="not_between">pas entre</option><option value="equal">égal à</option><option value="not_equal">différent de</option><option value="greater">supérieur à</option><option value="less">inférieur à</option></select>
+        </div>
+        <div class="frow">
+          <div class="fg"><label class="fl">Minimum / Source</label><input class="fc" id="dv-min" placeholder="Valeur ou A1:A10"></div>
+          <div class="fg"><label class="fl">Maximum</label><input class="fc" id="dv-max"></div>
+        </div>
+      </div>
+      <div class="fg"><label class="fl">Message d'erreur</label><input class="fc" id="dv-errmsg" placeholder="Valeur non valide"></div>
+      <label class="fcheck"><input type="checkbox" id="dv-dropdown" checked> Afficher un menu déroulant (pour liste)</label>
+    </div>
+    <div class="m-footer"><button class="btn" onclick="closeModal('modal-dv')">Annuler</button><button class="btn btn-primary" onclick="applyDV()">OK</button></div>
+  </div>
+</div>
+
+<!-- Paste Special Modal -->
+<div class="modal-overlay" id="modal-paste-special">
+  <div class="modal-box" style="max-width:360px">
+    <div class="m-header"><span class="m-title">Collage spécial</span><button class="m-close" onclick="closeModal('modal-paste-special')">×</button></div>
+    <div class="m-body">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
+        <label class="fcheck"><input type="radio" name="ps-what" value="all" checked> Tout</label>
+        <label class="fcheck"><input type="radio" name="ps-what" value="values"> Valeurs</label>
+        <label class="fcheck"><input type="radio" name="ps-what" value="formats"> Formats</label>
+        <label class="fcheck"><input type="radio" name="ps-what" value="formulas"> Formules</label>
+        <label class="fcheck"><input type="radio" name="ps-what" value="comments"> Commentaires</label>
+        <label class="fcheck"><input type="radio" name="ps-what" value="width"> Largeur col.</label>
+      </div>
+      <div class="fg" style="margin-top:10px"><label class="fl">Opération</label>
+        <select class="fc" id="ps-op"><option value="none">Aucune</option><option value="add">Addition</option><option value="sub">Soustraction</option><option value="mul">Multiplication</option><option value="div">Division</option></select>
+      </div>
+      <label class="fcheck"><input type="checkbox" id="ps-transpose"> Transposer</label>
+    </div>
+    <div class="m-footer"><button class="btn" onclick="closeModal('modal-paste-special')">Annuler</button><button class="btn btn-primary" onclick="doPasteSpecial()">Coller</button></div>
+  </div>
+</div>
+
+<!-- Cond Format Modal -->
+<div class="modal-overlay" id="modal-cf">
+  <div class="modal-box" style="max-width:440px">
+    <div class="m-header"><span class="m-title">Mise en forme conditionnelle</span><button class="m-close" onclick="closeModal('modal-cf')">×</button></div>
+    <div class="m-body">
+      <div class="fg"><label class="fl">Règle</label>
+        <select class="fc" id="cf-rule">
+          <option value="gt">Valeur supérieure à</option>
+          <option value="lt">Valeur inférieure à</option>
+          <option value="eq">Valeur égale à</option>
+          <option value="between">Valeur entre</option>
+          <option value="top10">Top 10%</option>
+          <option value="bottom10">Bottom 10%</option>
+          <option value="unique">Valeurs uniques</option>
+          <option value="duplicate">Doublons</option>
+          <option value="contains">Contient le texte</option>
+          <option value="colorscale">Échelle de couleur</option>
+          <option value="databars">Barres de données</option>
+        </select>
+      </div>
+      <div class="frow" id="cf-val-row">
+        <div class="fg"><label class="fl">Valeur 1</label><input class="fc" id="cf-val1" placeholder="0"></div>
+        <div class="fg" id="cf-val2-group" style="display:none"><label class="fl">Valeur 2</label><input class="fc" id="cf-val2" placeholder="100"></div>
+      </div>
+      <div class="fg"><label class="fl">Format appliqué</label>
+        <div style="display:flex;gap:8px;">
+          <input type="color" id="cf-color" value="#ff4444" style="width:40px;height:32px;border:1px solid var(--border);border-radius:3px;cursor:pointer;">
+          <input type="color" id="cf-bg-color" value="#ffe0e0" style="width:40px;height:32px;border:1px solid var(--border);border-radius:3px;cursor:pointer;">
+          <span style="font-size:11px;color:var(--gray-500);align-self:center;">Texte / Fond</span>
+        </div>
+      </div>
+    </div>
+    <div class="m-footer"><button class="btn" onclick="closeModal('modal-cf')">Annuler</button><button class="btn btn-primary" onclick="applyCF()">Appliquer</button></div>
+  </div>
+</div>
+
+<script src="excel.js"></script>
+</body>
+</html>

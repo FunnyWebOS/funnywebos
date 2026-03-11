@@ -1,0 +1,612 @@
+[
+    {
+        "id": "wiki",
+        "title": "AetherWiki",
+        "creator": "FunnyCorp",
+        "description": "Le centre de connaissances officiel d'AetherOS. Apprenez à créer vos propres apps et découvrez tous les secrets du système.",
+        "category": "productivity",
+        "icon": "📚",
+        "screenshots": [
+            "📖",
+            "🧩",
+            "💡"
+        ]
+    },
+    {
+        "id": "explorer",
+        "title": "Fichiers",
+        "creator": "System",
+        "description": "Gérez vos documents, images et téléchargements en toute simplicité avec l'explorateur de fichiers natif.",
+        "category": "productivity",
+        "icon": "📂",
+        "screenshots": [
+            "📁",
+            "📄",
+            "🖼️"
+        ]
+    },
+    {
+        "id": "browser",
+        "title": "Zaluea Browser",
+        "creator": "FunnyCorp / Zaluea",
+        "description": "Navigateur inspiré de Zaluea avec onglets, favoris, historique, téléchargements et page d'accueil revue.",
+        "category": "online",
+        "icon": "🌐",
+        "screenshots": [
+            "🌍",
+            "🧭",
+            "⬇️"
+        ]
+    },
+    {
+        "id": "word",
+        "title": "FunnyText",
+        "creator": "FunnyCorp",
+        "description": "Éditeur de texte complet pour vos notes, documents et fichiers Markdown. Simple, rapide et élégant.",
+        "category": "productivity",
+        "icon": "📝",
+        "screenshots": [
+            "✍️",
+            "📄",
+            "🖋️"
+        ]
+    },
+    {
+        "id": "excel",
+        "title": "FunnySheets",
+        "creator": "FunnyCorp",
+        "description": "Tableur complet avec cellules éditables, plusieurs feuilles et sauvegarde dans le VFS.",
+        "category": "productivity",
+        "icon": "📊",
+        "screenshots": [
+            "📈",
+            "🧮",
+            "📉"
+        ]
+    },
+    {
+        "id": "powerpoint",
+        "title": "FunnySlides",
+        "creator": "FunnyCorp",
+        "description": "Créateur de présentations avec gestion de slides, aperçu instantané et export VFS.",
+        "category": "productivity",
+        "icon": "📽️",
+        "screenshots": [
+            "🖼️",
+            "🎤",
+            "➡️"
+        ]
+    },
+    {
+        "id": "talky",
+        "title": "Talky Messenger",
+        "creator": "FunnyCorp",
+        "description": "Communiquez en temps réel avec vos amis grâce à la technologie P2P sécurisée d'AetherOS.",
+        "category": "online",
+        "icon": "💬",
+        "screenshots": [
+            "🗣️",
+            "📱",
+            "🤝"
+        ]
+    },
+    {
+        "id": "snake",
+        "title": "Snake OS",
+        "creator": "FunnyCorp",
+        "description": "Le classique revisité avec une touche futuriste et fluide. Contrôle aux flèches, vitesse progressive.",
+        "category": "online",
+        "icon": "🕹️",
+        "screenshots": [
+            "🎮",
+            "🐍",
+            "🍃"
+        ]
+    },
+    {
+        "id": "tetris",
+        "title": "Tetris Neon",
+        "creator": "FunnyCorp",
+        "description": "Empilez les blocs dans une ambiance néon cyberpunk. Musique immersive et effets visuels rétro.",
+        "category": "online",
+        "icon": "🧱",
+        "screenshots": [
+            "🧱",
+            "🧩",
+            "⚡"
+        ]
+    },
+    {
+        "id": "flappy",
+        "title": "Flappy Futur",
+        "creator": "FunnyCorp",
+        "description": "Volez à travers les piliers d'une cité futuriste. Un défi de réflexes pur et simple.",
+        "category": "online",
+        "icon": "🐦",
+        "screenshots": [
+            "🐦",
+            "☁️",
+            "🏙️"
+        ]
+    },
+    {
+        "id": "focusbox",
+        "title": "FocusBox",
+        "creator": "Vasseta1",
+        "description": "Un timer Pomodoro élégant conçu pour booster votre productivité sans distractions.",
+        "category": "productivity",
+        "icon": "⏳",
+        "screenshots": [
+            "⌛",
+            "📝",
+            "🧘"
+        ]
+    },
+    {
+        "id": "bunny",
+        "title": "Bunny Girl Viewer",
+        "creator": "Vasseta1",
+        "description": "Regardez toute la série et les films de Rascal Does Not Dream dans une interface élégante.",
+        "category": "online",
+        "icon": "🎬",
+        "screenshots": [
+            "📽️",
+            "🐰",
+            "✨"
+        ]
+    },
+    {
+        "id": "stremio",
+        "title": "Stremio Web",
+        "creator": "Stremio Team",
+        "description": "L'expérience cinema ultime. Regardez vos contenus préférés via addons. Interface fluide et moderne.",
+        "category": "online",
+        "icon": "🎥",
+        "screenshots": [
+            "🎥",
+            "🍿",
+            "🍿"
+        ]
+    },
+    {
+        "id": "youtube",
+        "title": "YouTube Redux",
+        "creator": "Google / Invidious",
+        "description": "L'expérience YouTube complète, sans publicités et optimisée pour FunnyWEB OS. Accédez à vos vidéos favorites grâce aux miroirs Invidious.",
+        "category": "online",
+        "icon": "📺",
+        "screenshots": [
+            "▶️",
+            "🤳",
+            "🌟"
+        ]
+    },
+    {
+        "id": "daw",
+        "title": "FunnyDAW Pro",
+        "creator": "FunnyCorp",
+        "description": "Créez vos propres morceaux de musique de A à Z. Une station audio numérique (DAW) complète avec séquenceur, synthétiseurs, boîte à rythmes et effets professionnels intégrés.",
+        "category": "productivity",
+        "icon": "🎹",
+        "screenshots": [
+            "🎹",
+            "🔊",
+            "🎛️"
+        ]
+    },
+    {
+        "id": "video",
+        "title": "FunnyVideo Pro",
+        "creator": "FunnyCorp",
+        "description": "Logiciel de montage vidéo professionnel. Importez vos médias, coupez, appliquez des transitions et exportez votre projet fini avec une timeline multipiste avancée.",
+        "category": "productivity",
+        "icon": "🎞️",
+        "screenshots": [
+            "🎬",
+            "✂️",
+            "🎞️"
+        ]
+    },
+    {
+        "id": "vm",
+        "title": "FunnyVM (Windows x86)",
+        "creator": "FunnyCorp",
+        "description": "Système de virtualisation x86 (v86 Engine). Lancez des systèmes d'exploitation rétro (Win98, DOS, KolibriOS) directement dans votre navigateur. Supporte le glisser-déposer de fichiers EXE (.exe).",
+        "category": "productivity",
+        "icon": "🖥️",
+        "screenshots": [
+            "🪟",
+            "💻",
+            "💾"
+        ]
+    },
+   {
+        "id": "ide",
+        "title": "FunnyStudio Code",
+        "creator": "FunnyCorp",
+        "description": "L'environnement de développement (IDE) ultime. Éditeur de code complet avec coloration syntaxique, système de fichiers virtuel, prévisualisation en direct via iframe, et console d'erreurs intégrée.",
+        "category": "productivity",
+        "icon": "💻",
+        "screenshots": [
+            "",
+            "",
+            ""
+        ]
+    },
+    {
+        "id": "android",
+        "title": "Android Subsystem",
+        "creator": "AetherOS Team",
+        "description": "Couche de compatibilité APK. Installez et exécutez des applications mobiles directement sur votre bureau.",
+        "category": "system",
+        "icon": "🤖",
+        "screenshots": [
+            "📱",
+            "⚙️",
+            "🚀"
+        ]
+    },
+    {
+        "id": "windows_subsystem",
+        "title": "Windows Subsystem",
+        "creator": "BoxedWine Team",
+        "description": "Couche de compatibilité pour exécuter des applications Windows (.exe) via BoxedWine.",
+        "category": "system",
+        "icon": "🪟",
+        "appFile": "exe_runner.html"
+    },
+    {
+        "id": "maps",
+        "title": "AetherMaps",
+        "creator": "FunnyCorp",
+        "description": "Explorez le monde avec une cartographie 3D fluide et des itinéraires précis.",
+        "category": "productivity",
+        "icon": "🗺️"
+    },
+    {
+        "id": "camera",
+        "title": "SnapCam",
+        "creator": "FunnyCorp",
+        "description": "Prenez des photos et appliquez des filtres en temps réel via votre webcam.",
+        "category": "productivity",
+        "icon": "📸"
+    },
+    {
+        "id": "spotify",
+        "title": "Spotify",
+        "creator": "Spotify AB",
+        "description": "Écoutez votre musique préférée. Des millions de titres et de podcasts.",
+        "category": "online",
+        "icon": "🎧",
+        "url": "https://open.spotify.com"
+    },
+    {
+        "id": "discord",
+        "title": "Discord",
+        "creator": "Discord Inc.",
+        "description": "Discutez, passez du temps avec vos amis et rejoignez des communautés.",
+        "category": "online",
+        "icon": "🎮",
+        "url": "https://discord.com/app"
+    },
+    {
+        "id": "vscode",
+        "title": "VS Code Web",
+        "creator": "Microsoft",
+        "description": "L'éditeur de code le plus populaire, directement dans votre navigateur.",
+        "category": "productivity",
+        "icon": "💻",
+        "url": "https://vscode.dev"
+    },
+    {
+        "id": "netflix",
+        "title": "Netflix",
+        "creator": "Netflix",
+        "description": "Regardez des films, des séries et des documentaires en illimité.",
+        "category": "online",
+        "icon": "🍿",
+        "url": "https://www.netflix.com"
+    },
+    {
+        "id": "figma",
+        "title": "Figma",
+        "creator": "Figma",
+        "description": "L'outil de design collaboratif par excellence.",
+        "category": "productivity",
+        "icon": "🎨",
+        "url": "https://www.figma.com"
+    },
+    {
+        "id": "chatgpt",
+        "title": "ChatGPT",
+        "creator": "OpenAI",
+        "description": "L'IA conversationnelle qui change le monde.",
+        "category": "productivity",
+        "icon": "🧠",
+        "url": "https://chat.openai.com"
+    },
+    {
+        "id": "tiktok",
+        "title": "TikTok",
+        "creator": "ByteDance",
+        "description": "Vidéos courtes et tendances virales.",
+        "category": "online",
+        "icon": "🎵",
+        "url": "https://www.tiktok.com"
+    },
+    {
+        "id": "github",
+        "title": "GitHub",
+        "creator": "Microsoft",
+        "description": "La plateforme de développement collaboratif.",
+        "category": "productivity",
+        "icon": "🐙",
+        "url": "https://github.com"
+    },
+    {
+        "id": "photoshop",
+        "title": "Photopea",
+        "creator": "Ivan Kutskir",
+        "description": "Éditeur d'image avancé compatible PSD, XD, Sketch.",
+        "category": "productivity",
+        "icon": "🖌️",
+        "url": "https://www.photopea.com"
+    },
+    {
+        "id": "onlyoffice",
+        "title": "OnlyOffice",
+        "creator": "OnlyOffice",
+        "description": "Suite bureautique en ligne complète pour les documents, feuilles de calcul et présentations. Compatible avec les formats Microsoft Office.",
+        "category": "productivity",
+        "icon": "💼",
+        "url": "https://www.onlyoffice.com/"
+    },
+    {
+        "id": "twitter",
+        "title": "X (Twitter)",
+        "creator": "X Corp",
+        "description": "Suivez l'actualité en temps réel.",
+        "category": "online",
+        "icon": "✖️",
+        "url": "https://twitter.com"
+    },
+    {
+        "id": "disney",
+        "title": "Disney+",
+        "creator": "Disney",
+        "description": "Le meilleur de Disney, Pixar, Marvel, Star Wars et National Geographic.",
+        "category": "online",
+        "icon": "🏰",
+        "url": "https://www.disneyplus.com"
+    },
+    {
+        "id": "slither",
+        "title": "Slither.io",
+        "creator": "Lowtech Studios",
+        "description": "Jeu multijoueur: deviens le plus grand serpent.",
+        "category": "games",
+        "icon": "🐍",
+        "url": "https://slither.io/"
+    },
+    {
+        "id": "agar",
+        "title": "Agar.io",
+        "creator": "Miniclip",
+        "description": "Jeu multijoueur: absorbe des cellules et grandis.",
+        "category": "games",
+        "icon": "🧫",
+        "url": "https://agar.io/"
+    },
+    {
+        "id": "diep",
+        "title": "Diep.io",
+        "creator": "Miniclip",
+        "description": "Jeu multijoueur: tanks, upgrades, chaos.",
+        "category": "games",
+        "icon": "🧨",
+        "url": "https://diep.io/"
+    },
+    {
+        "id": "skribbl",
+        "title": "Skribbl.io",
+        "creator": "Skribbl",
+        "description": "Jeu multijoueur: dessin & devinettes en temps réel.",
+        "category": "games",
+        "icon": "✏️",
+        "url": "https://skribbl.io/"
+    },
+    {
+        "id": "gartic_phone",
+        "title": "Gartic Phone",
+        "creator": "Gartic",
+        "description": "Jeu multijoueur: téléphone arabe en dessins.",
+        "category": "games",
+        "icon": "☎️",
+        "url": "https://garticphone.com/"
+    },
+    {
+        "id": "bonk",
+        "title": "Bonk.io",
+        "creator": "Bonk",
+        "description": "Jeu multijoueur: combats physiques en arène.",
+        "category": "games",
+        "icon": "🪐",
+        "url": "https://bonk.io/"
+    },
+    {
+        "id": "tetrio",
+        "title": "TETR.IO",
+        "creator": "TETR.IO",
+        "description": "Tetris compétitif multijoueur, classé et custom rooms.",
+        "category": "games",
+        "icon": "🧱",
+        "url": "https://tetr.io/"
+    },
+    {
+        "id": "jstris",
+        "title": "Jstris",
+        "creator": "Jstris",
+        "description": "Tetris multijoueur rapide, simple et efficace.",
+        "category": "games",
+        "icon": "⚡",
+        "url": "https://jstris.jezevec10.com/"
+    },
+    {
+        "id": "lichess",
+        "title": "Lichess",
+        "creator": "Lichess",
+        "description": "Échecs en ligne gratuits, parties classées et variantes.",
+        "category": "games",
+        "icon": "♟️",
+        "url": "https://lichess.org/"
+    },
+    {
+        "id": "chesscom",
+        "title": "Chess.com",
+        "creator": "Chess.com",
+        "description": "Échecs multijoueur, défis et tournois.",
+        "category": "games",
+        "icon": "♜",
+        "url": "https://www.chess.com/play/online"
+    },
+    {
+        "id": "colonist",
+        "title": "Colonist.io",
+        "creator": "Colonist",
+        "description": "Jeu multijoueur de stratégie inspiré de Catan.",
+        "category": "games",
+        "icon": "🏝️",
+        "url": "https://colonist.io/"
+    },
+    {
+        "id": "codenames",
+        "title": "Codenames Online",
+        "creator": "Community",
+        "description": "Jeu multijoueur d'association de mots.",
+        "category": "games",
+        "icon": "🕵️",
+        "url": "https://codenames.game/"
+    },
+    {
+        "id": "spyfall",
+        "title": "Spyfall",
+        "creator": "Community",
+        "description": "Jeu multijoueur de bluff et déduction.",
+        "category": "games",
+        "icon": "🕶️",
+        "url": "https://spyfall.app/"
+    },
+    {
+        "id": "shellshockers",
+        "title": "Shell Shockers",
+        "creator": "Blue Wizard",
+        "description": "FPS multijoueur délirant (œufs armés).",
+        "category": "games",
+        "icon": "🥚",
+        "url": "https://shellshockers.io/"
+    },
+    {
+        "id": "krunker",
+        "title": "Krunker",
+        "creator": "Krunker",
+        "description": "FPS multijoueur rapide, navigateur.",
+        "category": "games",
+        "icon": "🔫",
+        "url": "https://krunker.io/"
+    },
+    {
+        "id": "animesama",
+        "title": "Anime-sama",
+        "creator": "anime-sama.tv",
+        "description": "Accès direct à Anime-sama via proxy discret intégré.",
+        "category": "online",
+        "icon": "🎬",
+        "appFile": "animesama.html"
+    },
+    {
+        "id": "onevone_lol",
+        "title": "1v1.LOL",
+        "creator": "JustPlay.LOL",
+        "description": "Build + shooter multijoueur.",
+        "category": "games",
+        "icon": "🏗️",
+        "url": "https://1v1.lol/"
+    },
+    {
+        "id": "zombsroyale",
+        "title": "ZombsRoyale.io",
+        "creator": "ZombsRoyale",
+        "description": "Battle royale 2D multijoueur.",
+        "category": "games",
+        "icon": "🪂",
+        "url": "https://zombsroyale.io/"
+    },
+    {
+        "id": "moomoo",
+        "title": "MooMoo.io",
+        "creator": "MooMoo",
+        "description": "Survie multijoueur, craft & base building.",
+        "category": "games",
+        "icon": "🪓",
+        "url": "https://moomoo.io/"
+    },
+    {
+        "id": "evowars",
+        "title": "EvoWars.io",
+        "creator": "Night Steed Games",
+        "description": "Arena multijoueur: évolue et domine.",
+        "category": "games",
+        "icon": "⚔️",
+        "url": "https://evowars.io/"
+    },
+    {
+        "id": "splix",
+        "title": "Splix.io",
+        "creator": "Splix",
+        "description": "Conquête de territoire multijoueur.",
+        "category": "games",
+        "icon": "🟩",
+        "url": "https://splix.io/"
+    },
+    {
+        "id": "paperio2",
+        "title": "Paper.io 2",
+        "creator": "Voodoo",
+        "description": "Conquête de zone multijoueur.",
+        "category": "games",
+        "icon": "🟦",
+        "url": "https://paper-io.com/"
+    },
+    {
+        "id": "obs",
+        "title": "OBS Lite",
+        "creator": "FunnyCorp",
+        "description": "Scenes/sources, mix audio et enregistrement WebM (version navigateur).",
+        "category": "productivity",
+        "icon": "🎥",
+        "appFile": "obs.html"
+    },
+    {
+        "id": "mickey",
+        "title": "Mickey",
+        "creator": "System",
+        "description": "Assistant IA intégré (Groq) : commandes système (thème, apps, fond d’écran) + réponses à vos questions.",
+        "category": "system",
+        "icon": "🤖",
+        "screenshots": [
+            "🗣️",
+            "🎛️",
+            "✨"
+        ],
+        "appFile": "mickey.html"
+    },
+    {
+        "id": "admin",
+        "title": "Admin Center",
+        "creator": "Mouns",
+        "description": "Outils dâ€™administration pour gÃ©rer les icÃ´nes/noms et les overrides via Supabase.",
+        "category": "system",
+        "icon": "ðŸ›¡ï¸",
+        "appFile": "admin.html"
+    }
+]

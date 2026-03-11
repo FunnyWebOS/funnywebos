@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Aether Admin</title>
+  <style>
+    :root{
+      --bg:#0b1220;
+      --panel:rgba(255,255,255,.06);
+      --border:rgba(255,255,255,.12);
+      --text:#e9eefc;
+      --muted:rgba(233,238,252,.68);
+      --danger:#ff3b30;
+      --accent:#60a5fa;
+      --shadow:0 18px 60px rgba(0,0,0,.45);
+      --r:14px;
+      --font: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family:var(--font);
+      color:var(--text);
+      background: radial-gradient(1200px 700px at 15% 20%, rgba(96,165,250,.22), transparent 60%),
+                  radial-gradient(1000px 600px at 80% 20%, rgba(45,212,191,.16), transparent 55%),
+                  radial-gradient(900px 600px at 60% 90%, rgba(168,85,247,.10), transparent 55%),
+                  var(--bg);
+      overflow:hidden;
+    }
+    code{font-family:var(--mono)}
+    .wrap{height:100%; display:flex; flex-direction:column;}
+    .top{
+      display:flex; align-items:center; gap:10px;
+      padding:14px 16px;
+      border-bottom:1px solid var(--border);
+      background:linear-gradient(to bottom, rgba(255,255,255,.06), rgba(255,255,255,.02));
+      backdrop-filter: blur(18px);
+    }
+    .logo{
+      width:34px; height:34px; border-radius:10px;
+      display:flex; align-items:center; justify-content:center;
+      background:rgba(255,255,255,.10);
+      border:1px solid var(--border);
+      box-shadow: var(--shadow);
+      font-size:18px;
+      flex-shrink:0;
+    }
+    .title{display:flex; flex-direction:column; min-width:0;}
+    .title h1{margin:0; font-size:14.5px; letter-spacing:.2px;}
+    .title .sub{font-size:12px; color:var(--muted); margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+    .spacer{flex:1}
+    .pill{
+      font-size:12px; padding:6px 10px; border-radius:999px;
+      border:1px solid var(--border);
+      background:rgba(255,255,255,.06);
+      color:var(--muted);
+      display:flex; gap:8px; align-items:center;
+    }
+    .pill b{color:var(--text); font-weight:650}
+    .btn{
+      appearance:none; border:none;
+      background:rgba(255,255,255,.10);
+      color:var(--text);
+      padding:9px 12px;
+      border-radius:12px;
+      border:1px solid var(--border);
+      cursor:pointer;
+      font-weight:650;
+      transition: transform .08s ease, background .12s ease;
+    }
+    .btn:hover{background:rgba(255,255,255,.14)}
+    .btn:active{transform:translateY(1px)}
+    .btn.danger{background:rgba(255,59,48,.14); border-color:rgba(255,59,48,.28)}
+    .btn.danger:hover{background:rgba(255,59,48,.18)}
+    .btn.primary{background:rgba(96,165,250,.16); border-color:rgba(96,165,250,.28)}
+    .btn.primary:hover{background:rgba(96,165,250,.22)}
+    .content{
+      flex:1;
+      display:grid;
+      grid-template-columns: 360px 1fr;
+      gap:14px;
+      padding:14px;
+      min-height:0;
+    }
+    .panel{
+      background:var(--panel);
+      border:1px solid var(--border);
+      border-radius:var(--r);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+      min-height:0;
+    }
+    .panel-h{
+      padding:12px 12px;
+      display:flex; align-items:center; gap:10px;
+      border-bottom:1px solid var(--border);
+      background:rgba(255,255,255,.05);
+    }
+    .panel-h h2{margin:0; font-size:13px; letter-spacing:.2px;}
+    .panel-h .meta{margin-left:auto; font-size:12px; color:var(--muted);}
+    .panel-b{padding:12px; overflow:auto; max-height:100%;}
+    .field{display:flex; flex-direction:column; gap:6px; margin-bottom:10px;}
+    .label{font-size:12px; color:var(--muted); display:flex; gap:8px; align-items:center;}
+    .input, .textarea{
+      background:rgba(255,255,255,.06);
+      border:1px solid var(--border);
+      border-radius:12px;
+      color:var(--text);
+      padding:10px 10px;
+      outline:none;
+      font-size:13px;
+    }
+    .textarea{min-height:88px; resize:vertical}
+    .list{display:flex; flex-direction:column; gap:8px;}
+    .row{
+      display:flex; gap:10px; align-items:center;
+      padding:10px 10px;
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,.10);
+      background:rgba(0,0,0,.10);
+      cursor:pointer;
+      transition: background .12s ease, border-color .12s ease;
+    }
+    .row:hover{background:rgba(255,255,255,.06); border-color:rgba(255,255,255,.14)}
+    .row.sel{background:rgba(96,165,250,.10); border-color:rgba(96,165,250,.24)}
+    .ic{
+      width:34px; height:34px;
+      border-radius:10px;
+      display:flex; align-items:center; justify-content:center;
+      background:rgba(255,255,255,.08);
+      border:1px solid rgba(255,255,255,.12);
+      font-size:18px;
+      flex-shrink:0;
+      overflow:hidden;
+    }
+    .ic img{width:100%; height:100%; object-fit:cover; display:block;}
+    .name{min-width:0; flex:1;}
+    .name .t{font-size:13px; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+    .name .s{font-size:12px; color:var(--muted); margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+    .tag{
+      font-size:11px;
+      color:rgba(233,238,252,.78);
+      background:rgba(255,255,255,.07);
+      border:1px solid rgba(255,255,255,.12);
+      padding:4px 8px;
+      border-radius:999px;
+      font-family:var(--mono);
+    }
+    .split{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
+    .actions{display:flex; gap:10px; flex-wrap:wrap; align-items:center;}
+    .kmsg{
+      padding:14px;
+      border-radius:var(--r);
+      border:1px dashed rgba(255,255,255,.18);
+      color:var(--muted);
+      background:rgba(255,255,255,.04);
+      line-height:1.45;
+    }
+    .kmsg b{color:var(--text)}
+    .toggle{display:flex; align-items:center; gap:8px; user-select:none; font-size:13px; color:var(--muted); margin-top:6px;}
+    .toggle input{accent-color: var(--accent);}
+    .footer-note{margin-top:10px; font-size:12px; color:var(--muted)}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="top">
+      <div class="logo" title="Admin">🛡️</div>
+      <div class="title">
+        <h1>Admin Center</h1>
+        <div class="sub" id="subline">Connexion…</div>
+      </div>
+      <div class="spacer"></div>
+      <div class="pill" id="mode-pill" style="display:none"></div>
+      <button class="btn primary" id="btn-sync" style="display:none">↻ Sync</button>
+    </div>
+
+    <div class="content" id="content" style="display:none">
+      <div class="panel">
+        <div class="panel-h">
+          <h2>Apps</h2>
+          <div class="meta" id="apps-count">0</div>
+        </div>
+        <div class="panel-b">
+          <div class="field">
+            <div class="label">Recherche</div>
+            <input class="input" id="q" placeholder="id, titre, catégorie…" />
+          </div>
+          <div class="list" id="list"></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-h">
+          <h2>Override</h2>
+          <div class="meta" id="sel-id">—</div>
+        </div>
+        <div class="panel-b" id="editor">
+          <div class="kmsg">Sélectionne une app à gauche pour modifier son <b>titre</b>, <b>icône</b>, etc. Les modifications sont enregistrées dans <code>aether_store_overrides</code> (si Supabase est dispo), puis synchronisées pour tous.</div>
+        </div>
+      </div>
+    </div>
+
+    <div style="padding:14px" id="blocked" class="kmsg"></div>
+  </div>
+
+  <script>
+    const ADMIN_USERS = ['mouns'];
+    let userData = { userName: null };
+    let wm = null;
+    let selectedId = null;
+    let registry = [];
+    let remoteReady = false;
+
+    function norm(s){ return String(s || '').trim().toLowerCase(); }
+    function isAdmin(name){ return ADMIN_USERS.includes(norm(name)); }
+    function esc(s){ return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\"/g,'&quot;'); }
+
+    function getOverrides(){
+      try { return JSON.parse(localStorage.getItem('aether_apps_overrides') || '{}') || {}; }
+      catch { return {}; }
+    }
+    function setOverrides(next){ localStorage.setItem('aether_apps_overrides', JSON.stringify(next || {})); }
+
+    function renderIcon(icon){
+      const raw = typeof icon === 'string' ? icon.trim() : '';
+      if (!raw) return '<span>📦</span>';
+      if (/^(https?:\\/\\/|data:image\\/)/i.test(raw)) return `<img src="${esc(raw)}" alt="">`;
+      if (!/\\s/.test(raw) && (raw.includes('.') || raw.includes('/') || raw.startsWith('www.') || raw.includes(':'))) {
+        const normalized = `https://${raw.replace(/^\\/\\//,'')}`;
+        try {
+          const u = new URL(normalized);
+          if (u.protocol === 'http:' || u.protocol === 'https:') return `<img src="${esc(u.href)}" alt="">`;
+        } catch {}
+      }
+      return `<span>${esc(raw)}</span>`;
+    }
+
+    function getEffectiveApp(app){
+      const overrides = getOverrides();
+      const ov = overrides[app.id] || {};
+      return {
+        ...app,
+        title: ov.title ?? app.title,
+        icon: ov.icon ?? app.icon,
+        creator: ov.creator ?? app.creator,
+        description: ov.description ?? app.description,
+        category: ov.category ?? app.category,
+        hidden: ov.hidden === true
+      };
+    }
+
+    function rebuildRegistry(){
+      wm = window.parent && window.parent.windowManager ? window.parent.windowManager : null;
+      registry = (wm && Array.isArray(wm.appsRegistry)) ? wm.appsRegistry.filter(Boolean) : [];
+    }
+
+    function renderList(){
+      const q = norm(document.getElementById('q').value);
+      const list = document.getElementById('list');
+      const items = registry
+        .map(getEffectiveApp)
+        .filter(a => !a.hidden)
+        .filter(a => !q || norm(a.id).includes(q) || norm(a.title).includes(q) || norm(a.category).includes(q) || norm(a.creator).includes(q));
+
+      document.getElementById('apps-count').textContent = `${items.length}`;
+      list.innerHTML = items.map(a => {
+        const sel = a.id === selectedId ? ' sel' : '';
+        return `
+          <div class="row${sel}" data-id="${esc(a.id)}">
+            <div class="ic">${renderIcon(a.icon)}</div>
+            <div class="name">
+              <div class="t">${esc(a.title || a.id)}</div>
+              <div class="s">${esc(a.creator || '—')} · ${esc(a.category || '—')}</div>
+            </div>
+            <div class="tag">${esc(a.id)}</div>
+          </div>
+        `;
+      }).join('');
+
+      list.querySelectorAll('.row').forEach(row => {
+        row.addEventListener('click', () => selectApp(row.getAttribute('data-id')));
+      });
+    }
+
+    function renderEditor(){
+      const editor = document.getElementById('editor');
+      const idEl = document.getElementById('sel-id');
+      if (!selectedId){
+        idEl.textContent = '—';
+        editor.innerHTML = '<div class="kmsg">Sélectionne une app à gauche.</div>';
+        return;
+      }
+
+      const base = registry.find(a => a && a.id === selectedId) || { id: selectedId };
+      const overrides = getOverrides();
+      const currentOv = overrides[selectedId] || {};
+      const eff = getEffectiveApp(base);
+      idEl.textContent = selectedId;
+
+      editor.innerHTML = `
+        <div class="field">
+          <div class="label">ID</div>
+          <input class="input" value="${esc(selectedId)}" disabled style="font-family:var(--mono)" />
+        </div>
+        <div class="split">
+          <div class="field">
+            <div class="label">Titre</div>
+            <input class="input" id="f-title" value="${esc(eff.title || '')}" placeholder="Nom affiché" />
+          </div>
+          <div class="field">
+            <div class="label">Icône</div>
+            <input class="input" id="f-icon" value="${esc(eff.icon || '')}" placeholder="emoji / URL / data:image/…" />
+          </div>
+        </div>
+        <div class="split">
+          <div class="field">
+            <div class="label">Créateur</div>
+            <input class="input" id="f-creator" value="${esc(eff.creator || '')}" placeholder="Auteur / orga" />
+          </div>
+          <div class="field">
+            <div class="label">Catégorie</div>
+            <input class="input" id="f-category" value="${esc(eff.category || '')}" placeholder="productivity, games…" />
+          </div>
+        </div>
+        <div class="field">
+          <div class="label">Description</div>
+          <textarea class="textarea" id="f-desc" placeholder="Description courte">${esc(eff.description || '')}</textarea>
+        </div>
+        <label class="toggle">
+          <input type="checkbox" id="f-hidden" ${eff.hidden ? 'checked' : ''} />
+          Masquer l’app (hidden=true)
+        </label>
+        <div class="actions" style="margin-top:12px">
+          <button class="btn primary" id="btn-save">💾 Enregistrer</button>
+          <button class="btn" id="btn-reset">↩ Supprimer l’override</button>
+          <button class="btn danger" id="btn-hide">🙈 Masquer</button>
+        </div>
+        <div class="footer-note">L’override est stocké dans <code>aether_store_overrides</code> puis appliqué via la sync Store (qui met à jour <code>localStorage.aether_apps_overrides</code>).</div>
+        <div class="footer-note">Override actuel: <code>${esc(JSON.stringify(currentOv || {}))}</code></div>
+      `;
+
+      document.getElementById('btn-save').addEventListener('click', saveOverride);
+      document.getElementById('btn-reset').addEventListener('click', deleteOverride);
+      document.getElementById('btn-hide').addEventListener('click', () => {
+        document.getElementById('f-hidden').checked = true;
+        saveOverride();
+      });
+    }
+
+    function selectApp(id){
+      selectedId = id;
+      renderList();
+      renderEditor();
+    }
+
+    async function ensureRemoteReady(){
+      remoteReady = false;
+      if (!wm || typeof wm.checkStoreTablesAvailability !== 'function') return false;
+      try {
+        const cfg = wm.resolveSetupSupabaseConfig ? wm.resolveSetupSupabaseConfig() : (wm.supabaseConfig || null);
+        if (!cfg || !wm.isSupabaseApiReady || !wm.isSupabaseApiReady(cfg)) return false;
+        remoteReady = await wm.checkStoreTablesAvailability(cfg);
+        return remoteReady;
+      } catch {
+        remoteReady = false;
+        return false;
+      }
+    }
+
+    function setModePill(){
+      const pill = document.getElementById('mode-pill');
+      if (!pill) return;
+      pill.style.display = '';
+      pill.innerHTML = remoteReady
+        ? `Mode <b>Cloud</b> · Supabase OK`
+        : `Mode <b>Local</b> · Supabase indisponible`;
+    }
+
+    async function saveOverride(){
+      if (!selectedId) return;
+      const patch = {
+        title: document.getElementById('f-title').value.trim(),
+        icon: document.getElementById('f-icon').value.trim(),
+        creator: document.getElementById('f-creator').value.trim(),
+        category: document.getElementById('f-category').value.trim(),
+        description: document.getElementById('f-desc').value.trim(),
+        hidden: document.getElementById('f-hidden').checked === true
+      };
+      Object.keys(patch).forEach(k => { if (patch[k] === '') delete patch[k]; });
+
+      const overrides = getOverrides();
+      const existing = overrides[selectedId] || {};
+      const merged = { ...existing, ...patch };
+      overrides[selectedId] = merged;
+      setOverrides(overrides);
+
+      try {
+        if (wm && remoteReady && typeof wm.supabaseRequest === 'function') {
+          const cfg = wm.resolveSetupSupabaseConfig ? wm.resolveSetupSupabaseConfig() : (wm.supabaseConfig || null);
+          const t = wm.getStoreSupabaseTables ? wm.getStoreSupabaseTables() : { overrides: 'aether_store_overrides' };
+          await wm.supabaseRequest(`${t.overrides}?on_conflict=app_id`, cfg, {
+            method: 'POST',
+            headers: { Prefer: 'resolution=merge-duplicates,return=representation' },
+            body: [{ app_id: String(selectedId), payload: merged }]
+          });
+        }
+      } catch (err) {
+        alert('Erreur Supabase: ' + (err && err.message ? err.message : String(err)));
+      }
+
+      await syncNow();
+      renderList();
+      renderEditor();
+    }
+
+    async function deleteOverride(){
+      if (!selectedId) return;
+      if (!confirm('Supprimer l’override pour cette app ?')) return;
+
+      const overrides = getOverrides();
+      delete overrides[selectedId];
+      setOverrides(overrides);
+
+      try {
+        if (wm && remoteReady && typeof wm.supabaseRequest === 'function') {
+          const cfg = wm.resolveSetupSupabaseConfig ? wm.resolveSetupSupabaseConfig() : (wm.supabaseConfig || null);
+          const t = wm.getStoreSupabaseTables ? wm.getStoreSupabaseTables() : { overrides: 'aether_store_overrides' };
+          await wm.supabaseRequest(`${t.overrides}?app_id=eq.${encodeURIComponent(String(selectedId))}`, cfg, { method: 'DELETE' });
+        }
+      } catch (err) {
+        alert('Erreur Supabase: ' + (err && err.message ? err.message : String(err)));
+      }
+
+      await syncNow();
+      renderList();
+      renderEditor();
+    }
+
+    async function syncNow(){
+      try {
+        if (wm && typeof wm.syncStoreCatalogFromSupabase === 'function') {
+          await wm.syncStoreCatalogFromSupabase(true);
+        } else if (wm && typeof wm.applyRegistryOverridesFromStorage === 'function') {
+          wm.applyRegistryOverridesFromStorage();
+          if (typeof wm.refreshInstalledAppsMetadata === 'function') wm.refreshInstalledAppsMetadata();
+          if (document.getElementById('launchpad-grid') && typeof wm.renderLaunchpad === 'function') wm.renderLaunchpad();
+        }
+      } catch {}
+    }
+
+    function mountAdminUI(){
+      document.getElementById('blocked').style.display = 'none';
+      document.getElementById('content').style.display = '';
+      document.getElementById('btn-sync').style.display = '';
+      document.getElementById('btn-sync').addEventListener('click', async () => {
+        await syncNow();
+        rebuildRegistry();
+        renderList();
+        renderEditor();
+      });
+      document.getElementById('q').addEventListener('input', renderList);
+    }
+
+    function mountBlockedUI(messageHtml){
+      const el = document.getElementById('blocked');
+      el.style.display = '';
+      el.innerHTML = messageHtml;
+      document.getElementById('content').style.display = 'none';
+      document.getElementById('btn-sync').style.display = 'none';
+      document.getElementById('mode-pill').style.display = 'none';
+    }
+
+    async function boot(){
+      wm = window.parent && window.parent.windowManager ? window.parent.windowManager : null;
+      const sub = document.getElementById('subline');
+      const name = userData && userData.userName ? userData.userName : null;
+
+      if (!wm){
+        sub.textContent = 'Ouvre cette app depuis AetherOS.';
+        mountBlockedUI('Cette page a besoin de <b>windowManager</b> (ouvrir via le bureau/launchpad).');
+        return;
+      }
+      if (!isAdmin(name)){
+        sub.textContent = name ? `Utilisateur: ${name}` : 'Utilisateur inconnu';
+        mountBlockedUI(`Accès refusé. Cette app est réservée à l’administrateur (<b>Mouns</b>).`);
+        return;
+      }
+
+      sub.textContent = `Connecté: ${name}`;
+      rebuildRegistry();
+      mountAdminUI();
+      await ensureRemoteReady();
+      setModePill();
+      renderList();
+      renderEditor();
+      await syncNow();
+    }
+
+    window.addEventListener('message', (e) => {
+      if (!e || !e.data) return;
+      if (e.data.type === 'funnyweb_user_sync') {
+        userData = e.data || userData;
+        boot();
+      }
+      if (e.data.type === 'AETHER_STORE_SYNCED' || e.data.type === 'AETHER_REGISTRY_UPDATED') {
+        rebuildRegistry();
+        renderList();
+        renderEditor();
+      }
+    });
+
+    document.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('subline').textContent = 'En attente de la session…';
+      mountBlockedUI('En attente des infos utilisateur (<b>funnyweb_user_sync</b>).');
+      setTimeout(() => boot(), 600);
+    });
+  </script>
+</body>
+</html>
+

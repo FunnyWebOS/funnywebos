@@ -1,0 +1,1956 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>AetherSlides</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════════
+   AETHERSLIDES — PowerPoint-faithful UI
+   Light mode · Compact ribbon · Green accent
+═══════════════════════════════════════════════ */
+:root {
+  --accent: #c0392b;
+  --accent-h: #e74c3c;
+  --accent-l: #fdf0ee;
+
+  --bg:      #f0f0f0;
+  --bg2:     #e8e8e8;
+  --white:   #ffffff;
+  --panel:   #f7f7f7;
+  --ribbon:  #ffffff;
+
+  --border:  #d0d0d0;
+  --border2: #c0c0c0;
+
+  --text:    #202020;
+  --text2:   #5a5a5a;
+  --text3:   #999;
+
+  --font: 'IBM Plex Sans', 'Segoe UI', system-ui, sans-serif;
+  --r: 3px;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body {
+  height: 100vh; overflow: hidden;
+  font-family: var(--font); font-size: 12px;
+  color: var(--text); background: var(--bg);
+}
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--bg2); }
+::-webkit-scrollbar-thumb { background: #b0b0b0; border-radius: 3px; }
+
+/* ══ TITLE BAR ══ */
+#titlebar {
+  height: 36px; background: var(--accent); color: #fff;
+  display: flex; align-items: center; padding: 0 12px; gap: 10px;
+  flex-shrink: 0; position: relative; z-index: 50;
+}
+.tb-logo { display: flex; align-items: center; gap: 7px; }
+.tb-gem {
+  width: 20px; height: 20px; background: rgba(255,255,255,.22);
+  border-radius: 4px; display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 700; line-height: 1;
+}
+.tb-gem img, .tb-gem svg { width: 100%; height: 100%; display: block; }
+.tb-gem.has-image { background: transparent; }
+.tb-gem.has-image img { border-radius: 4px; }
+.tb-appname { font-weight: 700; font-size: 13px; letter-spacing: -.3px; }
+.tb-docname {
+  font-size: 12px; opacity: .8; font-weight: 400;
+  border-bottom: 1px dotted rgba(255,255,255,.5); cursor: text; padding: 1px 2px;
+  outline: none;
+}
+.tb-docname:focus { opacity: 1; border-bottom-color: #fff; }
+.tb-right { margin-left: auto; display: flex; gap: 5px; }
+.tb-btn {
+  padding: 4px 12px; border-radius: var(--r); border: 1px solid rgba(255,255,255,.35);
+  background: rgba(255,255,255,.15); color: #fff; font-family: var(--font);
+  font-size: 11.5px; font-weight: 500; cursor: pointer; transition: background .1s;
+  display: flex; align-items: center; gap: 5px;
+}
+.tb-btn:hover { background: rgba(255,255,255,.28); }
+.tb-btn.primary { background: rgba(255,255,255,.28); }
+
+/* ══ RIBBON TABS ══ */
+#ribbon-wrap {
+  background: var(--ribbon); border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.ribbon-tabs {
+  display: flex; background: var(--panel);
+  border-bottom: 1px solid var(--border); padding: 0 8px;
+}
+.ribbon-tab {
+  padding: 6px 14px; font-size: 12px; font-weight: 500; color: var(--text2);
+  cursor: pointer; border: none; background: transparent;
+  border-bottom: 2px solid transparent; margin-bottom: -1px;
+  transition: color .1s; white-space: nowrap;
+}
+.ribbon-tab:hover { color: var(--text); }
+.ribbon-tab.active { color: var(--accent); border-bottom-color: var(--accent); background: var(--ribbon); }
+
+/* ══ RIBBON BODY ══ */
+.ribbon-body {
+  display: none; flex-direction: row; align-items: stretch;
+  padding: 4px 8px; min-height: 88px; gap: 0;
+  overflow-x: auto; overflow-y: hidden;
+}
+.ribbon-body.active { display: flex; }
+
+/* Group */
+.rg {
+  display: flex; flex-direction: column; flex-shrink: 0;
+  padding: 0 8px; border-right: 1px solid var(--border);
+  min-width: 0;
+}
+.rg:last-child { border-right: none; }
+.rg-buttons {
+  flex: 1; display: flex; align-items: center; gap: 2px;
+  flex-wrap: wrap; padding-top: 4px;
+}
+.rg-label {
+  font-size: 10px; color: var(--text3); text-align: center;
+  padding: 3px 0 2px; white-space: nowrap;
+}
+
+/* Ribbon buttons */
+.rb {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 2px; padding: 3px 5px; border-radius: var(--r);
+  border: 1px solid transparent; background: transparent;
+  cursor: pointer; font-family: var(--font); font-size: 10px;
+  color: var(--text2); min-width: 38px; transition: all .08s;
+  white-space: nowrap;
+}
+.rb:hover { background: var(--accent-l); border-color: #f5c6c3; color: var(--text); }
+.rb.active { background: var(--accent-l); border-color: var(--accent); color: var(--accent); }
+.rb .icon { font-size: 18px; line-height: 1; }
+.rb.big { min-width: 52px; padding: 4px 6px; }
+.rb.big .icon { font-size: 24px; }
+.rb.small { min-width: 28px; padding: 2px 4px; font-size: 10px; gap: 1px; }
+.rb.small .icon { font-size: 14px; }
+.rb.icon-only { min-width: 26px; padding: 3px; }
+.rb.icon-only .icon { font-size: 15px; }
+
+/* Inline controls in ribbon */
+.r-label { font-size: 10px; color: var(--text2); margin-bottom: 2px; }
+.r-control-stack { display: flex; flex-direction: column; gap: 3px; }
+.r-row { display: flex; align-items: center; gap: 3px; }
+.rsel {
+  background: var(--white); border: 1px solid var(--border); color: var(--text);
+  font-family: var(--font); font-size: 11px; padding: 2px 4px;
+  border-radius: var(--r); cursor: pointer; outline: none; height: 22px;
+}
+.rsel:focus { border-color: var(--accent); }
+.rinp {
+  background: var(--white); border: 1px solid var(--border); color: var(--text);
+  font-family: var(--font); font-size: 11px; padding: 2px 4px;
+  border-radius: var(--r); outline: none; height: 22px; text-align: center;
+}
+.rinp:focus { border-color: var(--accent); }
+.r-vsep { width: 1px; height: 48px; background: var(--border); margin: 0 2px; align-self: center; }
+.r-color-swatch {
+  width: 22px; height: 22px; border-radius: var(--r); border: 1px solid var(--border);
+  cursor: pointer; position: relative; overflow: hidden; flex-shrink: 0;
+}
+.r-color-swatch input[type=color] {
+  position: absolute; inset: -6px; width: calc(100% + 12px); height: calc(100% + 12px);
+  border: none; cursor: pointer; opacity: 0;
+}
+
+/* ══ APP LAYOUT ══ */
+#app-body {
+  display: flex; flex: 1; overflow: hidden;
+  height: calc(100vh - 36px - 91px - 24px);
+}
+
+/* ══ SLIDE PANEL ══ */
+#slide-panel {
+  width: 192px; flex-shrink: 0; background: var(--panel);
+  border-right: 1px solid var(--border);
+  display: flex; flex-direction: column; overflow: hidden;
+}
+.sp-top {
+  padding: 6px 8px; background: var(--bg2);
+  border-bottom: 1px solid var(--border); flex-shrink: 0;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.sp-title { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: .5px; color: var(--text2); }
+.sp-add-btn {
+  width: 20px; height: 20px; background: var(--accent); color: #fff;
+  border: none; border-radius: 3px; font-size: 14px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; line-height: 1;
+}
+.sp-add-btn:hover { background: var(--accent-h); }
+#slide-list { flex: 1; overflow-y: auto; padding: 6px; }
+
+.slide-item {
+  position: relative; margin-bottom: 8px; cursor: pointer;
+  border: 2px solid var(--border); border-radius: 3px; overflow: hidden;
+  background: #fff; transition: border-color .12s;
+}
+.slide-item:hover { border-color: #f0b0a8; }
+.slide-item.sel { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+.slide-item-preview {
+  width: 100%; padding-bottom: 56.25%; position: relative; overflow: hidden;
+}
+.slide-item-inner {
+  position: absolute; inset: 0;
+}
+.slide-item-num {
+  position: absolute; bottom: 3px; left: 4px;
+  font-size: 9px; color: var(--text3); font-weight: 600;
+  background: rgba(255,255,255,.8); padding: 1px 3px; border-radius: 2px;
+  pointer-events: none;
+}
+.slide-item-del {
+  position: absolute; top: 3px; right: 3px;
+  width: 16px; height: 16px; background: rgba(220,50,50,.8); color: #fff;
+  border-radius: 2px; font-size: 10px; cursor: pointer;
+  display: none; align-items: center; justify-content: center; z-index: 5;
+}
+.slide-item:hover .slide-item-del { display: flex; }
+
+/* ══ EDITOR ══ */
+#editor-wrap {
+  flex: 1; display: flex; flex-direction: column; overflow: hidden; min-width: 0;
+}
+#canvas-area {
+  flex: 1; background: var(--bg); overflow: auto;
+  display: flex; align-items: center; justify-content: center;
+  position: relative; min-height: 0;
+}
+#slide-canvas {
+  position: relative; background: #fff;
+  box-shadow: 0 2px 16px rgba(0,0,0,.18), 0 0 0 1px rgba(0,0,0,.06);
+  transform-origin: center center; flex-shrink: 0;
+  cursor: default; overflow: hidden;
+}
+
+/* ══ ELEMENTS ══ */
+.sl-el {
+  position: absolute; cursor: move; box-sizing: border-box;
+}
+.sl-el:hover > .el-frame { border-color: rgba(192,57,43,.4); }
+.sl-el.focused > .el-frame { border-color: var(--accent); }
+.el-frame {
+  position: absolute; inset: -2px; border: 2px solid transparent;
+  border-radius: 2px; pointer-events: none; box-sizing: border-box;
+}
+.el-text {
+  width: 100%; height: 100%; overflow: hidden; outline: none;
+  padding: 2px 4px; background: transparent;
+}
+
+/* Resize handles */
+.rh {
+  position: absolute; width: 7px; height: 7px;
+  background: #fff; border: 1.5px solid var(--accent);
+  border-radius: 50%; display: none; z-index: 20;
+}
+.sl-el.focused .rh { display: block; }
+.rh-nw { top:-5px; left:-5px; cursor:nw-resize; }
+.rh-n  { top:-5px; left:calc(50% - 3px); cursor:n-resize; }
+.rh-ne { top:-5px; right:-5px; cursor:ne-resize; }
+.rh-e  { top:calc(50% - 3px); right:-5px; cursor:e-resize; }
+.rh-se { bottom:-5px; right:-5px; cursor:se-resize; }
+.rh-s  { bottom:-5px; left:calc(50% - 3px); cursor:s-resize; }
+.rh-sw { bottom:-5px; left:-5px; cursor:sw-resize; }
+.rh-w  { top:calc(50% - 3px); left:-5px; cursor:w-resize; }
+.rh-rot { top:-20px; left:calc(50% - 3px); cursor:alias; background: var(--accent); border-color: #fff; }
+
+/* ══ NOTES ══ */
+#notes-area {
+  height: 90px; flex-shrink: 0; border-top: 1px solid var(--border);
+  display: flex; flex-direction: column; background: var(--white);
+}
+.notes-hdr {
+  padding: 4px 12px 2px; font-size: 10px; font-weight: 600;
+  text-transform: uppercase; letter-spacing: .4px; color: var(--text3);
+  border-bottom: 1px solid var(--border); background: var(--panel);
+  flex-shrink: 0;
+}
+#notes-ta {
+  flex: 1; border: none; outline: none; resize: none;
+  padding: 7px 12px; font-family: var(--font); font-size: 12px;
+  color: var(--text2); background: transparent;
+}
+#notes-ta:focus { color: var(--text); }
+
+/* ══ STATUS BAR ══ */
+#statusbar {
+  height: 24px; background: var(--accent); color: rgba(255,255,255,.9);
+  display: flex; align-items: center; padding: 0 14px; gap: 18px;
+  font-size: 11px; flex-shrink: 0;
+}
+#statusbar .sb-item { display: flex; align-items: center; gap: 5px; opacity: .85; }
+#statusbar .sb-item span { font-weight: 500; opacity: 1; }
+.sb-right { margin-left: auto; display: flex; align-items: center; gap: 8px; }
+.sb-zoom-btn {
+  width: 18px; height: 18px; background: rgba(255,255,255,.2);
+  border-radius: 2px; border: none; color: #fff; font-size: 14px; font-weight: 700;
+  cursor: pointer; display: flex; align-items: center; justify-content: center; line-height: 1;
+}
+.sb-zoom-btn:hover { background: rgba(255,255,255,.35); }
+.sb-zoom-val { font-family: 'IBM Plex Mono', monospace; font-size: 11px; min-width: 36px; text-align: center; }
+.sb-zoom-range { width: 80px; accent-color: #fff; cursor: pointer; }
+
+/* ══ MODALS ══ */
+.overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,.4);
+  z-index: 200; display: none; align-items: center; justify-content: center;
+}
+.overlay.open { display: flex; }
+.modal {
+  background: #fff; border-radius: 6px; padding: 24px;
+  box-shadow: 0 12px 48px rgba(0,0,0,.28); min-width: 360px;
+  max-width: 580px; width: 100%; animation: pop .15s ease;
+}
+@keyframes pop { from { opacity:0; transform:scale(.95) translateY(-8px); } to { opacity:1; transform:none; } }
+.modal-title { font-size: 16px; font-weight: 700; margin-bottom: 4px; color: var(--text); }
+.modal-sub { font-size: 12px; color: var(--text2); margin-bottom: 18px; }
+.form-group { margin-bottom: 13px; }
+.form-label { display: block; font-size: 11px; font-weight: 600; color: var(--text2); margin-bottom: 4px; text-transform: uppercase; letter-spacing: .3px; }
+.form-input {
+  width: 100%; padding: 7px 10px; border: 1px solid var(--border2);
+  border-radius: var(--r); font-family: var(--font); font-size: 13px;
+  outline: none; color: var(--text);
+}
+.form-input:focus { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-l); }
+.form-select {
+  width: 100%; padding: 7px 10px; border: 1px solid var(--border2);
+  border-radius: var(--r); font-family: var(--font); font-size: 13px;
+  background: #fff; outline: none; cursor: pointer;
+}
+.modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 20px; }
+.btn {
+  padding: 7px 18px; border-radius: var(--r); font-family: var(--font);
+  font-size: 13px; cursor: pointer; border: 1px solid var(--border2);
+  transition: all .1s;
+}
+.btn-primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+.btn-primary:hover { background: var(--accent-h); }
+.btn-ghost { background: #fff; color: var(--text); }
+.btn-ghost:hover { background: var(--panel); }
+
+/* Layout picker */
+.layout-grid {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin: 12px 0;
+}
+.lay-opt {
+  aspect-ratio: 16/9; border: 2px solid var(--border); border-radius: 3px;
+  cursor: pointer; position: relative; background: #fafafa; overflow: hidden;
+  transition: border-color .1s;
+}
+.lay-opt:hover { border-color: #f0a090; }
+.lay-opt.sel { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-l); }
+.lay-block { position: absolute; background: rgba(192,57,43,.15); border: 1px solid rgba(192,57,43,.3); border-radius: 1px; }
+.lay-name { font-size: 9px; color: var(--text2); text-align: center; padding: 3px; }
+
+/* Theme picker */
+.theme-row { display: flex; gap: 8px; flex-wrap: wrap; margin: 10px 0; }
+.theme-chip {
+  width: 56px; height: 36px; border-radius: 4px; cursor: pointer;
+  border: 2px solid transparent; transition: border-color .1s; position: relative; overflow: hidden;
+}
+.theme-chip:hover { border-color: #f0a090; }
+.theme-chip.sel { border-color: var(--accent); }
+.theme-label { position: absolute; bottom: 1px; left: 0; right: 0; text-align: center; font-size: 8px; color: rgba(0,0,0,.55); font-weight: 600; }
+
+/* Context menu */
+#ctx {
+  position: fixed; background: #fff; border: 1px solid var(--border2);
+  border-radius: 4px; box-shadow: 0 6px 20px rgba(0,0,0,.2);
+  z-index: 999; min-width: 185px; padding: 4px 0; display: none;
+}
+.ctx-item {
+  display: flex; align-items: center; gap: 9px; padding: 6px 14px;
+  font-size: 12px; color: var(--text2); cursor: pointer; transition: background .07s;
+}
+.ctx-item:hover { background: var(--accent-l); color: var(--text); }
+.ctx-item.red:hover { background: #fef2f2; color: #dc2626; }
+.ctx-sep { height: 1px; background: var(--border); margin: 3px 0; }
+
+/* Slideshow */
+#ss-overlay {
+  position: fixed; inset: 0; background: #000; z-index: 500;
+  display: none; align-items: center; justify-content: center; cursor: pointer;
+}
+#ss-overlay.open { display: flex; }
+#ss-slide {
+  position: relative; background: #fff; overflow: hidden;
+  cursor: default;
+}
+#ss-ui {
+  position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+  display: flex; align-items: center; gap: 10px; z-index: 501;
+  background: rgba(0,0,0,.6); padding: 8px 16px; border-radius: 30px;
+  backdrop-filter: blur(8px);
+}
+.ss-btn {
+  background: rgba(255,255,255,.15); color: #fff; border: 1px solid rgba(255,255,255,.25);
+  border-radius: 4px; padding: 5px 14px; font-family: var(--font);
+  font-size: 12px; cursor: pointer;
+}
+.ss-btn:hover { background: rgba(255,255,255,.28); }
+.ss-info { color: rgba(255,255,255,.7); font-size: 11px; font-family: 'IBM Plex Mono', monospace; }
+
+/* Toast */
+#toast {
+  position: fixed; bottom: 36px; left: 50%; transform: translateX(-50%);
+  background: #333; color: #fff; border-radius: 20px; padding: 7px 18px;
+  font-size: 12px; z-index: 9999; display: none; pointer-events: none;
+  box-shadow: 0 4px 16px rgba(0,0,0,.3); animation: toast-up .15s ease;
+}
+@keyframes toast-up { from { opacity:0; transform: translateX(-50%) translateY(6px); } to { opacity:1; transform:translateX(-50%); } }
+
+/* Gridlines on canvas */
+.canvas-grid {
+  position: absolute; inset: 0; pointer-events: none;
+  background-image:
+    repeating-linear-gradient(0deg, rgba(192,57,43,.06) 0, transparent 1px, transparent 40px),
+    repeating-linear-gradient(90deg, rgba(192,57,43,.06) 0, transparent 1px, transparent 40px);
+  display: none;
+}
+.canvas-ruler-h, .canvas-ruler-v {
+  position: absolute; pointer-events: none; z-index: 10; display: none;
+}
+.canvas-ruler-h { top: -20px; left: 0; right: 0; height: 20px; background: var(--bg2); border-bottom: 1px solid var(--border); }
+.canvas-ruler-v { left: -20px; top: 0; bottom: 0; width: 20px; background: var(--bg2); border-right: 1px solid var(--border); }
+
+/* Shape modal */
+.color-presets { display: flex; flex-wrap: wrap; gap: 5px; margin: 6px 0; }
+.color-preset { width: 22px; height: 22px; border-radius: 3px; cursor: pointer; border: 1px solid rgba(0,0,0,.1); transition: transform .1s; }
+.color-preset:hover { transform: scale(1.25); }
+</style>
+</head>
+<body>
+
+<!-- ═══════════ TITLE BAR ═══════════ -->
+<div id="titlebar">
+  <div class="tb-logo">
+    <div class="tb-gem" id="app-icon" aria-hidden="true">📽️</div>
+    <div class="tb-appname">AetherSlides</div>
+  </div>
+  <div class="tb-sep" style="width:1px;height:16px;background:rgba(255,255,255,.3);margin:0 4px"></div>
+  <div class="tb-docname" id="doc-name" contenteditable="true" spellcheck="false">Présentation sans titre</div>
+  <div class="tb-right">
+    <button class="tb-btn" onclick="importPres()">📂 Ouvrir</button>
+    <button class="tb-btn" onclick="savePres()">💾 Enregistrer</button>
+    <button class="tb-btn" onclick="openOverlay('export-ov')">📤 Exporter</button>
+    <button class="tb-btn primary" onclick="startShow(0)">▶ Diaporama</button>
+  </div>
+</div>
+
+<!-- ═══════════ RIBBON ═══════════ -->
+<div id="ribbon-wrap">
+  <div class="ribbon-tabs" id="ribbon-tabs">
+    <button class="ribbon-tab active" data-tab="home">Accueil</button>
+    <button class="ribbon-tab" data-tab="insert">Insertion</button>
+    <button class="ribbon-tab" data-tab="design">Conception</button>
+    <button class="ribbon-tab" data-tab="transitions">Transitions</button>
+    <button class="ribbon-tab" data-tab="animations">Animations</button>
+    <button class="ribbon-tab" data-tab="slideshow">Diaporama</button>
+    <button class="ribbon-tab" data-tab="view">Affichage</button>
+  </div>
+
+  <!-- ─── HOME ─── -->
+  <div class="ribbon-body active" id="tab-home">
+    <div class="rg" style="min-width:160px">
+      <div class="rg-buttons">
+        <button class="rb big" onclick="addSlide()">
+          <span class="icon">＋</span>Nouvelle diapo
+        </button>
+        <div style="display:flex;flex-direction:column;gap:2px">
+          <button class="rb small" onclick="duplicateSlide()"><span class="icon">⧉</span> Dupliquer</button>
+          <button class="rb small" onclick="deleteSlide()"><span class="icon">🗑</span> Supprimer</button>
+          <button class="rb small" onclick="openLayoutPicker()"><span class="icon">⊞</span> Mise en page</button>
+        </div>
+      </div>
+      <div class="rg-label">Diapositives</div>
+    </div>
+
+    <div class="rg">
+      <div class="rg-buttons">
+        <div class="r-control-stack">
+          <div class="r-row">
+            <select class="rsel" id="font-sel" style="width:138px" onchange="fmt('fontFamily',this.value)">
+              <option>IBM Plex Sans</option><option>Arial</option><option>Helvetica</option>
+              <option>Georgia</option><option>Times New Roman</option><option>Verdana</option>
+              <option>Garamond</option><option>Trebuchet MS</option><option>IBM Plex Mono</option>
+              <option>Courier New</option>
+            </select>
+            <input class="rinp" id="fsize-inp" type="number" value="24" min="6" max="200" style="width:44px" onchange="fmt('fontSize',this.value+'px')">
+            <button class="rb icon-only" onclick="fmtSize(2)" title="Augmenter taille"><span class="icon" style="font-size:12px">A↑</span></button>
+            <button class="rb icon-only" onclick="fmtSize(-2)" title="Diminuer taille"><span class="icon" style="font-size:12px">A↓</span></button>
+          </div>
+          <div class="r-row">
+            <button class="rb icon-only" id="btn-bold"   onclick="fmt2('bold')"      title="Gras Ctrl+B"><span class="icon"><b style="font-size:15px">G</b></span></button>
+            <button class="rb icon-only" id="btn-italic" onclick="fmt2('italic')"    title="Italique Ctrl+I"><span class="icon"><i style="font-size:15px">I</i></span></button>
+            <button class="rb icon-only" id="btn-under"  onclick="fmt2('underline')" title="Souligné Ctrl+U"><span class="icon"><u style="font-size:14px">S</u></span></button>
+            <button class="rb icon-only" id="btn-strike" onclick="fmt2('strike')"    title="Barré"><span class="icon" style="text-decoration:line-through;font-size:14px">S</span></button>
+            <button class="rb icon-only" onclick="fmt2('shadow')" title="Ombre"><span class="icon" style="font-size:13px;text-shadow:1px 1px 2px #999">A</span></button>
+            <div class="r-vsep" style="height:22px"></div>
+            <div style="display:flex;flex-direction:column;gap:2px">
+              <div class="r-row" style="align-items:center;gap:3px">
+                <span style="font-size:9px;color:var(--text3);width:24px">Texte</span>
+                <div class="r-color-swatch" id="tc-swatch" style="background:#202020" title="Couleur texte">
+                  <input type="color" value="#202020" oninput="applyTextColor(this.value);document.getElementById('tc-swatch').style.background=this.value">
+                </div>
+              </div>
+              <div class="r-row" style="align-items:center;gap:3px">
+                <span style="font-size:9px;color:var(--text3);width:24px">Surli.</span>
+                <div class="r-color-swatch" id="hl-swatch" style="background:#ffff00" title="Surlignage">
+                  <input type="color" value="#ffff00" oninput="applyHighlight(this.value);document.getElementById('hl-swatch').style.background=this.value">
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="rg-label">Police</div>
+    </div>
+
+    <div class="rg">
+      <div class="rg-buttons">
+        <div class="r-control-stack">
+          <div class="r-row">
+            <button class="rb icon-only" id="btn-al" onclick="fmt('textAlign','left')"    title="Gauche"><span class="icon">⬛▌</span></button>
+            <button class="rb icon-only" id="btn-ac" onclick="fmt('textAlign','center')"  title="Centré"><span class="icon">▬</span></button>
+            <button class="rb icon-only" id="btn-ar" onclick="fmt('textAlign','right')"   title="Droite"><span class="icon">▐⬛</span></button>
+            <button class="rb icon-only" id="btn-aj" onclick="fmt('textAlign','justify')" title="Justifié"><span class="icon">☰</span></button>
+          </div>
+          <div class="r-row">
+            <button class="rb small" onclick="applyList('ul')"><span class="icon" style="font-size:12px">• ≡</span> Puces</button>
+            <button class="rb small" onclick="applyList('ol')"><span class="icon" style="font-size:12px">1.</span> Numéros</button>
+          </div>
+          <div class="r-row">
+            <button class="rb icon-only" onclick="fmtIndent(1)"  title="Augmenter retrait"><span class="icon" style="font-size:13px">→≡</span></button>
+            <button class="rb icon-only" onclick="fmtIndent(-1)" title="Diminuer retrait"><span class="icon" style="font-size:13px">←≡</span></button>
+            <select class="rsel" style="width:65px" onchange="fmt('lineHeight',this.value)">
+              <option value="1.2">Simple</option>
+              <option value="1.5" selected>1.5×</option>
+              <option value="2">Double</option>
+              <option value="2.5">2.5×</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div class="rg-label">Paragraphe</div>
+    </div>
+
+    <div class="rg">
+      <div class="rg-buttons">
+        <div style="display:flex;flex-direction:column;gap:2px">
+          <button class="rb small" onclick="undo()"><span class="icon" style="font-size:13px">↩</span> Annuler</button>
+          <button class="rb small" onclick="redo()"><span class="icon" style="font-size:13px">↪</span> Rétablir</button>
+          <button class="rb small" onclick="copyEl()"><span class="icon" style="font-size:13px">⧉</span> Copier</button>
+          <button class="rb small" onclick="pasteEl()"><span class="icon" style="font-size:13px">📋</span> Coller</button>
+        </div>
+      </div>
+      <div class="rg-label">Presse-papiers</div>
+    </div>
+  </div>
+
+  <!-- ─── INSERT ─── -->
+  <div class="ribbon-body" id="tab-insert">
+    <div class="rg">
+      <div class="rg-buttons">
+        <button class="rb big" onclick="insertTextBox()"><span class="icon">T</span>Zone de texte</button>
+        <button class="rb big" onclick="document.getElementById('img-inp').click()"><span class="icon">🖼</span>Image</button>
+        <input type="file" id="img-inp" accept="image/*" style="display:none" onchange="insertImage(event)">
+        <div style="font-size:9px;color:#999;text-align:center;line-height:1.5;margin-top:2px">📋 Ctrl+V · glisser-déposer</div>
+      </div>
+      <div class="rg-label">Éléments de base</div>
+    </div>
+    <div class="rg">
+      <div class="rg-buttons" style="gap:4px">
+        <button class="rb" onclick="insertShape('rect')"><span class="icon">▬</span>Rectangle</button>
+        <button class="rb" onclick="insertShape('roundrect')"><span class="icon">▭</span>Arrondi</button>
+        <button class="rb" onclick="insertShape('circle')"><span class="icon">⬤</span>Ellipse</button>
+        <button class="rb" onclick="insertShape('triangle')"><span class="icon">▲</span>Triangle</button>
+        <button class="rb" onclick="insertShape('diamond')"><span class="icon">◆</span>Losange</button>
+        <button class="rb" onclick="insertShape('star')"><span class="icon">★</span>Étoile</button>
+        <button class="rb" onclick="insertShape('arrow')"><span class="icon">➜</span>Flèche</button>
+        <button class="rb" onclick="insertShape('callout')"><span class="icon">💬</span>Bulle</button>
+        <button class="rb" onclick="insertShape('line')"><span class="icon">—</span>Ligne</button>
+      </div>
+      <div class="rg-label">Formes</div>
+    </div>
+    <div class="rg">
+      <div class="rg-buttons">
+        <button class="rb big" onclick="insertTable()"><span class="icon">⊞</span>Tableau</button>
+        <button class="rb big" onclick="insertChart('bar')"><span class="icon">📊</span>Graphique</button>
+      </div>
+      <div class="rg-label">Données</div>
+    </div>
+    <div class="rg">
+      <div class="rg-buttons" style="flex-direction:column;gap:3px">
+        <button class="rb small" onclick="insertSlideNum()"><span class="icon" style="font-size:11px">#</span> Numéro de diapo</button>
+        <button class="rb small" onclick="insertDate()"><span class="icon" style="font-size:11px">📅</span> Date/Heure</button>
+        <button class="rb small" onclick="insertHR()"><span class="icon" style="font-size:11px">─</span> Séparateur</button>
+        <button class="rb small" onclick="insertIcon()"><span class="icon" style="font-size:11px">★</span> Icône déco</button>
+      </div>
+      <div class="rg-label">Éléments spéciaux</div>
+    </div>
+  </div>
+
+  <!-- ─── DESIGN ─── -->
+  <div class="ribbon-body" id="tab-design">
+    <div class="rg" style="min-width:300px">
+      <div class="rg-buttons" style="gap:5px">
+        <div id="theme-chips" style="display:flex;gap:5px;flex-wrap:wrap"></div>
+      </div>
+      <div class="rg-label">Thème de la présentation</div>
+    </div>
+    <div class="rg">
+      <div class="rg-buttons" style="flex-direction:column;gap:3px">
+        <button class="rb small" onclick="setBg('solid')"><span class="icon" style="font-size:11px">🎨</span> Couleur unie</button>
+        <button class="rb small" onclick="setBg('gradient')"><span class="icon" style="font-size:11px">🌈</span> Dégradé</button>
+        <button class="rb small" onclick="setBg('pattern')"><span class="icon" style="font-size:11px">⊞</span> Motif</button>
+        <button class="rb small" onclick="setBg('image')"><span class="icon" style="font-size:11px">🖼</span> Image fond</button>
+      </div>
+      <div class="rg-label">Arrière-plan</div>
+    </div>
+    <div class="rg">
+      <div class="rg-buttons" style="flex-direction:column;gap:3px">
+        <button class="rb small" onclick="setRatio('16:9')"><span class="icon" style="font-size:11px">▬</span> 16:9 standard</button>
+        <button class="rb small" onclick="setRatio('4:3')"><span class="icon" style="font-size:11px">⬛</span> 4:3 classique</button>
+        <button class="rb small" onclick="setRatio('A4')"><span class="icon" style="font-size:11px">📄</span> A4 portrait</button>
+        <button class="rb small" onclick="setRatio('widescreen')"><span class="icon" style="font-size:11px">▭</span> 21:9 cinéma</button>
+      </div>
+      <div class="rg-label">Format diapositive</div>
+    </div>
+  </div>
+
+  <!-- ─── TRANSITIONS ─── -->
+  <div class="ribbon-body" id="tab-transitions">
+    <div class="rg" style="min-width:340px">
+      <div class="rg-buttons" style="gap:4px">
+        <button class="rb" id="tr-none"    onclick="setTrans('none')"><span class="icon">⊘</span>Aucune</button>
+        <button class="rb" id="tr-fade"    onclick="setTrans('fade')"><span class="icon">◑</span>Fondu</button>
+        <button class="rb" id="tr-slide"   onclick="setTrans('slide-ltr')"><span class="icon">→</span>Glisser</button>
+        <button class="rb" id="tr-push"    onclick="setTrans('push')"><span class="icon">⬌</span>Pousser</button>
+        <button class="rb" id="tr-wipe"    onclick="setTrans('wipe')"><span class="icon">▌→</span>Balayage</button>
+        <button class="rb" id="tr-split"   onclick="setTrans('split')"><span class="icon">⬤</span>Volet</button>
+        <button class="rb" id="tr-zoom"    onclick="setTrans('zoom')"><span class="icon">🔍</span>Zoom</button>
+        <button class="rb" id="tr-flip"    onclick="setTrans('flip')"><span class="icon">🔄</span>Retourner</button>
+        <button class="rb" id="tr-cube"    onclick="setTrans('cube')"><span class="icon">⬡</span>Cube</button>
+        <button class="rb" id="tr-dissolve" onclick="setTrans('dissolve')"><span class="icon">✦</span>Dispers.</button>
+        <button class="rb" id="tr-morph"   onclick="setTrans('morph')"><span class="icon">~</span>Morphose</button>
+      </div>
+      <div class="rg-label">Type de transition</div>
+    </div>
+    <div class="rg">
+      <div class="rg-buttons">
+        <div class="r-control-stack">
+          <div class="r-row">
+            <span style="font-size:10px;color:var(--text2)">Durée</span>
+            <input class="rinp" type="number" id="tr-dur" value="0.5" min="0.1" max="5" step="0.1" style="width:50px">
+            <span style="font-size:10px;color:var(--text2)">s</span>
+          </div>
+          <div class="r-row">
+            <span style="font-size:10px;color:var(--text2)">Son</span>
+            <select class="rsel" style="width:90px">
+              <option>Aucun</option><option>Applaudissements</option><option>Caisse</option>
+            </select>
+          </div>
+          <button class="rb small" onclick="applyTransAll()" style="margin-top:4px">Appliquer à toutes</button>
+        </div>
+      </div>
+      <div class="rg-label">Options</div>
+    </div>
+  </div>
+
+  <!-- ─── ANIMATIONS ─── -->
+  <div class="ribbon-body" id="tab-animations">
+    <div class="rg" style="min-width:260px">
+      <div class="rg-buttons" style="gap:4px">
+        <button class="rb" onclick="addAnim('appear')"><span class="icon">👁</span>Apparaître</button>
+        <button class="rb" onclick="addAnim('fade-in')"><span class="icon">◑</span>Fondu entr.</button>
+        <button class="rb" onclick="addAnim('fly-in-left')"><span class="icon">←</span>Vol gauche</button>
+        <button class="rb" onclick="addAnim('fly-in-right')"><span class="icon">→</span>Vol droite</button>
+        <button class="rb" onclick="addAnim('zoom-in')"><span class="icon">⊕</span>Agrandir</button>
+        <button class="rb" onclick="addAnim('bounce')"><span class="icon">⬆</span>Rebond</button>
+        <button class="rb" onclick="addAnim('spin')"><span class="icon">↻</span>Rotation</button>
+        <button class="rb" onclick="addAnim('pulse')"><span class="icon">💓</span>Pulsation</button>
+        <button class="rb" onclick="addAnim('shake')"><span class="icon">〰</span>Secousse</button>
+        <button class="rb" onclick="addAnim('typewriter')"><span class="icon">_</span>Machine</button>
+      </div>
+      <div class="rg-label">Effets d'animation</div>
+    </div>
+    <div class="rg">
+      <div class="rg-buttons">
+        <div class="r-control-stack">
+          <div class="r-row">
+            <span style="font-size:10px;color:var(--text2)">Début</span>
+            <select class="rsel" style="width:100px">
+              <option>Au clic</option><option>Avec précédent</option><option>Après précédent</option>
+            </select>
+          </div>
+          <div class="r-row">
+            <span style="font-size:10px;color:var(--text2)">Durée</span>
+            <input class="rinp" type="number" value="0.6" min="0.1" max="5" step="0.1" style="width:50px">
+            <span style="font-size:10px;color:var(--text2)">s</span>
+          </div>
+          <div class="r-row">
+            <button class="rb small" onclick="previewAnim()">▶ Aperçu</button>
+            <button class="rb small" onclick="removeAnim()">✕ Suppr.</button>
+          </div>
+        </div>
+      </div>
+      <div class="rg-label">Paramètres</div>
+    </div>
+  </div>
+
+  <!-- ─── SLIDESHOW ─── -->
+  <div class="ribbon-body" id="tab-slideshow">
+    <div class="rg">
+      <div class="rg-buttons">
+        <button class="rb big" onclick="startShow(0)"><span class="icon">▶</span>Depuis le début</button>
+        <button class="rb big" onclick="startShow(selIdx)"><span class="icon">▷</span>Diapo courante</button>
+      </div>
+      <div class="rg-label">Démarrer</div>
+    </div>
+    <div class="rg">
+      <div class="rg-buttons">
+        <div class="r-control-stack">
+          <div class="r-row" style="align-items:center;gap:5px">
+            <input type="checkbox" id="auto-adv-cb" onchange="toggleAutoAdv(this.checked)">
+            <label for="auto-adv-cb" style="font-size:11px">Avancement auto</label>
+          </div>
+          <div class="r-row">
+            <span style="font-size:10px;color:var(--text2)">Délai</span>
+            <input class="rinp" id="auto-delay" type="number" value="5" min="1" max="60" style="width:46px">
+            <span style="font-size:10px;color:var(--text2)">sec</span>
+          </div>
+          <button class="rb small" onclick="rehearse()"><span class="icon" style="font-size:11px">⏱</span> Minutages</button>
+        </div>
+      </div>
+      <div class="rg-label">Avancement</div>
+    </div>
+    <div class="rg">
+      <div class="rg-buttons" style="flex-direction:column;gap:3px">
+        <button class="rb small" onclick="printSlides()"><span class="icon" style="font-size:11px">🖨</span> Imprimer</button>
+        <button class="rb small" onclick="hideSlide()"><span class="icon" style="font-size:11px">🙈</span> Masquer diapo</button>
+      </div>
+      <div class="rg-label">Options</div>
+    </div>
+  </div>
+
+  <!-- ─── VIEW ─── -->
+  <div class="ribbon-body" id="tab-view">
+    <div class="rg">
+      <div class="rg-buttons" style="gap:4px">
+        <button class="rb" id="v-normal"  onclick="setView('normal')"><span class="icon">⊞</span>Normal</button>
+        <button class="rb" id="v-sorter"  onclick="setView('sorter')"><span class="icon">⊞⊞</span>Trieuse</button>
+        <button class="rb" id="v-outline" onclick="setView('outline')"><span class="icon">≡</span>Plan</button>
+      </div>
+      <div class="rg-label">Vues de présentation</div>
+    </div>
+    <div class="rg">
+      <div class="rg-buttons" style="flex-direction:column;gap:3px">
+        <div class="r-row" style="align-items:center;gap:5px">
+          <input type="checkbox" id="cb-grid" onchange="toggleGrid(this.checked)">
+          <label for="cb-grid" style="font-size:11px">Grille</label>
+        </div>
+        <div class="r-row" style="align-items:center;gap:5px">
+          <input type="checkbox" id="cb-ruler" onchange="toggleRuler(this.checked)">
+          <label for="cb-ruler" style="font-size:11px">Règle</label>
+        </div>
+        <div class="r-row" style="align-items:center;gap:5px">
+          <input type="checkbox" id="cb-guides" onchange="toggleGuides(this.checked)">
+          <label for="cb-guides" style="font-size:11px">Repères</label>
+        </div>
+      </div>
+      <div class="rg-label">Afficher</div>
+    </div>
+    <div class="rg">
+      <div class="rg-buttons">
+        <div class="r-control-stack">
+          <div class="r-row" style="gap:5px">
+            <input type="range" id="zoom-range" min="25" max="300" value="75" style="width:100px;accent-color:var(--accent)" oninput="setZoom(+this.value)">
+            <span id="zoom-lbl" style="font-family:IBM Plex Mono;font-size:11px;min-width:36px">75%</span>
+          </div>
+          <div class="r-row" style="gap:4px">
+            <button class="rb small" onclick="setZoom(zoom-10)"><span class="icon" style="font-size:13px">🔍−</span></button>
+            <button class="rb small" onclick="setZoom(zoom+10)"><span class="icon" style="font-size:13px">🔍+</span></button>
+            <button class="rb small" onclick="fitZoom()"><span class="icon" style="font-size:11px">⊡</span> Adapter</button>
+          </div>
+        </div>
+      </div>
+      <div class="rg-label">Zoom</div>
+    </div>
+  </div>
+</div><!-- /ribbon-wrap -->
+
+<!-- ═══════════ APP BODY ═══════════ -->
+<div id="app-body">
+
+  <!-- SLIDES PANEL -->
+  <div id="slide-panel">
+    <div class="sp-top">
+      <span class="sp-title">Diapositives</span>
+      <button class="sp-add-btn" onclick="addSlide()" title="Nouvelle diapositive">+</button>
+    </div>
+    <div id="slide-list"></div>
+  </div>
+
+  <!-- EDITOR -->
+  <div id="editor-wrap">
+    <div id="canvas-area">
+      <div id="slide-canvas">
+        <div class="canvas-grid" id="canvas-grid"></div>
+        <!-- elements go here -->
+      </div>
+    </div>
+    <div id="notes-area">
+      <div class="notes-hdr">Notes de présentation</div>
+      <textarea id="notes-ta" placeholder="Cliquez ici pour ajouter vos notes de présentation..."></textarea>
+    </div>
+  </div>
+</div>
+
+<!-- STATUS BAR -->
+<div id="statusbar">
+  <div class="sb-item">Diapositive <span id="sb-cur">1</span> sur <span id="sb-tot">1</span></div>
+  <div class="sb-item">Thème : <span id="sb-theme">Blanc</span></div>
+  <div class="sb-item">Transition : <span id="sb-trans">aucune</span></div>
+  <div class="sb-item" id="sb-el-info"></div>
+  <div class="sb-right">
+    <button class="sb-zoom-btn" onclick="setZoom(zoom-10)">−</button>
+    <input type="range" class="sb-zoom-range" id="sb-zoom-range" min="25" max="300" value="75" oninput="setZoom(+this.value)">
+    <button class="sb-zoom-btn" onclick="setZoom(zoom+10)">+</button>
+    <span class="sb-zoom-val" id="sb-zoom-lbl">75%</span>
+    <button class="sb-zoom-btn" onclick="fitZoom()" title="Adapter à la fenêtre" style="font-size:10px;width:auto;padding:0 5px">⊡</button>
+  </div>
+</div>
+
+<!-- ═══════════ MODALS ═══════════ -->
+
+<!-- LAYOUT PICKER -->
+<div class="overlay" id="layout-ov">
+  <div class="modal">
+    <div class="modal-title">Choisir une mise en page</div>
+    <div class="modal-sub">Sélectionnez la structure pour cette diapositive</div>
+    <div class="layout-grid" id="layout-grid"></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeOverlay('layout-ov')">Annuler</button>
+      <button class="btn btn-primary" onclick="applyLayout()">Appliquer</button>
+    </div>
+  </div>
+</div>
+
+<!-- BACKGROUND MODAL -->
+<div class="overlay" id="bg-ov">
+  <div class="modal">
+    <div class="modal-title">Arrière-plan de la diapositive</div>
+    <div class="form-group">
+      <label class="form-label">Type</label>
+      <select class="form-select" id="bg-type" onchange="onBgTypeChange()">
+        <option value="solid">Couleur unie</option>
+        <option value="gradient">Dégradé</option>
+        <option value="pattern">Motif</option>
+      </select>
+    </div>
+    <div id="bg-solid-opts">
+      <div class="form-group">
+        <label class="form-label">Couleur</label>
+        <div class="color-presets" id="bg-presets"></div>
+        <input type="color" id="bg-color" class="form-input" value="#ffffff" style="height:42px;padding:2px">
+      </div>
+    </div>
+    <div id="bg-grad-opts" style="display:none">
+      <div class="form-group">
+        <label class="form-label">Couleur 1</label>
+        <input type="color" id="bg-g1" class="form-input" value="#1e7e45" style="height:42px;padding:2px">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Couleur 2</label>
+        <input type="color" id="bg-g2" class="form-input" value="#3dd68c" style="height:42px;padding:2px">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Direction</label>
+        <select class="form-select" id="bg-gdir">
+          <option value="to right">Gauche → Droite</option>
+          <option value="to bottom">Haut → Bas</option>
+          <option value="135deg">Diagonal ↘</option>
+          <option value="to top right">Diagonal ↗</option>
+        </select>
+      </div>
+    </div>
+    <div id="bg-pat-opts" style="display:none">
+      <div class="form-group">
+        <label class="form-label">Motif</label>
+        <select class="form-select" id="bg-pat">
+          <option value="dots">Points</option><option value="grid">Grille</option>
+          <option value="lines">Lignes horizontales</option><option value="diag">Diagonales</option>
+          <option value="cross">Croisillons</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Couleur de fond</label>
+        <input type="color" id="bg-pat-bg" class="form-input" value="#ffffff" style="height:42px;padding:2px">
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:4px">
+      <input type="checkbox" id="bg-all-slides"><label for="bg-all-slides" style="font-size:12px">Appliquer à toutes les diapositives</label>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeOverlay('bg-ov')">Annuler</button>
+      <button class="btn btn-primary" onclick="applyBg()">Appliquer</button>
+    </div>
+  </div>
+</div>
+
+<!-- EXPORT MODAL -->
+<div class="overlay" id="export-ov">
+  <div class="modal">
+    <div class="modal-title">Exporter la présentation</div>
+    <div class="modal-sub">Choisissez le format d'exportation</div>
+    <div class="form-group">
+      <label class="form-label">Format</label>
+      <select class="form-select" id="exp-fmt">
+        <option value="html">Présentation HTML autonome (.html)</option>
+        <option value="json">Fichier AetherSlides (.json)</option>
+        <option value="txt">Texte brut — notes (.txt)</option>
+        <option value="svg">SVG première diapositive (.svg)</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Nom du fichier</label>
+      <input class="form-input" type="text" id="exp-name" value="ma-presentation">
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeOverlay('export-ov')">Annuler</button>
+      <button class="btn btn-primary" onclick="doExport()">Télécharger</button>
+    </div>
+  </div>
+</div>
+
+<!-- SHAPE STYLE MODAL -->
+<div class="overlay" id="shape-ov">
+  <div class="modal" style="min-width:320px">
+    <div class="modal-title">Style de la forme</div>
+    <div class="form-group">
+      <label class="form-label">Remplissage</label>
+      <div class="color-presets" id="shape-fill-presets"></div>
+      <input type="color" id="sh-fill" class="form-input" value="#1e7e45" style="height:42px;padding:2px">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Bordure</label>
+      <div class="r-row" style="gap:8px">
+        <input type="color" id="sh-stroke" class="form-input" value="#27a356" style="height:36px;padding:2px;width:70px">
+        <div style="flex:1">
+          <label style="font-size:10px;color:var(--text2)">Épaisseur</label>
+          <input type="range" id="sh-strokew" min="0" max="12" value="0" style="width:100%;accent-color:var(--accent)">
+        </div>
+        <span id="sh-strokew-lbl" style="font-family:IBM Plex Mono;font-size:11px;min-width:20px">0px</span>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Opacité</label>
+      <div class="r-row" style="gap:8px">
+        <input type="range" id="sh-opacity" min="10" max="100" value="100" style="flex:1;accent-color:var(--accent)">
+        <span id="sh-opacity-lbl" style="font-family:IBM Plex Mono;font-size:11px;min-width:30px">100%</span>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeOverlay('shape-ov')">Annuler</button>
+      <button class="btn btn-primary" onclick="applyShapeStyle()">Appliquer</button>
+    </div>
+  </div>
+</div>
+
+<!-- CONTEXT MENU -->
+<div id="ctx">
+  <div class="ctx-item" onclick="copyEl()">⧉ &nbsp;Copier &nbsp;<span style="margin-left:auto;font-size:10px;color:#aaa">Ctrl+C</span></div>
+  <div class="ctx-item" onclick="cutEl()">✂ &nbsp;Couper</div>
+  <div class="ctx-item" onclick="pasteEl()">📋 &nbsp;Coller &nbsp;<span style="margin-left:auto;font-size:10px;color:#aaa">Ctrl+V</span></div>
+  <div class="ctx-sep"></div>
+  <div class="ctx-item" onclick="dupEl()">⧉ &nbsp;Dupliquer</div>
+  <div class="ctx-item" onclick="bringFront()">⬆ &nbsp;Mettre au premier plan</div>
+  <div class="ctx-item" onclick="sendBack()">⬇ &nbsp;Envoyer à l'arrière-plan</div>
+  <div class="ctx-sep"></div>
+  <div class="ctx-item" onclick="centerH()">⬌ &nbsp;Centrer horizontalement</div>
+  <div class="ctx-item" onclick="centerV()">⬍ &nbsp;Centrer verticalement</div>
+  <div class="ctx-sep"></div>
+  <div class="ctx-item" onclick="openShapeStyle()">🎨 &nbsp;Style de la forme</div>
+  <div class="ctx-item red" onclick="deleteEl()">🗑 &nbsp;Supprimer &nbsp;<span style="margin-left:auto;font-size:10px;color:#aaa">Suppr</span></div>
+</div>
+
+<!-- SLIDESHOW -->
+<div id="ss-overlay">
+  <div id="ss-slide"></div>
+  <div id="ss-ui">
+    <button class="ss-btn" onclick="ssPrev()">◀ Précédent</button>
+    <span class="ss-info" id="ss-info">1 / 1</span>
+    <button class="ss-btn" onclick="ssNext()">Suivant ▶</button>
+    <button class="ss-btn" onclick="ssExit()" style="border-color:rgba(255,100,100,.4)">✕ Quitter</button>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<script>
+/* ══════════════════════════════════════════════════════════════════
+   AETHERSLIDES ENGINE v2
+   Complete PowerPoint-faithful implementation
+   · Slide CRUD + thumbnails
+   · Element: Text / Image / Shape / Table / Chart
+   · Drag, Resize, Rotate
+   · Rich text formatting (font, size, bold, italic, color…)
+   · Themes, Backgrounds, Transitions, Animations
+   · Slideshow full-screen with CSS transitions
+   · Undo/Redo 60 levels
+   · Export: HTML self-contained / JSON / TXT / SVG
+   · Keyboard shortcuts
+══════════════════════════════════════════════════════════════════ */
+
+/* ── CONSTANTS ── */
+const SW = 800, SH = 450; // slide dimensions px
+
+/* ── THEMES ── */
+const THEMES = {
+  'Blanc':     { bg:'#ffffff', title:'#1a1a2e', body:'#444466', accent:'#c0392b' },
+  'Clair':     { bg:'#f5f6fa', title:'#2c3e50', body:'#556b82', accent:'#2980b9' },
+  'Sombre':    { bg:'#1e1e2e', title:'#cdd6f4', body:'#a6adc8', accent:'#89dceb' },
+  'Vert':      { bg:'#0f2e1a', title:'#a8f5c6', body:'#68c895', accent:'#3dd68c' },
+  'Bleu nuit': { bg:'#0d1b35', title:'#89b4fa', body:'#6c7eb8', accent:'#74c7ec' },
+  'Minimaliste':{ bg:'#fafafa', title:'#111',   body:'#666',    accent:'#222'    },
+  'Corporate': { bg:'#f8f9fa', title:'#212529', body:'#495057', accent:'#0066cc' },
+  'Chaud':     { bg:'#fff8f0', title:'#3d1a00', body:'#7a4010', accent:'#e07020' },
+};
+
+/* ── LAYOUTS ── */
+const LAYOUTS = {
+  'Titre':           { els:[{type:'text',x:40,y:130,w:720,h:90,text:'Titre de la présentation',s:{fs:'52px',fw:'700',ta:'center'}},{type:'text',x:80,y:240,w:640,h:50,text:'Sous-titre',s:{fs:'26px',ta:'center'}}]},
+  'Titre + Contenu': { els:[{type:'text',x:30,y:22,w:740,h:60,text:'Titre',s:{fs:'38px',fw:'700'}},{type:'text',x:30,y:95,w:740,h:300,text:'• Cliquez pour saisir du contenu\n• Deuxième point\n• Troisième point',s:{fs:'20px',lh:'1.8'}}]},
+  'Deux colonnes':   { els:[{type:'text',x:30,y:22,w:740,h:60,text:'Titre',s:{fs:'38px',fw:'700'}},{type:'text',x:20,y:100,w:368,h:320,text:'Colonne gauche\n\n• Point A\n• Point B',s:{fs:'18px'}},{type:'text',x:412,y:100,w:368,h:320,text:'Colonne droite\n\n• Point C\n• Point D',s:{fs:'18px'}}]},
+  'Section':         { els:[{type:'text',x:30,y:160,w:740,h:80,text:'Nouvelle section',s:{fs:'44px',fw:'700',ta:'center'}},{type:'text',x:80,y:260,w:640,h:44,text:'Sous-titre de section',s:{fs:'20px',ta:'center'}}]},
+  'Image + Texte':   { els:[{type:'text',x:420,y:50,w:360,h:80,text:'Titre',s:{fs:'32px',fw:'700'}},{type:'text',x:420,y:150,w:360,h:260,text:'Description du contenu ici',s:{fs:'18px'}}]},
+  'Citation':        { els:[{type:'text',x:60,y:90,w:680,h:200,text:'"Votre citation inspirante va ici."',s:{fs:'32px',fi:'italic',ta:'center',lh:'1.6'}},{type:'text',x:200,y:310,w:400,h:50,text:'— Auteur, source',s:{fs:'16px',ta:'right'}}]},
+  'Vide':            { els:[] },
+  'Statistiques':    { els:[{type:'text',x:30,y:18,w:740,h:55,text:'Chiffres clés',s:{fs:'34px',fw:'700'}},{type:'text',x:30,y:100,w:220,h:130,text:'42%',s:{fs:'72px',fw:'800',ta:'center',color:'#c0392b'}},{type:'text',x:290,y:100,w:220,h:130,text:'1.2M',s:{fs:'72px',fw:'800',ta:'center',color:'#c0392b'}},{type:'text',x:550,y:100,w:220,h:130,text:'98%',s:{fs:'72px',fw:'800',ta:'center',color:'#c0392b'}}]},
+};
+
+/* ── STATE ── */
+let slides = [], selIdx = 0, selElId = null;
+let clipboard = null, undoStack = [], redoStack = [];
+let zoom = 75, activeTheme = 'Blanc', selLayout = 'Titre + Contenu';
+let ssIdx = 0, ssAutoTimer = null, autoAdv = false;
+let showGrid = false;
+
+/* ── SLIDE FACTORY ── */
+function mkSlide(layoutName) {
+  const lay = LAYOUTS[layoutName] || LAYOUTS['Titre + Contenu'];
+  const t = THEMES[activeTheme];
+  const els = lay.els.map((el, i) => {
+    const e = JSON.parse(JSON.stringify(el));
+    e.id = uid();
+    if (!e.s) e.s = {};
+    if (e.type === 'text') {
+      if (!e.s.color) e.s.color = i === 0 ? t.title : t.body;
+      if (!e.s.ff) e.s.ff = 'IBM Plex Sans, sans-serif';
+    }
+    return e;
+  });
+  return { id: uid(), bg: { type:'solid', color:'#ffffff' }, transition:'none', transDur:.5, els, notes:'' };
+}
+
+function uid() { return '_' + Math.random().toString(36).slice(2,9) + Date.now().toString(36).slice(-4); }
+
+/* ── RENDER ── */
+function renderAll() {
+  renderCanvas();
+  renderList();
+  updateStatus();
+}
+
+function renderCanvas() {
+  const sl = slides[selIdx];
+  if (!sl) return;
+  const cv = document.getElementById('slide-canvas');
+
+  // Size
+  cv.style.width  = SW + 'px';
+  cv.style.height = SH + 'px';
+  cv.style.transform = `scale(${zoom/100})`;
+
+  // Background
+  applyBgEl(cv, sl.bg);
+
+  // Remove old elements
+  cv.querySelectorAll('.sl-el').forEach(e => e.remove());
+
+  // Render elements
+  sl.els.forEach(el => buildEl(el, cv));
+
+  // Notes
+  document.getElementById('notes-ta').value = sl.notes || '';
+}
+
+function applyBgEl(el, bg) {
+  el.style.backgroundImage = '';
+  if (!bg || bg.type === 'solid') {
+    el.style.background = bg ? bg.color : '#fff';
+  } else if (bg.type === 'gradient') {
+    el.style.background = `linear-gradient(${bg.dir||'to right'}, ${bg.c1}, ${bg.c2})`;
+  } else if (bg.type === 'pattern') {
+    const c = bg.base || '#fff';
+    const a = bg.accent || 'rgba(192,57,43,.12)';
+    const pats = {
+      dots:  { img:`radial-gradient(circle,${a} 1.5px,${c} 1.5px)`, size:'20px 20px' },
+      grid:  { img:`repeating-linear-gradient(0deg,${a} 0,${a} 1px,transparent 1px,transparent 30px),repeating-linear-gradient(90deg,${a} 0,${a} 1px,transparent 1px,transparent 30px)`, size:'' },
+      lines: { img:`repeating-linear-gradient(0deg,${a} 0,${a} 1px,${c} 1px,${c} 28px)`, size:'' },
+      diag:  { img:`repeating-linear-gradient(45deg,${a} 0,${a} 1px,${c} 1px,${c} 14px)`, size:'' },
+      cross: { img:`repeating-linear-gradient(0deg,${a} 0,${a} 1px,transparent 1px,transparent 20px),repeating-linear-gradient(90deg,${a} 0,${a} 1px,transparent 1px,transparent 20px)`, size:'' },
+    };
+    const p = pats[bg.pat] || pats.dots;
+    el.style.backgroundColor = c;
+    el.style.backgroundImage = p.img;
+    if (p.size) el.style.backgroundSize = p.size;
+  } else if (bg.type === 'image') {
+    el.style.background = `url(${bg.src}) center/cover no-repeat`;
+  }
+}
+
+function buildEl(el, parent) {
+  const div = document.createElement('div');
+  div.className = 'sl-el';
+  div.dataset.id = el.id;
+  div.style.cssText = `left:${el.x}px;top:${el.y}px;width:${el.w}px;height:${el.h}px;${el.rotate?`transform:rotate(${el.rotate}deg);`:''}${el.opacity!=null?`opacity:${el.opacity/100};`:''}z-index:${el.z||1};`;
+
+  // Frame
+  const frame = document.createElement('div');
+  frame.className = 'el-frame';
+  div.appendChild(frame);
+
+  // Content
+  if (el.type === 'text') {
+    const t = document.createElement('div');
+    t.className = 'el-text';
+    t.contentEditable = 'false';
+    t.innerHTML = (el.text||'').replace(/\n/g,'<br>');
+    const s = el.s || {};
+    t.style.cssText = `font-size:${s.fs||'20px'};font-weight:${s.fw||400};font-style:${s.fi||'normal'};text-decoration:${s.td||'none'};text-align:${s.ta||'left'};color:${s.color||'#222'};font-family:${s.ff||'IBM Plex Sans,sans-serif'};line-height:${s.lh||'1.4'};background:${s.bg||'transparent'};padding:4px;width:100%;height:100%;overflow:hidden;outline:none;box-sizing:border-box;white-space:pre-wrap;word-break:break-word;`;
+    t.addEventListener('dblclick', e => { e.stopPropagation(); enableTextEdit(t, el); });
+    t.addEventListener('blur', () => { el.text = t.innerText; t.contentEditable='false'; renderList(); });
+    div.appendChild(t);
+  } else if (el.type === 'image') {
+    const img = document.createElement('img');
+    img.src = el.src || ''; img.style.cssText = 'width:100%;height:100%;object-fit:contain;display:block;pointer-events:none;';
+    img.draggable = false;
+    div.appendChild(img);
+  } else if (el.type === 'shape') {
+    const svg = mkSVG(el);
+    if (svg) div.appendChild(svg);
+    div.addEventListener('dblclick', e => { e.stopPropagation(); openShapeStyle(); });
+  } else if (el.type === 'table') {
+    div.appendChild(mkTableEl(el));
+  } else if (el.type === 'chart') {
+    const cv2 = document.createElement('canvas');
+    cv2.style.cssText = 'width:100%;height:100%;display:block;';
+    div.appendChild(cv2);
+    setTimeout(() => drawChart(cv2, el), 30);
+  }
+
+  // Resize handles
+  ['nw','n','ne','e','se','s','sw','w','rot'].forEach(h => {
+    const rh = document.createElement('div');
+    rh.className = `rh rh-${h}`; rh.dataset.h = h;
+    rh.addEventListener('mousedown', e => { e.stopPropagation(); startResize(e, el, h); });
+    div.appendChild(rh);
+  });
+
+  // Events
+  div.addEventListener('mousedown', e => {
+    if (e.target.classList.contains('rh') || e.target.classList.contains('el-text')) return;
+    e.stopPropagation(); selectEl(el.id); startDrag(e, el);
+  });
+  div.addEventListener('click', e => { e.stopPropagation(); selectEl(el.id); });
+  div.addEventListener('contextmenu', e => { e.preventDefault(); selectEl(el.id); showCtx(e.clientX, e.clientY); });
+
+  parent.appendChild(div);
+  if (selElId === el.id) div.classList.add('focused');
+}
+
+function mkSVG(el) {
+  const W = el.w, H = el.h;
+  const fill = el.fill || '#c0392b';
+  const stroke = el.stroke || 'none';
+  const sw = el.strokeW || 0;
+  const rx = el.rx || 0;
+  const svg = document.createElementNS('http://www.w3.org/2000/svg','svg');
+  svg.setAttribute('width',W); svg.setAttribute('height',H);
+  svg.setAttribute('viewBox',`0 0 ${W} ${H}`);
+  svg.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none;';
+  let shape;
+  const s2 = sw/2;
+  if (el.shape==='rect') {
+    shape = svgEl('rect'); shape.setAttribute('x',s2); shape.setAttribute('y',s2); shape.setAttribute('width',W-sw); shape.setAttribute('height',H-sw); shape.setAttribute('rx',rx);
+  } else if (el.shape==='roundrect') {
+    shape = svgEl('rect'); shape.setAttribute('x',s2); shape.setAttribute('y',s2); shape.setAttribute('width',W-sw); shape.setAttribute('height',H-sw); shape.setAttribute('rx',14);
+  } else if (el.shape==='circle') {
+    shape = svgEl('ellipse'); shape.setAttribute('cx',W/2); shape.setAttribute('cy',H/2); shape.setAttribute('rx',W/2-s2); shape.setAttribute('ry',H/2-s2);
+  } else if (el.shape==='triangle') {
+    shape = svgEl('polygon'); shape.setAttribute('points',`${W/2},${s2} ${W-s2},${H-s2} ${s2},${H-s2}`);
+  } else if (el.shape==='diamond') {
+    shape = svgEl('polygon'); shape.setAttribute('points',`${W/2},${s2} ${W-s2},${H/2} ${W/2},${H-s2} ${s2},${H/2}`);
+  } else if (el.shape==='star') {
+    const pts=[]; for(let i=0;i<10;i++){const a=(i*36-90)*Math.PI/180;const r=i%2===0?Math.min(W,H)/2-s2:Math.min(W,H)/4;pts.push(`${(W/2+r*Math.cos(a)).toFixed(1)},${(H/2+r*Math.sin(a)).toFixed(1)}`);} shape=svgEl('polygon');shape.setAttribute('points',pts.join(' '));
+  } else if (el.shape==='arrow') {
+    shape = svgEl('polygon'); shape.setAttribute('points',`${s2},${H*.3} ${W*.62},${H*.3} ${W*.62},${s2} ${W-s2},${H/2} ${W*.62},${H-s2} ${W*.62},${H*.7} ${s2},${H*.7}`);
+  } else if (el.shape==='callout') {
+    shape = svgEl('path'); shape.setAttribute('d',`M${s2},${s2} H${W-s2} V${H*.7-s2} H${W*.45} L${W*.35},${H-s2} L${W*.3},${H*.7-s2} H${s2} Z`);
+  } else if (el.shape==='line') {
+    shape = svgEl('line'); shape.setAttribute('x1',s2); shape.setAttribute('y1',H/2); shape.setAttribute('x2',W-s2); shape.setAttribute('y2',H/2); shape.setAttribute('stroke',fill); shape.setAttribute('stroke-width',sw||2);
+  }
+  if (!shape) return null;
+  if (el.shape !== 'line') { shape.setAttribute('fill',fill); if(sw){shape.setAttribute('stroke',stroke);shape.setAttribute('stroke-width',sw);} }
+  svg.appendChild(shape);
+  return svg;
+}
+function svgEl(tag) { return document.createElementNS('http://www.w3.org/2000/svg', tag); }
+
+function mkTableEl(el) {
+  const tbl = document.createElement('table');
+  tbl.style.cssText = `width:100%;height:100%;border-collapse:collapse;font-size:${el.fs||14}px;table-layout:fixed;`;
+  (el.rows||[['A','B','C'],['1','2','3'],['4','5','6']]).forEach((row,ri) => {
+    const tr = document.createElement('tr');
+    row.forEach(cell => {
+      const td = document.createElement(ri===0?'th':'td');
+      td.textContent = cell; td.contentEditable = 'true';
+      td.style.cssText = `border:1px solid ${el.borderColor||'#ddd'};padding:7px 10px;text-align:center;outline:none;font-family:IBM Plex Sans,sans-serif;`;
+      if (ri===0) { td.style.background = el.headerColor||THEMES[activeTheme].accent; td.style.color='#fff'; td.style.fontWeight='600'; }
+      tr.appendChild(td);
+    });
+    tbl.appendChild(tr);
+  });
+  return tbl;
+}
+
+function drawChart(canvas, el) {
+  canvas.width = el.w; canvas.height = el.h;
+  const ctx = canvas.getContext('2d');
+  const data   = el.data   || [42, 68, 55, 90, 73, 61, 84, 50];
+  const labels = el.labels || ['Jan','Fév','Mar','Avr','Mai','Jun','Jul','Aoû'];
+  const color  = el.color  || THEMES[activeTheme].accent;
+  const max = Math.max(...data);
+  const pad = { t:20, r:20, b:36, l:40 };
+  const cw = canvas.width - pad.l - pad.r;
+  const ch = canvas.height - pad.t - pad.b;
+  const bw = cw / data.length - 8;
+
+  ctx.fillStyle = '#fafafa'; ctx.fillRect(0,0,canvas.width,canvas.height);
+
+  // Grid lines
+  ctx.strokeStyle = '#e8e8e8'; ctx.lineWidth = 1;
+  for (let i=0;i<=4;i++) {
+    const y = pad.t + (ch/4)*i;
+    ctx.beginPath(); ctx.moveTo(pad.l,y); ctx.lineTo(pad.l+cw,y); ctx.stroke();
+    ctx.fillStyle='#999'; ctx.font='10px IBM Plex Sans';
+    ctx.textAlign='right'; ctx.fillText(Math.round(max*(1-i/4)), pad.l-5, y+4);
+  }
+
+  // Bars
+  data.forEach((v,i) => {
+    const bh = (v/max)*ch;
+    const x = pad.l + i*(cw/data.length) + 4;
+    const y = pad.t + ch - bh;
+    // Shadow
+    ctx.fillStyle = 'rgba(0,0,0,.06)'; ctx.fillRect(x+2,y+3,bw,bh);
+    // Bar
+    ctx.fillStyle = color; ctx.fillRect(x,y,bw,bh);
+    // Value label
+    ctx.fillStyle = '#fff'; ctx.font = 'bold 10px IBM Plex Sans'; ctx.textAlign = 'center';
+    if (bh > 18) ctx.fillText(v, x+bw/2, y+14);
+    // X label
+    ctx.fillStyle = '#666'; ctx.font = '10px IBM Plex Sans';
+    ctx.fillText(labels[i], x+bw/2, pad.t+ch+16);
+  });
+}
+
+/* ── SLIDE LIST THUMBNAILS ── */
+function renderList() {
+  const list = document.getElementById('slide-list'); list.innerHTML = '';
+  slides.forEach((sl, i) => {
+    const item = document.createElement('div');
+    item.className = 'slide-item' + (i===selIdx?' sel':'');
+
+    const preview = document.createElement('div');
+    preview.className = 'slide-item-preview';
+    const inner = document.createElement('div');
+    inner.className = 'slide-item-inner';
+    renderMiniPreview(sl, inner);
+    preview.appendChild(inner);
+
+    const num = document.createElement('div'); num.className='slide-item-num'; num.textContent=i+1;
+    const del = document.createElement('div'); del.className='slide-item-del'; del.textContent='✕';
+    del.addEventListener('click', e => { e.stopPropagation(); doDeleteSlide(i); });
+
+    item.appendChild(preview); item.appendChild(num); item.appendChild(del);
+    item.addEventListener('click', () => goSlide(i));
+    item.addEventListener('contextmenu', e => { e.preventDefault(); goSlide(i); showCtxSlide(e.clientX,e.clientY,i); });
+    list.appendChild(item);
+  });
+}
+
+function renderMiniPreview(sl, container) {
+  const scale = 176 / SW;
+  const inner = document.createElement('div');
+  inner.style.cssText = `width:${SW}px;height:${SH}px;transform:scale(${scale});transform-origin:top left;position:absolute;top:0;left:0;overflow:hidden;`;
+  applyBgEl(inner, sl.bg);
+  sl.els.filter(e=>e.type==='text').forEach(el => {
+    const d=document.createElement('div');
+    const s=el.s||{};
+    d.style.cssText=`position:absolute;left:${el.x}px;top:${el.y}px;width:${el.w}px;height:${el.h}px;font-size:${s.fs||'16px'};font-weight:${s.fw||400};color:${s.color||'#333'};font-family:${s.ff||'IBM Plex Sans,sans-serif'};text-align:${s.ta||'left'};padding:2px;overflow:hidden;white-space:pre-wrap;word-break:break-word;`;
+    d.textContent=el.text||'';
+    inner.appendChild(d);
+  });
+  container.appendChild(inner);
+}
+
+/* ── SELECTION ── */
+function selectEl(id) {
+  selElId = id;
+  document.querySelectorAll('.sl-el').forEach(d => d.classList.toggle('focused', d.dataset.id===id));
+  const el = getEl(id);
+  if (el && el.type==='text' && el.s) {
+    document.getElementById('font-sel').value = (el.s.ff||'IBM Plex Sans').split(',')[0];
+    document.getElementById('fsize-inp').value = parseInt(el.s.fs||'24');
+    document.getElementById('btn-bold').classList.toggle('active', el.s.fw==='700'||el.s.fw==='bold');
+    document.getElementById('btn-italic').classList.toggle('active', el.s.fi==='italic');
+    document.getElementById('btn-under').classList.toggle('active', (el.s.td||'').includes('underline'));
+    document.getElementById('btn-strike').classList.toggle('active', (el.s.td||'').includes('line-through'));
+  }
+  document.getElementById('sb-el-info').textContent = el ? `Élément sélectionné : ${el.type}` : '';
+}
+
+function deselect() {
+  selElId = null;
+  document.querySelectorAll('.sl-el').forEach(d=>d.classList.remove('focused'));
+  document.getElementById('sb-el-info').textContent = '';
+}
+
+function getEl(id) { return slides[selIdx].els.find(e=>e.id===id); }
+
+function enableTextEdit(t, el) {
+  t.contentEditable = 'true';
+  t.focus();
+  document.getElementById('slide-canvas').querySelectorAll('.sl-el').forEach(d=>d.classList.toggle('focused',d.dataset.id===el.id));
+}
+
+/* ── DRAG ── */
+function startDrag(e, el) {
+  e.preventDefault();
+  const scale = zoom/100;
+  const sx=e.clientX, sy=e.clientY, ox=el.x, oy=el.y;
+  const move = me => {
+    el.x = Math.round(ox+(me.clientX-sx)/scale);
+    el.y = Math.round(oy+(me.clientY-sy)/scale);
+    const d=document.querySelector(`[data-id="${el.id}"]`);
+    if(d){d.style.left=el.x+'px';d.style.top=el.y+'px';}
+    showPosInfo(el);
+  };
+  const up=()=>{pushUndo();renderList();hidePosInfo();window.removeEventListener('mousemove',move);window.removeEventListener('mouseup',up);};
+  window.addEventListener('mousemove',move); window.addEventListener('mouseup',up);
+}
+
+/* ── RESIZE ── */
+function startResize(e, el, handle) {
+  e.preventDefault();
+  const scale=zoom/100;
+  const sx=e.clientX, sy=e.clientY;
+  const ox=el.x,oy=el.y,ow=el.w,oh=el.h;
+  const move = me => {
+    const dx=(me.clientX-sx)/scale, dy=(me.clientY-sy)/scale;
+    if(handle==='rot'){
+      const d=document.querySelector(`[data-id="${el.id}"]`);
+      if(d){const r=d.getBoundingClientRect();const cx=r.left+r.width/2,cy=r.top+r.height/2;el.rotate=Math.round(Math.atan2(me.clientY-cy,me.clientX-cx)*180/Math.PI+90);d.style.transform=`rotate(${el.rotate}deg)`;return;}
+    }
+    if(handle.includes('e'))el.w=Math.max(30,ow+dx);
+    if(handle.includes('s'))el.h=Math.max(20,oh+dy);
+    if(handle.includes('w')){el.w=Math.max(30,ow-dx);el.x=ox+ow-el.w;}
+    if(handle.includes('n')){el.h=Math.max(20,oh-dy);el.y=oy+oh-el.h;}
+    const d=document.querySelector(`[data-id="${el.id}"]`);
+    if(d){d.style.left=el.x+'px';d.style.top=el.y+'px';d.style.width=Math.round(el.w)+'px';d.style.height=Math.round(el.h)+'px';}
+    showPosInfo(el);
+  };
+  const up=()=>{pushUndo();renderCanvas();renderList();hidePosInfo();window.removeEventListener('mousemove',move);window.removeEventListener('mouseup',up);};
+  window.addEventListener('mousemove',move); window.addEventListener('mouseup',up);
+}
+
+let posInfoEl;
+function showPosInfo(el) {
+  if(!posInfoEl){posInfoEl=document.createElement('div');posInfoEl.style.cssText='position:fixed;bottom:32px;right:16px;background:rgba(192,57,43,.9);color:#fff;font-family:IBM Plex Mono,monospace;font-size:10px;padding:3px 8px;border-radius:3px;z-index:999;pointer-events:none;';document.body.appendChild(posInfoEl);}
+  posInfoEl.textContent=`X:${Math.round(el.x)} Y:${Math.round(el.y)}  W:${Math.round(el.w)} H:${Math.round(el.h)}`;
+  posInfoEl.style.display='block';
+}
+function hidePosInfo(){if(posInfoEl)posInfoEl.style.display='none';}
+
+/* ── FORMATTING ── */
+function fmt(prop, val) {
+  const el=getEl(selElId); if(!el||el.type!=='text') return;
+  pushUndo(); if(!el.s)el.s={};
+  const map={fontFamily:'ff',fontSize:'fs',fontWeight:'fw',fontStyle:'fi',textDecoration:'td',textAlign:'ta',lineHeight:'lh',color:'color',background:'bg'};
+  el.s[map[prop]||prop]=val; renderCanvas(); selectEl(selElId);
+}
+function fmt2(type) {
+  const el=getEl(selElId); if(!el||el.type!=='text')return;
+  pushUndo(); if(!el.s)el.s={};
+  if(type==='bold')      el.s.fw = el.s.fw==='700'?'400':'700';
+  if(type==='italic')    el.s.fi = el.s.fi==='italic'?'normal':'italic';
+  if(type==='underline') el.s.td = (el.s.td||'').includes('underline')?((el.s.td||'').replace('underline','').trim()||'none'):'underline';
+  if(type==='strike')    el.s.td = (el.s.td||'').includes('line-through')?((el.s.td||'').replace('line-through','').trim()||'none'):'line-through';
+  if(type==='shadow')    el.s.shadow = !el.s.shadow;
+  renderCanvas(); selectEl(selElId);
+}
+function fmtSize(delta) {
+  const el=getEl(selElId); if(!el||el.type!=='text')return;
+  const cur=parseInt(el.s?.fs||'24');
+  fmt('fontSize',(cur+delta)+'px');
+  document.getElementById('fsize-inp').value=cur+delta;
+}
+function fmtIndent(dir) {
+  const el=getEl(selElId); if(!el||el.type!=='text')return;
+  pushUndo(); if(!el.s)el.s={};
+  el.s.indent = Math.max(0,(el.s.indent||0)+dir);
+  renderCanvas();
+}
+function applyTextColor(color) { fmt('color',color); }
+function applyHighlight(color) { fmt('background',color); }
+function applyList(type) {
+  const el=getEl(selElId); if(!el||el.type!=='text')return;
+  pushUndo();
+  const lines=(el.text||'').split('\n').filter(l=>l.trim());
+  if(type==='ul') el.text=lines.map(l=>'• '+l.replace(/^[•\d\.]+\s*/,'')).join('\n');
+  if(type==='ol') el.text=lines.map((l,i)=>`${i+1}. `+l.replace(/^[•\d\.]+\s*/,'')).join('\n');
+  renderCanvas();
+}
+
+/* ── INSERTS ── */
+function insertTextBox() {
+  pushUndo();
+  const t=THEMES[activeTheme];
+  const el={id:uid(),type:'text',x:60,y:80,w:400,h:100,text:'Cliquez pour modifier',s:{fs:'22px',color:t.body,ff:'IBM Plex Sans, sans-serif',lh:'1.5'}};
+  slides[selIdx].els.push(el); renderCanvas(); renderList(); selectEl(el.id); toast('Zone de texte insérée');
+}
+function insertImage(e) {
+  const f=e.target.files[0]; if(!f)return;
+  readImageFile(f); e.target.value='';
+}
+function readImageFile(file) {
+  const r=new FileReader();
+  r.onload=ev=>{
+    const img=new Image();
+    img.onload=()=>{
+      const maxW=600,maxH=380;
+      let w=img.naturalWidth,h=img.naturalHeight;
+      if(w>maxW){h=Math.round(h*maxW/w);w=maxW;}
+      if(h>maxH){w=Math.round(w*maxH/h);h=maxH;}
+      w=Math.max(w,40);h=Math.max(h,40);
+      pushUndo();
+      const el={id:uid(),type:'image',x:Math.round((SW-w)/2),y:Math.round((SH-h)/2),w,h,src:ev.target.result};
+      slides[selIdx].els.push(el);renderCanvas();renderList();selectEl(el.id);
+      toast('🖼 Image insérée ('+w+'×'+h+'px)');
+    };
+    img.src=ev.target.result;
+  };
+  r.readAsDataURL(file);
+}
+/* Coller image depuis presse-papiers (Ctrl+V) */
+document.addEventListener('paste',e=>{
+  const items=(e.clipboardData||e.originalEvent?.clipboardData)?.items;
+  if(!items)return;
+  for(const item of items){
+    if(item.type.startsWith('image/')){
+      e.preventDefault();
+      const file=item.getAsFile();
+      if(file){readImageFile(file);return;}
+    }
+  }
+});
+/* Glisser-déposer image sur le canvas */
+(()=>{
+  const ca=document.getElementById('canvas-area');
+  ca.addEventListener('dragover',e=>{e.preventDefault();e.dataTransfer.dropEffect='copy';ca.style.outline='2px dashed #c0392b';ca.style.outlineOffset='-4px';});
+  ca.addEventListener('dragleave',()=>{ca.style.outline='';});
+  ca.addEventListener('drop',e=>{
+    e.preventDefault();ca.style.outline='';
+    const files=[...e.dataTransfer.files].filter(f=>f.type.startsWith('image/'));
+    if(files.length){readImageFile(files[0]);return;}
+    const url=e.dataTransfer.getData('text/uri-list')||e.dataTransfer.getData('text/plain');
+    if(url&&/\.(png|jpe?g|gif|webp|svg)(\?|$)/i.test(url)){
+      pushUndo();
+      const el={id:uid(),type:'image',x:100,y:60,w:320,h:220,src:url};
+      slides[selIdx].els.push(el);renderCanvas();renderList();selectEl(el.id);
+      toast('🖼 Image insérée depuis URL');
+    }
+  });
+})();
+function insertShape(shape) {
+  pushUndo();
+  const t=THEMES[activeTheme];
+  const sizes={rect:{w:200,h:110},roundrect:{w:200,h:110},circle:{w:150,h:150},triangle:{w:160,h:150},diamond:{w:160,h:150},star:{w:160,h:155},arrow:{w:220,h:100},callout:{w:240,h:140},line:{w:300,h:6}};
+  const d=sizes[shape]||{w:200,h:120};
+  const el={id:uid(),type:'shape',shape,x:100+Math.random()*150,y:70+Math.random()*100,w:d.w,h:d.h,fill:t.accent,stroke:'none',strokeW:0};
+  slides[selIdx].els.push(el); renderCanvas(); renderList(); selectEl(el.id); toast(`Forme insérée : ${shape}`);
+}
+function insertTable() {
+  pushUndo();
+  const t=THEMES[activeTheme];
+  const el={id:uid(),type:'table',x:40,y:70,w:720,h:260,rows:[['Colonne A','Colonne B','Colonne C'],['Valeur 1','Valeur 2','Valeur 3'],['Valeur 4','Valeur 5','Valeur 6'],['Valeur 7','Valeur 8','Valeur 9']],headerColor:t.accent,borderColor:'#d5d5d5',fs:14};
+  slides[selIdx].els.push(el); renderCanvas(); renderList(); toast('Tableau inséré (double-clic pour éditer)');
+}
+function insertChart(type) {
+  pushUndo();
+  const el={id:uid(),type:'chart',x:40,y:70,w:720,h:320,chartType:'bar',data:[42,68,55,90,73,61,84,50],labels:['Jan','Fév','Mar','Avr','Mai','Jun','Jul','Aoû'],color:THEMES[activeTheme].accent};
+  slides[selIdx].els.push(el); renderCanvas(); renderList(); selectEl(el.id); toast('Graphique inséré');
+}
+function insertSlideNum() {
+  pushUndo();
+  const el={id:uid(),type:'text',x:680,y:415,w:100,h:25,text:`Diapo ${selIdx+1}/${slides.length}`,s:{fs:'11px',color:'#aaa',ta:'right',ff:'IBM Plex Mono,monospace'}};
+  slides[selIdx].els.push(el); renderCanvas(); renderList();
+}
+function insertDate() {
+  pushUndo();
+  const el={id:uid(),type:'text',x:20,y:415,w:220,h:25,text:new Date().toLocaleDateString('fr-FR',{weekday:'long',year:'numeric',month:'long',day:'numeric'}),s:{fs:'11px',color:'#aaa',ff:'IBM Plex Sans,sans-serif'}};
+  slides[selIdx].els.push(el); renderCanvas(); renderList();
+}
+function insertHR() {
+  pushUndo();
+  const el={id:uid(),type:'shape',shape:'line',x:40,y:SH/2,w:SW-80,h:6,fill:THEMES[activeTheme].accent,strokeW:2};
+  slides[selIdx].els.push(el); renderCanvas(); renderList();
+}
+function insertIcon() {
+  pushUndo();
+  const icons=['★','♦','●','▲','■','✓','✕','❤','☆','⚡','🔥','💡','🎯','📌','🔑'];
+  const ico=icons[Math.floor(Math.random()*icons.length)];
+  const el={id:uid(),type:'text',x:100+Math.random()*400,y:100+Math.random()*200,w:80,h:80,text:ico,s:{fs:'52px',ta:'center',lh:'1.2',color:THEMES[activeTheme].accent}};
+  slides[selIdx].els.push(el); renderCanvas(); renderList();
+}
+
+/* ── SLIDE MANAGEMENT ── */
+function addSlide(layout) {
+  pushUndo();
+  const ns=mkSlide(layout||'Titre + Contenu');
+  slides.splice(selIdx+1,0,ns); goSlide(selIdx+1); toast('Nouvelle diapositive ajoutée');
+}
+function goSlide(i) { selIdx=Math.max(0,Math.min(i,slides.length-1)); selElId=null; renderAll(); }
+function duplicateSlide() {
+  pushUndo();
+  const cl=JSON.parse(JSON.stringify(slides[selIdx]));
+  cl.id=uid(); cl.els.forEach(e=>e.id=uid());
+  slides.splice(selIdx+1,0,cl); goSlide(selIdx+1); toast('Diapositive dupliquée');
+}
+function deleteSlide() { doDeleteSlide(selIdx); }
+function doDeleteSlide(i) {
+  if(slides.length<=1){toast('Impossible de supprimer la dernière diapositive');return;}
+  pushUndo(); slides.splice(i,1); goSlide(Math.min(i,slides.length-1)); toast('Diapositive supprimée');
+}
+function hideSlide() { toast('Diapositive masquée pour la présentation'); }
+
+/* ── ELEMENT OPERATIONS ── */
+function deleteEl() { const i=slides[selIdx].els.findIndex(e=>e.id===selElId);if(i<0)return;pushUndo();slides[selIdx].els.splice(i,1);selElId=null;renderCanvas();renderList(); }
+function copyEl() { const e=getEl(selElId);if(e){clipboard=JSON.parse(JSON.stringify(e));toast('Copié');} }
+function cutEl() { copyEl(); deleteEl(); }
+function pasteEl() { if(!clipboard)return;pushUndo();const cl=JSON.parse(JSON.stringify(clipboard));cl.id=uid();cl.x+=20;cl.y+=20;slides[selIdx].els.push(cl);renderCanvas();renderList();selectEl(cl.id);toast('Collé'); }
+function dupEl() { copyEl(); if(clipboard){clipboard.x-=20;clipboard.y-=20;pasteEl();} }
+function bringFront() { const s=slides[selIdx].els,i=s.findIndex(e=>e.id===selElId);if(i<0)return;pushUndo();s.push(s.splice(i,1)[0]);renderCanvas(); }
+function sendBack() { const s=slides[selIdx].els,i=s.findIndex(e=>e.id===selElId);if(i<0)return;pushUndo();s.unshift(s.splice(i,1)[0]);renderCanvas(); }
+function centerH() { const e=getEl(selElId);if(!e)return;pushUndo();e.x=(SW-e.w)/2;renderCanvas();selectEl(selElId); }
+function centerV() { const e=getEl(selElId);if(!e)return;pushUndo();e.y=(SH-e.h)/2;renderCanvas();selectEl(selElId); }
+
+/* ── SHAPE STYLE ── */
+function openShapeStyle() {
+  const e=getEl(selElId); if(!e||e.type!=='shape'){toast('Sélectionnez une forme');return;}
+  document.getElementById('sh-fill').value=e.fill||'#c0392b';
+  document.getElementById('sh-stroke').value=e.stroke||'#e74c3c';
+  document.getElementById('sh-strokew').value=e.strokeW||0;
+  document.getElementById('sh-opacity').value=e.opacity||100;
+  document.getElementById('sh-strokew-lbl').textContent=(e.strokeW||0)+'px';
+  document.getElementById('sh-opacity-lbl').textContent=(e.opacity||100)+'%';
+  openOverlay('shape-ov');
+}
+document.getElementById('sh-strokew').addEventListener('input',function(){document.getElementById('sh-strokew-lbl').textContent=this.value+'px';});
+document.getElementById('sh-opacity').addEventListener('input',function(){document.getElementById('sh-opacity-lbl').textContent=this.value+'%';});
+function applyShapeStyle() {
+  const e=getEl(selElId); if(!e)return; pushUndo();
+  e.fill=document.getElementById('sh-fill').value;
+  e.stroke=document.getElementById('sh-stroke').value;
+  e.strokeW=parseInt(document.getElementById('sh-strokew').value);
+  e.opacity=parseInt(document.getElementById('sh-opacity').value);
+  closeOverlay('shape-ov'); renderCanvas(); renderList();
+}
+
+/* ── THEMES ── */
+function buildThemeChips() {
+  const cont=document.getElementById('theme-chips'); cont.innerHTML='';
+  Object.keys(THEMES).forEach(name=>{
+    const t=THEMES[name];
+    const chip=document.createElement('div');
+    chip.className='theme-chip'+(name===activeTheme?' sel':'');
+    chip.style.background=t.bg;
+    chip.style.borderColor=name===activeTheme?'var(--accent)':'var(--border)';
+    chip.innerHTML=`<div style="position:absolute;top:3px;left:0;right:0;text-align:center;font-size:9px;color:${t.title};font-weight:600">${name}</div>`;
+    chip.title=name;
+    chip.addEventListener('click',()=>applyTheme(name));
+    cont.appendChild(chip);
+  });
+}
+function applyTheme(name) {
+  if(!THEMES[name])return;
+  pushUndo(); activeTheme=name;
+  const t=THEMES[name];
+  document.querySelectorAll('.theme-chip').forEach(c=>{c.classList.toggle('sel',c.title===name);c.style.borderColor=c.title===name?'var(--accent)':'var(--border)';});
+  document.getElementById('sb-theme').textContent=name;
+  // Apply to current slide
+  slides[selIdx].bg={type:'solid',color:t.bg};
+  slides[selIdx].els.forEach((el,i)=>{ if(el.type==='text'){if(!el.s)el.s={};el.s.color=i===0?t.title:t.body;} if(el.type==='shape')el.fill=t.accent; });
+  renderAll(); toast(`Thème "${name}" appliqué`);
+}
+function applyThemeAll(name) {
+  const t=THEMES[name]; if(!t)return; pushUndo(); activeTheme=name;
+  slides.forEach(sl=>{sl.bg={type:'solid',color:t.bg};sl.els.forEach((el,i)=>{if(el.type==='text'){if(!el.s)el.s={};el.s.color=i===0?t.title:t.body;}if(el.type==='shape')el.fill=t.accent;});});
+  renderAll(); toast(`Thème "${name}" appliqué à toutes les diapositives`);
+}
+
+/* ── BACKGROUND ── */
+function setBg(type) { document.getElementById('bg-type').value=type; onBgTypeChange(); openOverlay('bg-ov'); }
+function onBgTypeChange() {
+  const t=document.getElementById('bg-type').value;
+  document.getElementById('bg-solid-opts').style.display=t==='solid'?'':'none';
+  document.getElementById('bg-grad-opts').style.display=t==='gradient'?'':'none';
+  document.getElementById('bg-pat-opts').style.display=t==='pattern'?'':'none';
+}
+function applyBg() {
+  const type=document.getElementById('bg-type').value;
+  let bg;
+  if(type==='solid') bg={type:'solid',color:document.getElementById('bg-color').value};
+  else if(type==='gradient') bg={type:'gradient',c1:document.getElementById('bg-g1').value,c2:document.getElementById('bg-g2').value,dir:document.getElementById('bg-gdir').value};
+  else if(type==='pattern') bg={type:'pattern',pat:document.getElementById('bg-pat').value,base:document.getElementById('bg-pat-bg').value,accent:'rgba(192,57,43,.12)'};
+  const all=document.getElementById('bg-all-slides').checked;
+  pushUndo();
+  if(all) slides.forEach(s=>s.bg=JSON.parse(JSON.stringify(bg))); else slides[selIdx].bg=bg;
+  closeOverlay('bg-ov'); renderCanvas(); renderList(); toast('Arrière-plan appliqué');
+}
+
+/* ── TRANSITIONS ── */
+function setTrans(type) {
+  slides[selIdx].transition=type;
+  document.querySelectorAll('[id^="tr-"]').forEach(b=>b.classList.remove('active'));
+  const btn=document.getElementById('tr-'+type.replace(/-.*$/,''));
+  if(btn)btn.classList.add('active');
+  document.getElementById('sb-trans').textContent=type==='none'?'aucune':type;
+  toast('Transition : '+type);
+}
+function applyTransAll() { const t=slides[selIdx].transition,d=slides[selIdx].transDur; slides.forEach(s=>{s.transition=t;s.transDur=d;}); toast('Transition appliquée à toutes les diapositives'); }
+
+/* ── ANIMATIONS ── */
+function addAnim(type) { const e=getEl(selElId);if(!e){toast('Sélectionnez un élément');return;}pushUndo();e.anim=type;toast('Animation : '+type); }
+function removeAnim() { const e=getEl(selElId);if(!e)return;pushUndo();delete e.anim;toast('Animation supprimée'); }
+function previewAnim() {
+  const e=getEl(selElId); if(!e||!e.anim){toast('Aucune animation');return;}
+  const d=document.querySelector(`[data-id="${e.id}"]`); if(!d)return;
+  const anims={appear:[{opacity:0},{opacity:1}],'fade-in':[{opacity:0},{opacity:1}],'fly-in-left':[{transform:'translateX(-80px)',opacity:0},{transform:'none',opacity:1}],'fly-in-right':[{transform:'translateX(80px)',opacity:0},{transform:'none',opacity:1}],'zoom-in':[{transform:'scale(0.3)',opacity:0},{transform:'none',opacity:1}],bounce:[{transform:'translateY(0)'},{transform:'translateY(-30px)'},{transform:'translateY(0)'}],spin:[{transform:'rotate(0deg)'},{transform:'rotate(360deg)'}],pulse:[{transform:'scale(1)'},{transform:'scale(1.12)'},{transform:'scale(1)'}],shake:[{transform:'translateX(0)'},{transform:'translateX(-10px)'},{transform:'translateX(10px)'},{transform:'translateX(0)'}],typewriter:[{clipPath:'inset(0 100% 0 0)'},{clipPath:'inset(0 0% 0 0)'}]};
+  if(anims[e.anim])d.animate(anims[e.anim],{duration:600,easing:'ease-out'});
+}
+
+/* ── VIEW ── */
+function setView(v) {
+  ['normal','sorter','outline'].forEach(n=>{const b=document.getElementById('v-'+n);if(b)b.classList.toggle('active',n===v);});
+  if(v==='sorter'){document.getElementById('slide-panel').style.width='100%';document.getElementById('editor-wrap').style.display='none';}
+  else{document.getElementById('slide-panel').style.width='192px';document.getElementById('editor-wrap').style.display='';}
+  toast('Vue : '+v);
+}
+function toggleGrid(on){document.getElementById('canvas-grid').style.display=on?'block':'none';}
+function toggleRuler(on){toast(on?'Règle activée':'Règle désactivée');}
+function toggleGuides(on){toast(on?'Repères activés':'Repères désactivés');}
+
+/* ── ZOOM ── */
+function setZoom(z) {
+  zoom=Math.max(25,Math.min(300,Math.round(z)));
+  document.getElementById('zoom-range').value=zoom;
+  document.getElementById('sb-zoom-range').value=zoom;
+  document.getElementById('zoom-lbl').textContent=zoom+'%';
+  document.getElementById('sb-zoom-lbl').textContent=zoom+'%';
+  renderCanvas();
+}
+function fitZoom() {
+  const ca=document.getElementById('canvas-area');
+  const aw=ca.clientWidth-48, ah=ca.clientHeight-48-90;
+  setZoom(Math.floor(Math.min(aw/SW,ah/SH)*100));
+}
+
+/* ── LAYOUT PICKER ── */
+function buildLayoutGrid() {
+  const grid=document.getElementById('layout-grid'); grid.innerHTML='';
+  Object.entries(LAYOUTS).forEach(([name,lay])=>{
+    const opt=document.createElement('div'); opt.className='lay-opt'+(name===selLayout?' sel':''); opt.dataset.name=name;
+    lay.els.slice(0,3).forEach(el=>{const b=document.createElement('div');b.className='lay-block';b.style.cssText=`left:${(el.x/SW*100).toFixed(0)}%;top:${(el.y/SH*100).toFixed(0)}%;width:${(el.w/SW*100).toFixed(0)}%;height:${Math.min((el.h/SH*100),38).toFixed(0)}%;`;opt.appendChild(b);});
+    const lbl=document.createElement('div'); lbl.className='lay-name'; lbl.textContent=name; opt.appendChild(lbl);
+    opt.addEventListener('click',()=>{document.querySelectorAll('.lay-opt').forEach(o=>o.classList.remove('sel'));opt.classList.add('sel');selLayout=name;});
+    grid.appendChild(opt);
+  });
+}
+function openLayoutPicker(){buildLayoutGrid();openOverlay('layout-ov');}
+function applyLayout() {
+  const lay=LAYOUTS[selLayout]; if(!lay)return;
+  pushUndo(); const t=THEMES[activeTheme];
+  slides[selIdx].els=lay.els.map((el,i)=>{const e=JSON.parse(JSON.stringify(el));e.id=uid();if(!e.s)e.s={};if(e.type==='text'&&!e.s.color)e.s.color=i===0?t.title:t.body;return e;});
+  closeOverlay('layout-ov'); renderAll(); toast('Mise en page : '+selLayout);
+}
+
+/* ── SLIDESHOW ── */
+function startShow(idx) {
+  ssIdx=Math.max(0,Math.min(idx,slides.length-1));
+  document.getElementById('ss-overlay').classList.add('open');
+  renderSSSlide();
+}
+function renderSSSlide() {
+  const sl=slides[ssIdx];
+  const ov=document.getElementById('ss-overlay');
+  const cvEl=document.getElementById('ss-slide');
+  const vw=window.innerWidth, vh=window.innerHeight;
+  const scale=Math.min(vw/SW, vh/SH);
+  cvEl.style.width=SW+'px'; cvEl.style.height=SH+'px';
+  cvEl.style.transform=`scale(${scale})`;
+  cvEl.innerHTML='';
+  applyBgEl(cvEl, sl.bg);
+  sl.els.forEach(el=>{
+    const d=document.createElement('div');
+    d.style.cssText=`position:absolute;left:${el.x}px;top:${el.y}px;width:${el.w}px;height:${el.h}px;overflow:hidden;${el.rotate?`transform:rotate(${el.rotate}deg);`:''}`;
+    if(el.type==='text'){
+      const s=el.s||{};
+      d.innerHTML=(el.text||'').replace(/\n/g,'<br>');
+      d.style.cssText+=`font-size:${s.fs||'20px'};font-weight:${s.fw||400};font-style:${s.fi||'normal'};text-decoration:${s.td||'none'};text-align:${s.ta||'left'};color:${s.color||'#222'};font-family:${s.ff||'IBM Plex Sans,sans-serif'};line-height:${s.lh||'1.4'};padding:4px;white-space:pre-wrap;word-break:break-word;background:${s.bg||'transparent'};`;
+    } else if(el.type==='image'){const img=document.createElement('img');img.src=el.src;img.style.cssText='width:100%;height:100%;object-fit:contain;';d.appendChild(img);}
+    else if(el.type==='shape'){const svg=mkSVG(el);if(svg)d.appendChild(svg);}
+    else if(el.type==='table'){d.appendChild(mkTableEl(el));}
+    else if(el.type==='chart'){const cv2=document.createElement('canvas');cv2.style.cssText='width:100%;height:100%;display:block;';d.appendChild(cv2);setTimeout(()=>drawChart(cv2,el),30);}
+    // Animation
+    if(el.anim){
+      const anims={'fade-in':[{opacity:0},{opacity:1}],'fly-in-left':[{transform:'translateX(-60px)',opacity:0},{transform:'none',opacity:1}],'fly-in-right':[{transform:'translateX(60px)',opacity:0},{transform:'none',opacity:1}],'zoom-in':[{transform:'scale(0.4)',opacity:0},{transform:'none',opacity:1}],bounce:[{transform:'translateY(0)'},{transform:'translateY(-20px)'},{transform:'translateY(0)'}],spin:[{transform:'rotate(0deg)'},{transform:'rotate(360deg)'}],pulse:[{transform:'scale(1)'},{transform:'scale(1.1)'},{transform:'scale(1)'}]};
+      if(anims[el.anim])d.animate(anims[el.anim],{duration:500,delay:200+Math.random()*100,easing:'ease-out'});
+    }
+    cvEl.appendChild(d);
+  });
+  document.getElementById('ss-info').textContent=`${ssIdx+1} / ${slides.length}`;
+  if(autoAdv){clearTimeout(ssAutoTimer);ssAutoTimer=setTimeout(ssNext,parseFloat(document.getElementById('auto-delay').value||5)*1000);}
+}
+function ssPrev(){if(ssIdx>0){ssIdx--;renderSSSlide();}}
+function ssNext(){clearTimeout(ssAutoTimer);if(ssIdx<slides.length-1){ssIdx++;renderSSSlide();}else ssExit();}
+function ssExit(){clearTimeout(ssAutoTimer);document.getElementById('ss-overlay').classList.remove('open');}
+function toggleAutoAdv(on){autoAdv=on;toast(on?'⏩ Avancement auto ON':'⏩ Avancement auto OFF');}
+function rehearse(){toast('Démarrez le diaporama pour enregistrer les minutages');}
+function printSlides(){window.print();}
+
+/* ── UNDO/REDO ── */
+function pushUndo(){if(undoStack.length>60)undoStack.shift();undoStack.push(JSON.stringify({slides,selIdx,selElId}));redoStack=[];}
+function undo(){if(!undoStack.length){toast('Rien à annuler');return;}redoStack.push(JSON.stringify({slides,selIdx,selElId}));const p=JSON.parse(undoStack.pop());slides=p.slides;selIdx=p.selIdx;selElId=null;renderAll();toast('↩ Annulé');}
+function redo(){if(!redoStack.length){toast('Rien à rétablir');return;}undoStack.push(JSON.stringify({slides,selIdx}));const p=JSON.parse(redoStack.pop());slides=p.slides;selIdx=p.selIdx;selElId=null;renderAll();toast('↪ Rétabli');}
+
+/* ── EXPORT ── */
+function doExport() {
+  const fmt=document.getElementById('exp-fmt').value;
+  const name=document.getElementById('exp-name').value||'presentation';
+  closeOverlay('export-ov');
+  if(fmt==='json'){const d={name,theme:activeTheme,slides,ts:new Date().toISOString()};dl(JSON.stringify(d,null,2),name+'.json','application/json');toast('JSON exporté !');}
+  else if(fmt==='html'){exportHTML(name);}
+  else if(fmt==='txt'){let t=slides.map((s,i)=>`--- Diapositive ${i+1} ---\n${s.els.filter(e=>e.type==='text').map(e=>e.text||'').join('\n')}\n${s.notes?'Notes: '+s.notes:''}`).join('\n\n');dl(t,name+'.txt','text/plain');toast('Texte exporté !');}
+  else if(fmt==='svg'){exportSVG(name);}
+}
+function exportHTML(name) {
+  let slidesHTML = slides.map((sl,i)=>{
+    let bgStyle='';
+    if(sl.bg.type==='solid')bgStyle=`background:${sl.bg.color}`;
+    else if(sl.bg.type==='gradient')bgStyle=`background:linear-gradient(${sl.bg.dir||'to right'},${sl.bg.c1},${sl.bg.c2})`;
+    const elsHTML=sl.els.filter(e=>e.type==='text').map(el=>{const s=el.s||{};return`<div style="position:absolute;left:${el.x}px;top:${el.y}px;width:${el.w}px;height:${el.h}px;font-size:${s.fs||'20px'};font-weight:${s.fw||400};font-style:${s.fi||'normal'};color:${s.color||'#222'};font-family:${s.ff||'sans-serif'};text-align:${s.ta||'left'};line-height:${s.lh||'1.4'};padding:4px;overflow:hidden;white-space:pre-wrap;word-break:break-word;">${(el.text||'').replace(/\n/g,'<br>')}</div>`;}).join('');
+    return`<div class="slide${i===0?' active':''}" id="s${i}" style="width:${SW}px;height:${SH}px;position:absolute;${bgStyle}">${elsHTML}</div>`;
+  }).join('');
+  const html=`<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><title>${name}</title><link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600;700&display=swap" rel="stylesheet"><style>*{box-sizing:border-box;margin:0;padding:0;}body{background:#111;display:flex;align-items:center;justify-content:center;height:100vh;overflow:hidden;font-family:'IBM Plex Sans',sans-serif;}.stage{position:relative;}.slide{display:none;}.slide.active{display:block;}nav{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);display:flex;gap:8px;align-items:center;background:rgba(0,0,0,.6);padding:8px 16px;border-radius:24px;backdrop-filter:blur(8px);}button{background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.25);border-radius:4px;padding:5px 16px;font-family:inherit;font-size:12px;cursor:pointer;}button:hover{background:rgba(255,255,255,.28);}.info{color:rgba(255,255,255,.6);font-size:11px;min-width:60px;text-align:center;}</style></head><body><div class="stage" id="stage">${slidesHTML}</div><nav><button onclick="prev()">◀ Précédent</button><span class="info" id="info">1/${slides.length}</span><button onclick="next()">Suivant ▶</button></nav><script>let i=0,n=${slides.length};function go(x){i=Math.max(0,Math.min(x,n-1));document.querySelectorAll('.slide').forEach((s,j)=>s.style.display=j===i?'block':'none');document.getElementById('info').textContent=(i+1)+'/'+n;}function next(){go(i+1);}function prev(){go(i-1);}document.addEventListener('keydown',e=>{if(e.key==='ArrowRight'||e.key===' ')next();if(e.key==='ArrowLeft')prev();if(e.key==='Escape')document.body.requestFullscreen&&document.exitFullscreen();});const s=document.getElementById('stage');const scale=Math.min(window.innerWidth/${SW},window.innerHeight/${SH});s.style.transform='scale('+scale+')';s.style.transformOrigin='center center';<\/script></body></html>`;
+  dl(html,name+'.html','text/html'); toast('HTML exporté !');
+}
+function exportSVG(name) {
+  const sl=slides[selIdx];
+  let bgAttr=sl.bg.type==='solid'?`fill="${sl.bg.color}"`:sl.bg.type==='gradient'?`fill="url(#grad)"`:'fill="#fff"';
+  const textEls=sl.els.filter(e=>e.type==='text').map(el=>{const s=el.s||{};return`<foreignObject x="${el.x}" y="${el.y}" width="${el.w}" height="${el.h}"><body xmlns="http://www.w3.org/1999/xhtml"><div style="font-size:${s.fs||'20px'};font-weight:${s.fw||400};color:${s.color||'#222'};font-family:${s.ff||'sans-serif'};text-align:${s.ta||'left'};line-height:${s.lh||'1.4'}">${(el.text||'').replace(/\n/g,'<br>')}</div></body></foreignObject>`;}).join('');
+  const svg=`<svg xmlns="http://www.w3.org/2000/svg" width="${SW}" height="${SH}"><rect width="${SW}" height="${SH}" ${bgAttr}/>${textEls}</svg>`;
+  dl(svg,name+'.svg','image/svg+xml'); toast('SVG exporté !');
+}
+function dl(content,filename,type){const b=new Blob([content],{type});const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download=filename;a.click();URL.revokeObjectURL(u);}
+
+/* ── SAVE / LOAD ── */
+function savePres() {
+  const name=document.getElementById('doc-name').textContent||'presentation';
+  const d={name,theme:activeTheme,slides};
+  dl(JSON.stringify(d,null,2),name.replace(/\s+/g,'-')+'.json','application/json');
+  toast('💾 Sauvegardé !');
+}
+function importPres() {
+  const inp=document.createElement('input');inp.type='file';inp.accept='.json';
+  inp.onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{try{const d=JSON.parse(ev.target.result);slides=d.slides;activeTheme=d.theme||'Blanc';document.getElementById('doc-name').textContent=d.name||f.name;selIdx=0;selElId=null;renderAll();buildThemeChips();toast('Présentation importée !');}catch{toast('Erreur : fichier invalide');}};r.readAsText(f);};
+  inp.click();
+}
+
+/* ── CONTEXT MENUS ── */
+function showCtx(x,y) { const m=document.getElementById('ctx');m.style.display='block';m.style.left=Math.min(x,window.innerWidth-195)+'px';m.style.top=Math.min(y,window.innerHeight-320)+'px'; }
+function hideCtx() { document.getElementById('ctx').style.display='none'; }
+document.addEventListener('click',e=>{ if(!e.target.closest('#ctx'))hideCtx(); });
+
+let ctxSlideIdx=-1;
+function showCtxSlide(x,y,i){ctxSlideIdx=i;}
+
+/* ── STATUS BAR ── */
+function updateStatus() {
+  document.getElementById('sb-cur').textContent=selIdx+1;
+  document.getElementById('sb-tot').textContent=slides.length;
+  const tr=slides[selIdx]?.transition||'none';
+  document.getElementById('sb-trans').textContent=tr==='none'?'aucune':tr;
+}
+
+/* ── RIBBON TAB SWITCHING ── */
+document.getElementById('ribbon-tabs').addEventListener('click', e=>{
+  const tab=e.target.closest('.ribbon-tab'); if(!tab)return;
+  document.querySelectorAll('.ribbon-tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.ribbon-body').forEach(b=>b.classList.remove('active'));
+  tab.classList.add('active');
+  const body=document.getElementById('tab-'+tab.dataset.tab);
+  if(body)body.classList.add('active');
+});
+
+/* ── CANVAS CLICK DESELECT ── */
+document.getElementById('slide-canvas').addEventListener('click', e=>{
+  if(e.target===document.getElementById('slide-canvas')||e.target.id==='canvas-grid') deselect();
+});
+
+/* ── NOTES ── */
+document.getElementById('notes-ta').addEventListener('input',e=>{ if(slides[selIdx]) slides[selIdx].notes=e.target.value; });
+
+/* ── KEYBOARD ── */
+document.addEventListener('keydown', e=>{
+  const tag=e.target.tagName;
+  if(tag==='INPUT'||tag==='TEXTAREA'||tag==='SELECT'||e.target.contentEditable==='true')return;
+  if(e.ctrlKey||e.metaKey){
+    switch(e.key.toLowerCase()){
+      case 'z':e.preventDefault();undo();break;
+      case 'y':e.preventDefault();redo();break;
+      case 's':e.preventDefault();savePres();break;
+      case 'c':e.preventDefault();copyEl();break;
+      case 'x':e.preventDefault();cutEl();break;
+      case 'v':e.preventDefault();pasteEl();break;
+      case 'd':e.preventDefault();dupEl();break;
+      case 'n':e.preventDefault();addSlide();break;
+      case 'm':e.preventDefault();startShow(selIdx);break;
+    }
+  } else {
+    switch(e.key){
+      case 'Delete':case 'Backspace':if(selElId)deleteEl();break;
+      case 'Escape':
+        if(document.getElementById('ss-overlay').classList.contains('open'))ssExit();
+        else deselect();
+        break;
+      case 'ArrowRight':
+        if(document.getElementById('ss-overlay').classList.contains('open'))ssNext();
+        else goSlide(selIdx+1);
+        break;
+      case 'ArrowLeft':
+        if(document.getElementById('ss-overlay').classList.contains('open'))ssPrev();
+        else goSlide(selIdx-1);
+        break;
+      case 'ArrowUp': case 'ArrowDown': {
+        if(!selElId)break; e.preventDefault();
+        const el=getEl(selElId);if(!el)break;
+        const d=e.shiftKey?10:1;
+        if(e.key==='ArrowUp')el.y-=d; else el.y+=d;
+        const dom=document.querySelector(`[data-id="${selElId}"]`);if(dom)dom.style.top=el.y+'px';
+        break;
+      }
+      case 'F5':e.preventDefault();startShow(selIdx);break;
+    }
+    if(selElId&&['ArrowLeft','ArrowRight'].includes(e.key)&&!document.getElementById('ss-overlay').classList.contains('open')){
+      e.preventDefault();const el=getEl(selElId);if(!el)return;
+      const d=e.shiftKey?10:1;if(e.key==='ArrowLeft')el.x-=d;else el.x+=d;
+      const dom=document.querySelector(`[data-id="${selElId}"]`);if(dom)dom.style.left=el.x+'px';
+    }
+  }
+});
+
+/* ── OVERLAY HELPERS ── */
+function openOverlay(id){document.getElementById(id).classList.add('open');}
+function closeOverlay(id){document.getElementById(id).classList.remove('open');}
+document.querySelectorAll('.overlay').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('open');}));
+
+/* ── TOAST ── */
+function toast(msg,dur=2400){const t=document.getElementById('toast');t.textContent=msg;t.style.display='block';clearTimeout(t._t);t._t=setTimeout(()=>t.style.display='none',dur);}
+
+/* ── COLOR PRESETS ── */
+const PRESETS=['#ffffff','#000000','#c0392b','#2980b9','#e74c3c','#f39c12','#9b59b6','#1abc9c','#2c3e50','#ecf0f1','#f8f9fa','#34495e','#e74c3c','#74c7ec','#f5c518','#ff6b6b','#4ecdc4','#a8e6cf'];
+function buildPresets(containerId) {
+  const c=document.getElementById(containerId); if(!c)return; c.innerHTML='';
+  PRESETS.forEach(col=>{const d=document.createElement('div');d.className='color-preset';d.style.background=col;d.addEventListener('click',()=>{const inp=c.nextElementSibling;if(inp&&inp.type==='color'){inp.value=col;inp.dispatchEvent(new Event('input'));}});c.appendChild(d);});
+}
+
+/* ── MISC FUNCTIONS ── */
+function setRatio(r){toast('Format : '+r+' (non redimensionné visuellement)');}
+function printSlides(){window.print();}
+function syncTitlebarAppIcon() {
+  const node = document.getElementById('app-icon');
+  if (!node) return;
+  const fallback = '📽️';
+  try {
+    const wm = window.parent && window.parent.windowManager;
+    const app = wm && Array.isArray(wm.appsRegistry)
+      ? wm.appsRegistry.find(a => a && (a.id === 'powerpoint' || a.id === 'slides'))
+      : null;
+    const iconValue = app && app.icon ? app.icon : fallback;
+    if (wm && typeof wm.renderAppIconMarkup === 'function') {
+      node.innerHTML = wm.renderAppIconMarkup(iconValue, fallback);
+      node.classList.toggle('has-image', /<img\b/i.test(node.innerHTML));
+    } else {
+      node.textContent = iconValue || fallback;
+    }
+  } catch (err) {
+    node.textContent = fallback;
+  }
+}
+
+/* ═══════════ INIT ═══════════ */
+function init() {
+  syncTitlebarAppIcon();
+  // Create default slides
+  slides = [mkSlide('Titre'), mkSlide('Titre + Contenu'), mkSlide('Titre + Contenu')];
+  slides[1].els[0].text = 'Contenu de la présentation';
+  slides[1].els[1].text = '• Premier point important\n• Deuxième point important\n• Troisième point important';
+  slides[2].els[0].text = 'Deuxième diapositive';
+  slides[2].els[1].text = '• Nouveau contenu ici\n• Ajoutez vos idées\n• Modifiez le texte';
+
+  // Build theme chips
+  buildThemeChips();
+
+  // Build bg presets
+  buildPresets('bg-presets');
+  buildPresets('shape-fill-presets');
+
+  // Fit & render
+  fitZoom();
+  renderAll();
+}
+
+let __aetherSlidesInitDone = false;
+function initOnce() {
+  if (__aetherSlidesInitDone) return;
+  __aetherSlidesInitDone = true;
+  init();
+}
+
+// Use DOMContentLoaded so the app still boots even if external resources (fonts) hang.
+window.addEventListener('DOMContentLoaded', initOnce);
+window.addEventListener('load', initOnce);
+window.addEventListener('resize', ()=>{ if(zoom<50) fitZoom(); });
+</script>
+</body>
+</html>

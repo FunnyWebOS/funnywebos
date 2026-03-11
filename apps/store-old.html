@@ -1,0 +1,1913 @@
+﻿<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GridStore - AetherOS Discovery (Refonte complète)</title>
+    <style>
+        :root {
+            --accent: #0A84FF;
+            --accent2: #7C3AED;
+            --accent3: #22C55E;
+            --bg-glass: rgba(20, 20, 25, 0.7);
+            --card-bg: rgba(255, 255, 255, 0.05);
+            --border: rgba(255, 255, 255, 0.1);
+            --text-main: #ffffff;
+            --text-secondary: rgba(255, 255, 255, 0.5);
+            --shadow: 0 22px 60px rgba(0, 0, 0, 0.45);
+        }
+
+        * {
+            box-sizing: border-box;
+            -webkit-font-smoothing: antialiased;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif;
+            background: transparent;
+            color: var(--text-main);
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        /* Layout Principal */
+        .app-container {
+            display: flex;
+            height: 100vh;
+            background:
+                radial-gradient(120% 120% at 10% 10%, rgba(10, 132, 255, 0.14), transparent 55%),
+                radial-gradient(110% 140% at 90% 0%, rgba(124, 58, 237, 0.18), transparent 50%),
+                linear-gradient(145deg, rgba(20, 20, 25, 0.72), rgba(10, 10, 14, 0.78));
+            backdrop-filter: blur(40px) saturate(180%);
+            animation: fadeIn 0.4s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(1.02); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        /* Barre Latérale */
+        .sidebar {
+            width: 88px;
+            border-right: 1px solid rgba(255, 255, 255, 0.08);
+            padding: 18px 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+
+        .sidebar-item {
+            padding: 10px 10px;
+            border-radius: 16px;
+            cursor: pointer;
+            transition: 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            justify-content: center;
+        }
+
+        .sidebar-item:hover {
+            background: rgba(255, 255, 255, 0.05);
+            color: white;
+        }
+
+        .sidebar-item.active {
+            background: rgba(255, 255, 255, 0.12);
+            color: white;
+        }
+
+        .sidebar-icon {
+            font-size: 18px;
+        }
+
+        .sidebar-label {
+            display: none;
+        }
+
+        /* Zone Principale */
+        .main-view {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            min-height: 0;
+            min-width: 0;
+        }
+
+        .top-bar {
+            padding: 18px 18px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 14px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            min-width: 180px;
+        }
+
+        .brand-badge {
+            width: 38px;
+            height: 38px;
+            border-radius: 14px;
+            border: 1px solid rgba(255, 255, 255, 0.16);
+            background: linear-gradient(135deg, rgba(10, 132, 255, 0.85), rgba(124, 58, 237, 0.78));
+            box-shadow: 0 10px 30px rgba(10, 132, 255, 0.18);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 900;
+            letter-spacing: 0.06em;
+            font-size: 12px;
+            background-image: url('store-icon.svg');
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+            color: transparent;
+        }
+
+        .brand h1 {
+            margin: 0;
+            font-size: 18px;
+            font-weight: 900;
+            letter-spacing: -0.02em;
+        }
+
+        .brand p {
+            margin: 0;
+            font-size: 11px;
+            opacity: 0.6;
+        }
+
+        .top-tabs {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            flex: 1;
+            overflow: auto;
+            padding: 6px 2px;
+        }
+
+        .top-tab {
+            border: 1px solid rgba(255, 255, 255, 0.14);
+            background: rgba(255, 255, 255, 0.04);
+            color: rgba(255, 255, 255, 0.8);
+            border-radius: 999px;
+            padding: 8px 12px;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+
+        .top-tab.active {
+            border-color: rgba(10, 132, 255, 0.9);
+            background: rgba(10, 132, 255, 0.18);
+            color: white;
+        }
+
+        .search-container {
+            position: relative;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .search-input {
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 8px 12px 8px 35px;
+            color: white;
+            width: 250px;
+            outline: none;
+            transition: 0.3s;
+        }
+
+        .search-input:focus {
+            width: 320px;
+            border-color: var(--accent);
+            background: rgba(0, 0, 0, 0.4);
+        }
+
+        /* Grille des Apps */
+        .content-scroll {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px 18px 26px;
+        }
+
+        .app-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+        }
+
+        .app-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 22px;
+            padding: 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            transition: 0.3s cubic-bezier(0.2, 0, 0, 1);
+            cursor: pointer;
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.22);
+        }
+
+        .app-card:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .app-cover {
+            width: 100%;
+            height: 148px;
+            border-radius: 16px;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            background: linear-gradient(135deg, rgba(10, 132, 255, 0.18), rgba(124, 58, 237, 0.12));
+            box-shadow: 0 18px 38px rgba(0, 0, 0, 0.25);
+        }
+
+        .app-cover img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        .app-card-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+        }
+
+        .app-card-meta {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            min-width: 0;
+        }
+
+        .app-icon-small {
+            width: 44px;
+            height: 44px;
+            flex: 0 0 auto;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            overflow: hidden;
+        }
+
+        .app-icon-small img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .app-info-mini {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .app-name {
+            font-weight: 700;
+            margin-bottom: 2px;
+        }
+
+        .app-dev {
+            font-size: 11px;
+            color: var(--text-secondary);
+        }
+
+        .get-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            color: var(--accent);
+            font-weight: 800;
+            font-size: 13px;
+            padding: 6px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: 0.2s;
+            flex: 0 0 auto;
+        }
+
+        .get-btn:hover {
+            background: var(--accent);
+            color: white;
+        }
+
+        /* Page Détails */
+        #detail-view {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #111;
+            z-index: 1000;
+            display: none;
+            flex-direction: column;
+            animation: slideIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @keyframes slideIn {
+            from { transform: translateY(100%); }
+            to { transform: translateY(0); }
+        }
+
+        .detail-header {
+            padding: 20px 40px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .back-btn {
+            background: none;
+            border: none;
+            color: var(--accent);
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .detail-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 40px;
+            max-width: 900px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .detail-top {
+            display: flex;
+            gap: 30px;
+            align-items: flex-start;
+            margin-bottom: 40px;
+        }
+
+        .detail-icon {
+            width: 160px;
+            height: 160px;
+            background: var(--card-bg);
+            border-radius: 35px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 80px;
+            border: 1px solid var(--border);
+        }
+
+        .detail-title-area h2 {
+            font-size: 40px;
+            margin: 0 0 10px 0;
+        }
+
+        .detail-description {
+            font-size: 18px;
+            line-height: 1.6;
+            color: var(--text-secondary);
+        }
+
+        .install-row {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            margin-top: 25px;
+        }
+
+        .main-btn {
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            font-weight: 700;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(255, 255, 255, 0.9);
+            color: black;
+            padding: 12px 24px;
+            border-radius: 30px;
+            font-weight: 600;
+            display: none;
+            z-index: 2000;
+        }
+
+        .screenshot-gallery {
+            display: flex;
+            gap: 15px;
+            overflow-x: auto;
+            padding: 20px 0;
+            margin-top: 20px;
+        }
+
+        .screenshot-gallery img {
+            height: 180px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            cursor: zoom-in;
+            transition: 0.3s;
+        }
+
+        .screenshot-gallery img:hover {
+            transform: scale(1.05);
+        }
+
+        .submit-mode-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+
+        .submit-mode-btn {
+            border: 1px solid var(--border);
+            background: rgba(255, 255, 255, 0.05);
+            color: white;
+            border-radius: 10px;
+            padding: 10px;
+            cursor: pointer;
+            font-weight: 700;
+            font-size: 12px;
+            transition: 0.2s;
+        }
+
+        .submit-mode-btn.active {
+            background: rgba(10, 132, 255, 0.25);
+            border-color: var(--accent);
+        }
+
+        /* Featured (V2) */
+        .featured-wrap {
+            display: grid;
+            grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr);
+            gap: 16px;
+            margin-bottom: 18px;
+        }
+
+        .featured-hero {
+            border-radius: 26px;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            background: rgba(255, 255, 255, 0.04);
+            box-shadow: var(--shadow);
+            position: relative;
+            min-height: 260px;
+        }
+
+        .featured-hero .hero-cover {
+            position: absolute;
+            inset: 0;
+            opacity: 0.95;
+        }
+
+        .featured-hero .hero-cover img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        .featured-hero .hero-overlay {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(90deg, rgba(8, 10, 16, 0.78), rgba(8, 10, 16, 0.15));
+        }
+
+        .featured-hero .hero-content {
+            position: relative;
+            z-index: 2;
+            padding: 18px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-width: 60%;
+            min-width: 260px;
+        }
+
+        .hero-kicker {
+            margin: 0;
+            font-size: 11px;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+            opacity: 0.7;
+        }
+
+        .hero-title {
+            margin: 0;
+            font-size: 26px;
+            font-weight: 900;
+            letter-spacing: -0.03em;
+        }
+
+        .hero-desc {
+            margin: 0;
+            font-size: 13px;
+            opacity: 0.85;
+            line-height: 1.45;
+        }
+
+        .hero-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 6px;
+            flex-wrap: wrap;
+        }
+
+        .pill-btn {
+            border: 1px solid rgba(255, 255, 255, 0.16);
+            background: rgba(255, 255, 255, 0.08);
+            color: white;
+            border-radius: 999px;
+            padding: 9px 14px;
+            font-weight: 900;
+            font-size: 12px;
+            cursor: pointer;
+        }
+
+        .pill-btn.primary {
+            border-color: rgba(10, 132, 255, 0.9);
+            background: linear-gradient(135deg, rgba(10, 132, 255, 0.95), rgba(124, 58, 237, 0.85));
+        }
+
+        .featured-side {
+            display: grid;
+            grid-template-rows: repeat(2, minmax(0, 1fr));
+            gap: 16px;
+        }
+
+        .side-card {
+            border-radius: 20px;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            background: rgba(255, 255, 255, 0.03);
+            box-shadow: 0 16px 40px rgba(0, 0, 0, 0.28);
+            display: grid;
+            grid-template-columns: 120px 1fr;
+            min-height: 122px;
+            cursor: pointer;
+            transition: transform 0.2s ease, background 0.2s ease;
+        }
+
+        .side-card:hover {
+            transform: translateY(-2px);
+            background: rgba(255, 255, 255, 0.06);
+        }
+
+        .side-card .thumb img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        .side-card .info {
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            justify-content: center;
+        }
+
+        .side-card .info .t {
+            font-weight: 900;
+            font-size: 14px;
+        }
+
+        .side-card .info .d {
+            font-size: 12px;
+            opacity: 0.7;
+            line-height: 1.35;
+        }
+
+        .featured-row {
+            display: flex;
+            gap: 12px;
+            overflow: auto;
+            padding: 4px 2px 10px;
+            margin-bottom: 10px;
+        }
+
+        .row-card {
+            min-width: 180px;
+            max-width: 220px;
+            border-radius: 18px;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            background: rgba(255, 255, 255, 0.03);
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+
+        .row-card:hover {
+            transform: translateY(-2px);
+        }
+
+        .row-card .thumb {
+            height: 120px;
+            background: rgba(255, 255, 255, 0.06);
+        }
+
+        .row-card .thumb img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        .row-card .b {
+            padding: 10px 12px;
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .row-card .b .name {
+            font-weight: 900;
+            font-size: 12px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .row-card .b .tag {
+            font-size: 10px;
+            opacity: 0.65;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        .submit-mode-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 12px;
+            margin-bottom: 10px;
+        }
+
+        .submit-mode-grid.ai-active {
+            grid-template-columns: 1.2fr 0.8fr;
+            align-items: start;
+        }
+
+        #ai-prompt-container.ai-panel {
+            display: none;
+            padding: 14px;
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            background: rgba(255, 255, 255, 0.04);
+        }
+
+        #ai-prompt-container.ai-panel.active {
+            display: block;
+        }
+
+        @media (max-width: 980px) {
+            .featured-wrap {
+                grid-template-columns: 1fr;
+            }
+            .featured-hero .hero-content {
+                max-width: 100%;
+            }
+            .submit-mode-grid.ai-active {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 720px) {
+            .app-container {
+                flex-direction: column;
+            }
+            
+            .sidebar {
+                width: 100%;
+                border-right: none;
+                border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+                padding: 12px 16px;
+                flex-direction: row;
+                flex-wrap: wrap;
+                gap: 8px;
+            }
+            
+            .sidebar-item {
+                flex: 1;
+                min-width: calc(50% - 8px);
+                justify-content: center;
+            }
+            
+            .sidebar-label {
+                display: block;
+                font-size: 11px;
+            }
+            
+            .main-view {
+                margin-top: 0;
+            }
+            
+            .search-input {
+                width: 100%;
+                max-width: none;
+            }
+            
+            .app-grid {
+                grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+                gap: 12px;
+            }
+        }
+
+        @media (max-width: 520px) {
+            .search-input {
+                width: 160px;
+            }
+            .search-input:focus {
+                width: 200px;
+            }
+            .top-tabs {
+                display: none;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="app-container">
+        <!-- Barre Latérale -->
+        <div class="sidebar">
+            <div class="sidebar-item active" onclick="filterCat('all')">
+                <span class="sidebar-icon">🏠</span><span class="sidebar-label">Découvrir</span>
+            </div>
+            <div class="sidebar-item" onclick="filterCat('productivity')">
+                <span class="sidebar-icon">📅</span><span class="sidebar-label">Productivité</span>
+            </div>
+            <div class="sidebar-item" onclick="filterCat('online')">
+                <span class="sidebar-icon">🌐</span><span class="sidebar-label">Online</span>
+            </div>
+            <div class="sidebar-item" onclick="filterCat('games')">
+                <span class="sidebar-icon">🎮</span><span class="sidebar-label">Jeux</span>
+            </div>
+            <div style="margin-top:auto; height:1px; background:rgba(255,255,255,0.1); margin-bottom:10px;"></div>
+            <div class="sidebar-item" onclick="showSubmitForm()">
+                <span class="sidebar-icon">🚀</span><span class="sidebar-label">Soumettre</span>
+            </div>
+            <div class="sidebar-item" id="admin-tab" onclick="showAdminView()">
+                <span class="sidebar-icon">🛡️</span><span class="sidebar-label">Modération</span>
+            </div>
+        </div>
+
+        <!-- Vue Principale -->
+        <div class="main-view">
+            <div class="top-bar">
+                <div class="brand">
+                    <div class="brand-badge">GS</div>
+                    <div>
+                        <h1>GridStore</h1>
+                        <p>Discovery + Install</p>
+                    </div>
+                </div>
+                <div class="top-tabs">
+                    <div class="top-tab active" onclick="filterCatTop('all', this)">Tous</div>
+                    <div class="top-tab" onclick="filterCatTop('productivity', this)">Productivité</div>
+                    <div class="top-tab" onclick="filterCatTop('online', this)">Online</div>
+                    <div class="top-tab" onclick="filterCatTop('games', this)">Jeux</div>
+                </div>
+                <div class="search-container">
+                    <input type="text" class="search-input" id="search" placeholder="Rechercher..." oninput="handleSearch()">
+                </div>
+            </div>
+
+            <div class="content-scroll" id="main-content-scroll">
+                <div class="featured-wrap" id="featured-wrap" style="display:none;">
+                    <div class="featured-hero" id="featured-hero"></div>
+                    <div class="featured-side" id="featured-side"></div>
+                </div>
+                <div class="featured-row" id="featured-row" style="display:none;"></div>
+                <div class="app-grid" id="grid">
+                    <!-- Apps injectees ici -->
+                </div>
+            </div>
+
+            <!-- Vue Soumission -->
+            <div class="content-scroll" id="submit-view" style="display:none;">
+                <div style="max-width: 600px; margin: 0 auto; background:rgba(0,0,0,0.2); padding:30px; border-radius:20px; border:1px solid var(--border);">
+                    <h2>Soumettre votre Node</h2>
+                    <p style="opacity:0.6; margin-bottom:30px;">Toutes les soumissions sont vérifiées manuellement par l'équipe AetherOS avant d'être publiques.</p>
+
+                    <label style="display:block; margin-bottom:8px; font-weight:600;">Nom de l'App</label>
+                    <input type="text" id="sub-name" class="search-input" style="width:100%; margin-bottom:20px; padding-left:15px;" placeholder="Ex: MyCoolApp">
+
+                    <label style="display:block; margin-bottom:8px; font-weight:600;">Icône (Emoji ou URL d'image)</label>
+                    <input type="text" id="sub-icon" class="search-input" style="width:100%; margin-bottom:20px; padding-left:15px;" placeholder="Ex: ✨ ou https://image.png">
+
+                    <label style="display:block; margin-bottom:8px; font-weight:600;">Description</label>
+                    <textarea id="sub-desc" style="width:100%; height:80px; background:rgba(0,0,0,0.3); border:1px solid var(--border); border-radius:8px; color:white; padding:15px; margin-bottom:20px; outline:none;" placeholder="Décrivez votre application..."></textarea>
+
+                    <label style="display:block; margin-bottom:8px; font-weight:600;">Screenshots (Optionnel, emojis ou URLs séparés par des virgules)</label>
+                    <input type="text" id="sub-shots" class="search-input" style="width:100%; margin-bottom:20px; padding-left:15px;" placeholder="Ex: 📸, 🎨, 🚀">
+
+                    <div class="submit-mode-grid" id="submit-mode-grid">
+                        <div class="submit-mode-row">
+                            <button class="submit-mode-btn active" id="submit-mode-html" onclick="setSubmitMode('html')">Publier une App HTML</button>
+                            <button class="submit-mode-btn" id="submit-mode-site" onclick="setSubmitMode('site')">Publier un Site en App</button>
+                            <button class="submit-mode-btn" id="submit-mode-ai-app" onclick="setSubmitMode('ai-app')">✨ Générer App IA</button>
+                            <button class="submit-mode-btn" id="submit-mode-ai-ext" onclick="setSubmitMode('ai-ext')">🧩 Générer Extension IA</button>
+                        </div>
+                        <div id="ai-prompt-container" class="ai-panel">
+                            <label style="display:block; margin-bottom:8px; font-weight:600;">Prompt IA</label>
+                            <textarea id="sub-ai-prompt" style="width:100%; height:140px; background:rgba(0,0,0,0.3); border:1px solid var(--border); border-radius:12px; color:white; padding:12px; margin-bottom:10px; outline:none; resize:none;" placeholder="Decris ton app/extension (ex: Une calculatrice scientifique avec un design neon, historique, raccourcis...)"></textarea>
+                            <button class="main-btn" onclick="generateCodeFromAI()" style="width:100%; background:linear-gradient(135deg, #6366f1, #a855f7);">✨ GÉNÉRER LE CODE</button>
+                            <p style="margin:10px 0 0; font-size:11px; opacity:0.6;">Utilise `AETHER_GROQ_API_KEY` dans `.env`.</p>
+                        </div>
+                    </div>
+
+                    <label style="display:block; margin-bottom:8px; font-weight:600;" id="sub-source-label">Code Source</label>
+                    <input type="hidden" id="sub-type" value="html">
+                    <input type="hidden" id="sub-category" value="productivity">
+                    <textarea id="sub-code" style="width:100%; height:150px; background:rgba(0,0,0,0.3); border:1px solid var(--border); border-radius:8px; color:white; padding:15px; font-family:monospace; margin-bottom:20px; outline:none;" placeholder="<!DOCTYPE html>..."></textarea>
+
+                    <button class="main-btn" id="final-submit-btn" onclick="submitApp()" style="width:100%;">ENVOYER POUR VÉRIFICATION</button>
+                </div>
+            </div>
+
+            <!-- Vue Modération -->
+            <div class="content-scroll" id="admin-view" style="display:none;">
+                <div style="margin-bottom:40px;">
+                    <h2 style="color:var(--accent);">⌛ Soumissions en attente</h2>
+                    <div id="pending-items" style="display:grid; gap:15px; margin-top:20px;"></div>
+                </div>
+
+                <div style="border-top:1px solid rgba(255,255,255,0.1); padding-top:40px; margin-bottom:40px;">
+                    <h2 style="color:#28c840;">✅ Catalogue Public (Communauté)</h2>
+                    <div id="live-items" style="display:grid; gap:15px; margin-top:20px;"></div>
+                </div>
+
+                <div style="border-top:1px solid rgba(255,255,255,0.1); padding-top:40px;">
+                    <h2 style="color:#ffcc00;">⚙️ Applications Système & Registre</h2>
+                    <div id="registry-items" style="display:grid; gap:15px; margin-top:20px;"></div>
+                </div>
+            </div>
+
+            <!-- Modal d'édition d'App -->
+            <div id="edit-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); backdrop-filter:blur(20px); z-index:9000; align-items:center; justify-content:center; padding:20px;">
+                <div style="background:#1a1a20; width:100%; max-width:500px; padding:30px; border-radius:24px; border:1px solid var(--border); box-shadow:0 20px 50px rgba(0,0,0,0.5);">
+                    <h2 id="edit-modal-title">Modifier l'Application</h2>
+                    <input type="hidden" id="edit-app-id">
+                    <input type="hidden" id="edit-app-source">
+
+                    <label style="display:block; margin:15px 0 5px; font-size:12px; opacity:0.6;">NOM DE L'APP</label>
+                    <input type="text" id="edit-name" class="search-input" style="width:100%;">
+
+                    <label style="display:block; margin:15px 0 5px; font-size:12px; opacity:0.6;">ICÔNE (Emoji ou URL)</label>
+                    <input type="text" id="edit-icon" class="search-input" style="width:100%;">
+
+                    <label style="display:block; margin:15px 0 5px; font-size:12px; opacity:0.6;">BANNIERE (URL)</label>
+                    <input type="text" id="edit-banner" class="search-input" style="width:100%;">
+
+                    <label style="display:block; margin:15px 0 5px; font-size:12px; opacity:0.6;">CRÉATEUR</label>
+                    <input type="text" id="edit-dev" class="search-input" style="width:100%;">
+
+                    <label style="display:block; margin:15px 0 5px; font-size:12px; opacity:0.6;">DESCRIPTION</label>
+                    <textarea id="edit-desc" style="width:100%; height:80px; background:rgba(0,0,0,0.3); border:1px solid var(--border); border-radius:8px; color:white; padding:10px; margin-top:5px; outline:none; resize:none;"></textarea>
+
+                    <label style="display:block; margin:15px 0 5px; font-size:12px; opacity:0.6;">SCREENSHOTS (URLs séparées par des virgules)</label>
+                    <input type="text" id="edit-shots" class="search-input" style="width:100%;">
+
+                    <div style="display:flex; gap:10px; margin-top:30px;">
+                        <button onclick="saveAppEdit()" style="flex:1; background:var(--accent); color:white; border:none; padding:12px; border-radius:12px; font-weight:700; cursor:pointer;">ENREGISTRER</button>
+                        <button onclick="document.getElementById('edit-modal').style.display='none'" style="flex:1; background:rgba(255,255,255,0.1); color:white; border:none; padding:12px; border-radius:12px; font-weight:700; cursor:pointer;">ANNULER</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Vue Détails -->
+    <div id="detail-view">
+        <div class="detail-header">
+            <button class="back-btn" onclick="closeDetail()">← Retour</button>
+            <span id="detail-status" style="opacity: 0.4;">Détails</span>
+        </div>
+        <div class="detail-body" id="detail-body">
+            <!-- Contenu dynamique -->
+        </div>
+    </div>
+
+    <div id="toast" class="toast">Application installée !</div>
+
+    <script>
+        // ==================== DONNÉES DE BASE ====================
+        const apps = [
+            { id: "wiki", name: "AetherWiki", dev: "FunnyCorp", cat: "productivity", icon: "📚", desc: "Le centre de connaissances officiel d'AetherOS. Apprenez à créer vos propres apps et découvrez tous les secrets du système.", ver: "11.0.0" },
+            { id: "focusbox", name: "FocusBox", dev: "Vasseta1", cat: "productivity", icon: "⏳", desc: "Le meilleur timer Pomodoro pour rester concentré. Gérez vos cycles de travail et de pause avec une interface apaisante.", ver: "1.2.0" },
+            { id: "snake", name: "Snake OS", dev: "FunnyCorp", cat: "games", icon: "🕹️", desc: "Le serpent classique revisité. Collectez les points sans vous mordre la queue !", ver: "2.1.0" },
+            { id: "tetris", name: "Tetris Neon", dev: "FunnyCorp", cat: "games", icon: "🧱", desc: "Un puzzle game légendaire avec des effets néon futuristes.", ver: "1.5.0" },
+            { id: "talky", name: "Talky Messenger", dev: "FunnyCorp", cat: "online", icon: "💬", desc: "Messagerie instantanée pour FunnyWEB. Communiquez avec vos amis en temps réel.", ver: "3.0.1" },
+            { id: "word", name: "FunnyText", dev: "FunnyCorp", cat: "productivity", icon: "📝", desc: "Traitement de texte puissant avec sauvegarde VFS.", ver: "11.0.0" },
+            { id: "excel", name: "FunnySheets", dev: "FunnyCorp", cat: "productivity", icon: "📊", desc: "Tableur avec cellules éditables, calculs et sauvegarde VFS.", ver: "11.0.0" },
+            { id: "powerpoint", name: "FunnySlides", dev: "FunnyCorp", cat: "productivity", icon: "📽️", desc: "Créateur de diaporamas avec slides, thèmes et export VFS.", ver: "11.0.0" },
+            { id: "browser", name: "Zaluea Browser", dev: "FunnyCorp / Zaluea", cat: "online", icon: "🌐", desc: "Navigateur inspiré de Zaluea avec onglets, favoris, historique et page d'accueil adaptée.", ver: "12.1.0" },
+            { id: "mail", name: "FunnyMail", dev: "FunnyCorp", cat: "online", icon: "✉️", desc: "Gérez vos courriels avec élégance et sécurité.", ver: "2.4.0" },
+            { id: "bunny", name: "Bunny Girl Viewer", dev: "Vasseta1", cat: "online", icon: "🎬", desc: "Regardez toute la série et les films de Rascal Does Not Dream dans une interface élégante.", ver: "1.0.0", shots: ["📽️", "🐰", "✨"] },
+            { id: "stremio", name: "Stremio Web", dev: "Stremio Team", cat: "online", icon: "🎥", desc: "L'expérience cinéma ultime. Regardez vos contenus préférés via addons. Interface fluide et moderne.", ver: "1.0.0", shots: ["🎥", "🍿", "🎬"] },
+            { id: "youtube", name: "YouTube Redux", dev: "Google / Invidious", cat: "online", icon: "📺", desc: "Regardez vos vidéos préférées sans publicités et d'une manière optimisée pour le système.", ver: "11.0.2", shots: ["▶️", "🤳", "🌟"] },
+            { id: "daw", name: "FunnyDAW Pro", dev: "FunnyCorp", cat: "productivity", icon: "🎹", desc: "Créez vos propres morceaux de musique de A à Z. Une station audio numérique (DAW) complète avec séquenceur, synthétiseurs, boîte à rythmes et effets professionnels intégrés.", ver: "1.0.0", shots: ["🎹", "🔊", "🎛️"] },
+            { id: "video", name: "FunnyVideo Pro", dev: "FunnyCorp", cat: "productivity", icon: "🎞️", desc: "Logiciel de montage vidéo professionnel. Importez vos médias, coupez, appliquez des transitions et exportez votre projet fini avec une timeline multipiste avancée.", ver: "1.0.0", shots: ["🎬", "✂️", "🎞️"] },
+            { id: "vm", name: "FunnyVM", dev: "FunnyCorp", cat: "productivity", icon: "🖥️", desc: "Système de virtualisation x86 (v86 Engine). Lancez des systèmes d'exploitation rétro (Win98, DOS, KolibriOS) directement dans votre navigateur. Supporte le glisser-déposer de fichiers EXE (.exe).", ver: "2.4.1", shots: ["🪟", "💻", "💾"] },
+            { id: "ide", name: "FunnyStudio IDE", dev: "FunnyCorp", cat: "productivity", icon: "💻", desc: "L'environnement de développement (IDE) ultime. Éditeur de code complet avec coloration syntaxique, système de fichiers virtuel, prévisualisation en direct via iframe, et console d'erreurs intégrée.", ver: "1.0.0", shots: ["👨‍💻", "🚀", "⚡"] }
+        ];
+
+        let currentCat = 'all';
+        let userData = {};
+        let storeSyncTimer = null;
+
+        // ==================== FONCTIONS UTILITAIRES ====================
+        function hashHue(input) {
+            const str = String(input || '');
+            let hash = 0;
+            for (let i = 0; i < str.length; i++) hash = ((hash << 5) - hash) + str.charCodeAt(i);
+            return Math.abs(hash) % 360;
+        }
+
+        function getFirstUrlShot(app) {
+            const shots = Array.isArray(app && app.shots) ? app.shots : [];
+            const found = shots.find(s => typeof s === 'string' && /^https?:\/\//i.test(s));
+            return found || '';
+        }
+
+        function makeCoverSvg(app) {
+            const title = String((app && (app.name || app.id)) || 'App').slice(0, 22);
+            const icon = (app && app.icon && typeof app.icon === 'string' && !/^https?:\/\//i.test(app.icon)) ? app.icon : ((app && app.cat) === 'games' ? 'GAME' : 'APP');
+            const hue = hashHue((app && app.id) || title);
+            const hue2 = (hue + 48) % 360;
+            const svg = [
+                '<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="720" viewBox="0 0 1200 720">',
+                `<defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1">`,
+                `<stop offset="0" stop-color="hsl(${hue},85%,55%)"/>`,
+                `<stop offset="1" stop-color="hsl(${hue2},85%,55%)"/>`,
+                '</linearGradient>',
+                '<radialGradient id="r" cx="30%" cy="15%" r="80%">',
+                '<stop offset="0" stop-color="rgba(255,255,255,0.18)"/>',
+                '<stop offset="1" stop-color="rgba(255,255,255,0)"/>',
+                '</radialGradient></defs>',
+                '<rect width="1200" height="720" fill="url(#g)"/>',
+                '<rect width="1200" height="720" fill="url(#r)"/>',
+                '<g opacity="0.22">',
+                '<circle cx="1040" cy="140" r="170" fill="rgba(0,0,0,0.22)"/>',
+                '<circle cx="940" cy="540" r="230" fill="rgba(0,0,0,0.16)"/>',
+                '<circle cx="260" cy="520" r="190" fill="rgba(255,255,255,0.14)"/>',
+                '</g>',
+                '<g font-family="-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Arial,sans-serif" fill="white">',
+                `<text x="72" y="132" font-size="52" font-weight="800" opacity="0.95">${title.replace(/&/g, '&amp;').replace(/</g, '&lt;')}</text>`,
+                `<text x="72" y="196" font-size="20" font-weight="700" opacity="0.75" letter-spacing="3">AETHEROS STORE</text>`,
+                `<text x="72" y="612" font-size="120" font-weight="900" opacity="0.28">${String(icon).replace(/&/g, '&amp;').replace(/</g, '&lt;')}</text>`,
+                '</g>',
+                '</svg>'
+            ].join('');
+            return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+        }
+
+        function getCoverUrl(app) {
+            if (app && typeof app.banner === 'string' && /^https?:\/\//i.test(app.banner)) return app.banner;
+            const shot = getFirstUrlShot(app);
+            if (shot) return shot;
+            if (app && typeof app.icon === 'string' && /^https?:\/\//i.test(app.icon)) return app.icon;
+            return makeCoverSvg(app);
+        }
+
+        function isInstalled(id) {
+            const wm = window.parent.windowManager;
+            if (!wm) return false;
+            if (wm.installedApps && wm.installedApps.includes(id)) return true;
+            if (window.parent.document.getElementById(`icon-${id}`)) return true;
+            return false;
+        }
+
+        function showToast() {
+            const t = document.getElementById('toast');
+            t.style.display = 'block';
+            setTimeout(() => t.style.display = 'none', 3000);
+        }
+
+        // ==================== GESTION DES VUES ====================
+        function hideAllViews() {
+            document.getElementById('main-content-scroll').style.display = 'block';
+            document.getElementById('submit-view').style.display = 'none';
+            document.getElementById('admin-view').style.display = 'none';
+        }
+
+        function setActiveTab(el) {
+            document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
+            if (el) el.classList.add('active');
+        }
+
+        function checkAdminStatus() {
+            if (userData.userName === 'Admin' || userData.userName === 'vasseta1' || userData.userName === 'Milk') {
+                document.getElementById('admin-tab').style.display = 'flex';
+            }
+        }
+
+        function showSubmitForm() {
+            hideAllViews();
+            document.getElementById('submit-view').style.display = 'block';
+            document.getElementById('main-content-scroll').style.display = 'none';
+            setActiveTab(event ? event.currentTarget : document.getElementById('submitNav'));
+            setSubmitMode('html');
+        }
+
+        function showAdminView() {
+            hideAllViews();
+            document.getElementById('admin-view').style.display = 'block';
+            document.getElementById('main-content-scroll').style.display = 'none';
+            setActiveTab(event ? event.currentTarget : document.getElementById('admin-tab'));
+            renderPendingApps();
+            renderLiveApps();
+            renderRegistryApps();
+        }
+
+        // ==================== FONCTIONS DE RENDU ====================
+        function setFeaturedVisible(visible) {
+            const wrap = document.getElementById('featured-wrap');
+            const row = document.getElementById('featured-row');
+            if (wrap) wrap.style.display = visible ? 'grid' : 'none';
+            if (row) row.style.display = visible ? 'flex' : 'none';
+        }
+
+        function renderFeatured(appList) {
+            const hero = document.getElementById('featured-hero');
+            const side = document.getElementById('featured-side');
+            const row = document.getElementById('featured-row');
+            if (!hero || !side || !row) return;
+
+            if (currentCat !== 'all' || String(document.getElementById('search')?.value || '').trim()) {
+                setFeaturedVisible(false);
+                return;
+            }
+
+            const list = Array.isArray(appList) ? appList.slice() : [];
+            if (list.length < 4) {
+                setFeaturedVisible(false);
+                return;
+            }
+
+            const heroApp = list.find(a => a && a.cat === 'games') || list[0];
+            const sideApps = list.filter(a => a && a.id !== heroApp.id).slice(0, 2);
+            const rowApps = list.filter(a => a && a.id !== heroApp.id && !sideApps.find(s => s.id === a.id)).slice(0, 8);
+
+            hero.innerHTML = `
+                <div class="hero-cover"><img src="${getCoverUrl(heroApp)}" alt=""></div>
+                <div class="hero-overlay"></div>
+                <div class="hero-content">
+                    <p class="hero-kicker">FEATURED</p>
+                    <h2 class="hero-title">${heroApp.name || heroApp.id}</h2>
+                    <p class="hero-desc">${(heroApp.desc || '').slice(0, 140)}${(heroApp.desc || '').length > 140 ? '...' : ''}</p>
+                    <div class="hero-actions">
+                        <button class="pill-btn primary" onclick="openDetail('${heroApp.id}')">Voir</button>
+                        <button class="pill-btn" onclick="actionClick('${heroApp.id}')">${isInstalled(heroApp.id) ? 'Ouvrir' : 'Obtenir'}</button>
+                    </div>
+                </div>
+            `;
+
+            side.innerHTML = sideApps.map(app => `
+                <div class="side-card" onclick="openDetail('${app.id}')">
+                    <div class="thumb"><img src="${getCoverUrl(app)}" alt=""></div>
+                    <div class="info">
+                        <div class="t">${app.name || app.id}</div>
+                        <div class="d">${(app.desc || '').slice(0, 84)}${(app.desc || '').length > 84 ? '...' : ''}</div>
+                    </div>
+                </div>
+            `).join('');
+
+            row.innerHTML = rowApps.map(app => `
+                <div class="row-card" onclick="openDetail('${app.id}')">
+                    <div class="thumb"><img src="${getCoverUrl(app)}" alt=""></div>
+                    <div class="b">
+                        <div class="name">${app.name || app.id}</div>
+                        <div class="tag">${app.cat || 'app'}</div>
+                    </div>
+                </div>
+            `).join('');
+
+            setFeaturedVisible(true);
+        }
+
+        function renderGrid(filter = '') {
+            const grid = document.getElementById('grid');
+            if (!grid) return;
+            grid.innerHTML = '';
+
+            const wm = window.parent.windowManager;
+            const registry = wm ? wm.appsRegistry : [];
+            const approved = JSON.parse(localStorage.getItem('aether_approved_apps') || '[]');
+
+            // Construction de la liste complète des apps
+            const displayApps = apps.map(a => {
+                const reg = registry.find(r => r.id === a.id);
+                if (reg) {
+                    return {
+                        ...a,
+                        name: reg.title || a.name,
+                        icon: reg.icon || a.icon,
+                        banner: reg.banner || a.banner,
+                        dev: reg.creator || a.dev,
+                        desc: reg.description || a.desc,
+                        shots: reg.shots || reg.screenshots || a.shots,
+                        cat: reg.category || a.cat,
+                        type: reg.type || a.type,
+                        url: reg.url || a.url
+                    };
+                }
+                return a;
+            });
+
+            registry.forEach(reg => {
+                if (!displayApps.find(a => a.id === reg.id)) {
+                    displayApps.push({
+                        id: reg.id,
+                        name: reg.title || reg.id,
+                        icon: reg.icon || '📦',
+                        banner: reg.banner || '',
+                        dev: reg.creator || 'Registry',
+                        desc: reg.description || 'Application ajoutée depuis le registre.',
+                        type: reg.type || 'html',
+                        url: reg.url || '',
+                        shots: reg.shots || reg.screenshots || [reg.icon || '📦', '⚡', '🧩'],
+                        cat: reg.category || 'productivity',
+                        ver: reg.version || reg.ver || '1.0.0'
+                    });
+                }
+            });
+
+            approved.forEach(app => {
+                if (!displayApps.find(a => a.id === app.id)) {
+                    displayApps.push({
+                        id: app.id,
+                        name: app.name,
+                        icon: app.icon,
+                        banner: app.banner || '',
+                        dev: app.dev,
+                        desc: app.desc,
+                        type: app.type || 'html',
+                        url: app.url || '',
+                        shots: app.shots,
+                        cat: app.cat || 'productivity',
+                        ver: app.ver || '1.0.0'
+                    });
+                } else {
+                    const idx = displayApps.findIndex(a => a.id === app.id);
+                    displayApps[idx] = {
+                        ...displayApps[idx],
+                        name: app.name || displayApps[idx].name,
+                        icon: app.icon || displayApps[idx].icon,
+                        dev: app.dev || displayApps[idx].dev,
+                        desc: app.desc || displayApps[idx].desc,
+                        shots: app.shots || displayApps[idx].shots,
+                        banner: app.banner || displayApps[idx].banner
+                    };
+                }
+            });
+
+            const filtered = displayApps.filter(a => {
+                const matchesCat = currentCat === 'all' || a.cat === currentCat;
+                const matchesSearch = (a.name || "").toLowerCase().includes(filter.toLowerCase());
+                return matchesCat && matchesSearch;
+            });
+
+            renderFeatured(filtered);
+
+            filtered.forEach(app => {
+                const installed = isInstalled(app.id);
+                const card = document.createElement('div');
+                card.className = 'app-card';
+                card.onclick = () => openDetail(app.id);
+                card.innerHTML = `
+                    <div class="app-cover">
+                        <img src="${getCoverUrl(app)}" alt="">
+                    </div>
+                    <div class="app-card-head">
+                        <div class="app-card-meta">
+                            <div class="app-icon-small">
+                                ${app.icon && (app.icon.startsWith('http') || app.icon.startsWith('data:')) ? `<img src="${app.icon}" alt="">` : (app.icon || '📦')}
+                            </div>
+                            <div class="app-info-mini">
+                                <div class="app-name">${app.name}</div>
+                                <div class="app-dev">${app.dev}</div>
+                            </div>
+                        </div>
+                        <button class="get-btn" onclick="event.stopPropagation(); actionClick('${app.id}')">
+                            ${installed ? 'OUVRIR' : 'OBTENIR'}
+                        </button>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function renderPendingApps() {
+            const container = document.getElementById('pending-items');
+            const pending = JSON.parse(localStorage.getItem('aether_pending_apps') || '[]');
+
+            if (pending.length === 0) {
+                container.innerHTML = '<p style="opacity:0.5;">Aucune application en attente.</p>';
+                return;
+            }
+
+            container.innerHTML = pending.map((app, index) => `
+                <div style="background:rgba(255,255,255,0.05); padding:20px; border-radius:15px; display:flex; flex-direction:column; gap:15px; border:1px solid var(--border);">
+                    <div style="display:flex; align-items:center; gap:20px;">
+                        <div style="font-size:40px; width:60px; height:60px; display:flex; align-items:center; justify-content:center; background:rgba(255,255,255,0.05); border-radius:12px;">
+                            ${app.icon && app.icon.startsWith('http') ? `<img src="${app.icon}" style="width:100%; height:100%; object-fit:cover; border-radius:12px;">` : (app.icon || '📦')}
+                        </div>
+                        <div style="flex:1;">
+                            <div style="font-weight:700; font-size:18px;">${app.name}</div>
+                            <div style="font-size:12px; opacity:0.6;">Par ${app.dev}</div>
+                            <div style="font-size:11px; opacity:0.6; margin-top:2px;">Type: ${app.type === 'site' ? 'Site Web' : 'App HTML'}</div>
+                        </div>
+                        <div style="display:flex; gap:10px;">
+                            <button onclick="testPendingApp(${index})" style="background:rgba(255,255,255,0.1); color:white; border:none; padding:8px 15px; border-radius:8px; cursor:pointer; font-weight:600;">TESTER / PREVIEW</button>
+                            <button onclick="approveApp(${index})" style="background:#28c840; color:white; border:none; padding:8px 15px; border-radius:8px; cursor:pointer; font-weight:600;">APPROUVER</button>
+                            <button onclick="rejectApp(${index})" style="background:#ff3b30; color:white; border:none; padding:8px 15px; border-radius:8px; cursor:pointer; font-weight:600;">REJETER</button>
+                        </div>
+                    </div>
+                    ${app.desc ? `<div style="font-size:13px; opacity:0.8; padding:10px; background:rgba(0,0,0,0.2); border-radius:8px;">${app.desc}</div>` : ''}
+                    ${app.type === 'site' && app.url ? `<div style="font-size:12px; opacity:0.7;">URL: ${app.url}</div>` : ''}
+                </div>
+            `).join('');
+        }
+
+        function renderLiveApps() {
+            const container = document.getElementById('live-items');
+            const approved = JSON.parse(localStorage.getItem('aether_approved_apps') || '[]');
+
+            if (approved.length === 0) {
+                container.innerHTML = '<p style="opacity:0.5;">Aucune application publiée pour le moment.</p>';
+                return;
+            }
+
+            container.innerHTML = approved.map((app, index) => `
+                <div style="background:rgba(255,255,255,0.05); padding:15px; border-radius:12px; display:flex; align-items:center; gap:15px; border:1px solid rgba(255,255,255,0.1);">
+                    <div style="font-size:30px; width:50px; height:50px; display:flex; align-items:center; justify-content:center; background:rgba(255,255,255,0.05); border-radius:10px; overflow:hidden;">
+                        ${app.icon && app.icon.startsWith('http') ? `<img src="${app.icon}" style="width:100%; height:100%; object-fit:cover;">` : (app.icon || '📦')}
+                    </div>
+                    <div style="flex:1;">
+                        <div style="font-weight:700;">${app.name}</div>
+                        <div style="font-size:11px; opacity:0.6;">App ID: ${app.id} | Par ${app.dev} | ${app.type === 'site' ? 'Site Web' : 'App HTML'}</div>
+                    </div>
+                    <div style="display:flex; gap:10px;">
+                        <button onclick="editApp('${app.id}', 'community')" style="background:var(--accent); color:white; border:none; padding:8px 12px; border-radius:8px; cursor:pointer; font-size:12px; font-weight:600;">ÉDITER</button>
+                        <button onclick="removeLiveApp(${index})" style="background:#ff3b30; color:white; border:none; padding:8px 12px; border-radius:8px; cursor:pointer; font-size:12px; font-weight:600;">RETIRER</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderRegistryApps() {
+            const container = document.getElementById('registry-items');
+            if (!container) return;
+            const wm = window.parent.windowManager;
+            const coreApps = wm ? wm.appsRegistry : [];
+
+            container.innerHTML = coreApps.map(app => `
+                <div style="background:rgba(255,255,255,0.05); padding:15px; border-radius:12px; display:flex; align-items:center; gap:15px; border:1px solid rgba(255,255,255,0.1);">
+                    <div style="font-size:30px; width:50px; height:50px; display:flex; align-items:center; justify-content:center; background:rgba(255,255,255,0.05); border-radius:10px; overflow:hidden;">
+                        ${app.icon && app.icon.startsWith('http') ? `<img src="${app.icon}" style="width:100%; height:100%; object-fit:cover;">` : (app.icon || '📦')}
+                    </div>
+                    <div style="flex:1;">
+                        <div style="font-weight:700;">${app.title || app.id}</div>
+                        <div style="font-size:11px; opacity:0.6;">App ID: ${app.id} | Créateur: ${app.creator || 'Système'}</div>
+                    </div>
+                    <button onclick="editApp('${app.id}', 'registry')" style="background:var(--accent); color:white; border:none; padding:8px 12px; border-radius:8px; cursor:pointer; font-size:12px; font-weight:600;">MODIFIER</button>
+                </div>
+            `).join('');
+        }
+
+        // ==================== ACTIONS SUR LES APPLICATIONS ====================
+        function actionClick(id) {
+            const wm = window.parent.windowManager;
+            if (isInstalled(id)) {
+                const app = apps.find(a => a.id === id);
+                const reg = wm ? wm.appsRegistry.find(r => r.id === id) : null;
+                const approvedApps = JSON.parse(localStorage.getItem('aether_approved_apps') || '[]');
+                const appApproved = approvedApps.find(a => a.id === id);
+
+                let title = id;
+                if (reg && reg.title) title = reg.title;
+                else if (appApproved && appApproved.name) title = appApproved.name;
+                else if (app && app.name) title = app.name;
+
+                if (wm) wm.createWindow(id, title, true);
+            } else {
+                installApp(id);
+            }
+        }
+
+        function installApp(id) {
+            const wm = window.parent.windowManager;
+            if (wm) {
+                wm.installApp(id);
+                showToast();
+                renderGrid();
+                if (document.getElementById('detail-view').style.display === 'flex') {
+                    openDetail(id);
+                }
+            }
+        }
+
+        function openDetail(id) {
+            const wm = window.parent.windowManager;
+            const registry = wm ? wm.appsRegistry : [];
+            const approved = JSON.parse(localStorage.getItem('aether_approved_apps') || '[]');
+
+            const rawApp = apps.find(a => a.id === id);
+            const reg = registry.find(r => r.id === id);
+            const appApproved = approved.find(a => a.id === id);
+
+            let app = rawApp ? { ...rawApp } : (appApproved ? { ...appApproved } : { id: id, name: id, icon: '📦', dev: 'Inconnu' });
+
+            if (reg) {
+                app = {
+                    ...app,
+                    name: reg.title || app.name,
+                    icon: reg.icon || app.icon,
+                    banner: reg.banner || app.banner,
+                    dev: reg.creator || app.dev,
+                    desc: reg.description || app.desc,
+                    shots: reg.shots || reg.screenshots || app.shots,
+                    cat: reg.category || app.cat,
+                    type: reg.type || app.type,
+                    url: reg.url || app.url
+                };
+            } else if (appApproved) {
+                app = { ...app, ...appApproved };
+            }
+
+            const installed = isInstalled(id);
+            const body = document.getElementById('detail-body');
+
+            const isCommunity = !rawApp && (appApproved || id.startsWith('dev_'));
+            const installAction = installed
+                ? `actionClick('${app.id}')`
+                : (isCommunity ? `installSelfApp('${app.id}')` : `actionClick('${app.id}')`);
+            const typeLabel = app.type === 'site' ? 'Site Web empaqueté' : 'Application HTML';
+
+            body.innerHTML = `
+                <div class="detail-top">
+                    <div class="detail-icon">
+                        ${app.icon && app.icon.startsWith('http') ? `<img src="${app.icon}" style="width:100%; height:100%; object-fit:cover; border-radius:35px;">` : (app.icon || '📦')}
+                    </div>
+                    <div class="detail-title-area">
+                        <h2>${app.name}</h2>
+                        <div style="color:var(--accent); font-weight:600;">${app.dev}</div>
+                        <div class="install-row">
+                            <button class="main-btn" onclick="${installAction}">
+                                ${installed ? 'OUVRIR' : 'OBTENIR'}
+                            </button>
+                            <span style="opacity:0.4; font-size:12px;">${isCommunity ? `App Communautaire • ${typeLabel}` : `Version ${app.ver || '1.0.0'}`}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="detail-description">
+                    ${app.desc || "Aucune description disponible pour cette application."}
+                </div>
+                ${app.type === 'site' && app.url ? `
+                    <div style="margin-top:14px; font-size:12px; opacity:0.8;">
+                        URL source: <span style="color:var(--accent);">${app.url}</span>
+                    </div>
+                ` : ''}
+                ${app.shots && app.shots.length > 0 ? `
+                    <div class="screenshot-gallery">
+                        ${app.shots.map(s => `
+                            <div style="min-width:120px; height:180px; background:rgba(255,255,255,0.05); border:1px solid var(--border); border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:48px; overflow:hidden;">
+                                ${s && s.startsWith('http') ? `<img src="${s}" style="width:100%; height:100%; object-fit:cover;">` : (s || '🖼️')}
+                            </div>
+                        `).join('')}
+                    </div>
+                ` : ''}
+            `;
+
+            document.getElementById('detail-view').style.display = 'flex';
+        }
+
+        function closeDetail() {
+            document.getElementById('detail-view').style.display = 'none';
+        }
+
+        window.installSelfApp = function(id) {
+            const approved = JSON.parse(localStorage.getItem('aether_approved_apps') || '[]');
+            const app = approved.find(a => a.id === id);
+            if (!app) return;
+
+            if (window.parent.windowManager) {
+                window.parent.windowManager.installApp(app.id, app.name);
+                showToast();
+            }
+        };
+
+        // ==================== FILTRES ====================
+        function filterCat(cat) {
+            currentCat = cat;
+            document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
+            event.currentTarget.classList.add('active');
+            renderGrid(document.getElementById('search').value);
+        }
+
+        function filterCatTop(cat, el) {
+            currentCat = cat;
+            document.querySelectorAll('.top-tab').forEach(b => b.classList.remove('active'));
+            if (el) el.classList.add('active');
+
+            document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
+            const match = Array.from(document.querySelectorAll('.sidebar-item')).find(i => {
+                const oc = (i.getAttribute('onclick') || '');
+                return oc.includes(`filterCat('${cat}')`);
+            });
+            if (match) match.classList.add('active');
+
+            renderGrid(document.getElementById('search').value);
+        }
+
+        function handleSearch() {
+            renderGrid(document.getElementById('search').value);
+        }
+
+        // ==================== SOUMISSION D'APPLICATIONS ====================
+        function setSubmitMode(mode) {
+            const type = mode;
+            const sourceInput = document.getElementById('sub-code');
+            const sourceLabel = document.getElementById('sub-source-label');
+            const typeInput = document.getElementById('sub-type');
+            const catInput = document.getElementById('sub-category');
+            const aiContainer = document.getElementById('ai-prompt-container');
+            const modeGrid = document.getElementById('submit-mode-grid');
+            
+            const htmlBtn = document.getElementById('submit-mode-html');
+            const siteBtn = document.getElementById('submit-mode-site');
+            const aiAppBtn = document.getElementById('submit-mode-ai-app');
+            const aiExtBtn = document.getElementById('submit-mode-ai-ext');
+
+            if (!sourceInput || !sourceLabel || !typeInput) return;
+
+            htmlBtn.classList.toggle('active', type === 'html');
+            siteBtn.classList.toggle('active', type === 'site');
+            aiAppBtn.classList.toggle('active', type === 'ai-app');
+            aiExtBtn.classList.toggle('active', type === 'ai-ext');
+
+            const isAi = (type === 'ai-app' || type === 'ai-ext');
+            if (modeGrid) modeGrid.classList.toggle('ai-active', isAi);
+            if (aiContainer) {
+                aiContainer.classList.toggle('active', isAi);
+                aiContainer.style.display = '';
+            }
+            sourceInput.style.display = 'block';
+            sourceLabel.style.display = 'block';
+            typeInput.value = (type === 'site') ? 'site' : 'html';
+            catInput.value = (type === 'ai-ext') ? 'extension' : 'productivity';
+
+            if (type === 'site') {
+                sourceLabel.textContent = "URL du site à embarquer";
+                sourceInput.placeholder = "https://example.com";
+                sourceInput.style.height = "72px";
+                sourceInput.style.fontFamily = "inherit";
+            } else if (type === 'html') {
+                sourceLabel.textContent = "Code HTML de l'App";
+                sourceInput.placeholder = "<!DOCTYPE html>...";
+                sourceInput.style.height = "150px";
+                sourceInput.style.fontFamily = "monospace";
+            } else if (type === 'ai-app' || type === 'ai-ext') {
+                sourceLabel.textContent = "Code Généré (Modifiable)";
+                sourceInput.placeholder = "Le code généré par l'IA apparaîtra ici...";
+                sourceInput.style.height = "200px";
+                document.getElementById('sub-ai-prompt').placeholder = type === 'ai-ext' 
+                    ? "Ex: Une extension qui affiche la météo dans la barre des tâches..." 
+                    : "Ex: Une application de liste de tâches avec un design néon...";
+            }
+        }
+
+        function sanitizeUrl(rawUrl) {
+            const value = (rawUrl || '').trim();
+            if (!value) return '';
+            const hasProtocol = /^https?:\/\//i.test(value);
+            const normalized = hasProtocol ? value : `https://${value}`;
+            try {
+                const url = new URL(normalized);
+                if (!['http:', 'https:'].includes(url.protocol)) return '';
+                return url.href;
+            } catch (err) {
+                return '';
+            }
+        }
+
+        async function submitApp() {
+            const name = document.getElementById('sub-name').value;
+            const icon = document.getElementById('sub-icon').value;
+            const source = document.getElementById('sub-code').value.trim();
+            const desc = document.getElementById('sub-desc').value;
+            const shots = document.getElementById('sub-shots').value ? document.getElementById('sub-shots').value.split(',').map(s => s.trim()) : [];
+            const type = (document.getElementById('sub-type').value === 'site') ? 'site' : 'html';
+            const category = document.getElementById('sub-category').value;
+
+            if (!name || !icon || !source) return alert("Veuillez remplir (Nom, Icône, contenu).");
+
+            const pendingPayload = {
+                id: 'user_app_' + Date.now(),
+                name,
+                icon,
+                desc,
+                shots,
+                type,
+                dev: userData.userName || 'Anonyme',
+                category,
+                cat: category,
+                timestamp: Date.now()
+            };
+
+            if (type === 'site') {
+                const cleanUrl = sanitizeUrl(source);
+                if (!cleanUrl) return alert("URL invalide. Exemple attendu: https://example.com");
+                pendingPayload.url = cleanUrl;
+            } else {
+                pendingPayload.code = source;
+            }
+
+            const pending = JSON.parse(localStorage.getItem('aether_pending_apps') || '[]');
+            pending.push(pendingPayload);
+            localStorage.setItem('aether_pending_apps', JSON.stringify(pending));
+
+            try {
+                await remoteUpsertStoreApp(pendingPayload, 'pending');
+                await requestRemoteStoreSync(true);
+            } catch (err) {}
+
+            alert("Application envoyée ! Elle sera visible après validation par un admin.");
+            location.reload();
+        }
+
+        // ==================== MODÉRATION ====================
+        function testPendingApp(index) {
+            const pending = JSON.parse(localStorage.getItem('aether_pending_apps') || '[]');
+            const app = pending[index];
+            if (window.parent.windowManager) {
+                const wm = window.parent.windowManager;
+                const testId = `dev_${app.type === 'site' ? 'url' : 'app'}_preview_${Date.now()}`;
+                if (app.type === 'site') {
+                    if (!wm.devUrls) wm.devUrls = {};
+                    wm.devUrls[testId] = app.url;
+                } else {
+                    if (!wm.devApps) wm.devApps = {};
+                    wm.devApps[testId] = app.code || '';
+                }
+                wm.createWindow(testId, 'Preview: ' + app.name, true);
+            }
+        }
+
+        function approveApp(index) {
+            const pending = JSON.parse(localStorage.getItem('aether_pending_apps') || '[]');
+            const app = pending[index];
+
+            const approved = JSON.parse(localStorage.getItem('aether_approved_apps') || '[]');
+            approved.push(app);
+            localStorage.setItem('aether_approved_apps', JSON.stringify(approved));
+
+            pending.splice(index, 1);
+            localStorage.setItem('aether_pending_apps', JSON.stringify(pending));
+
+            try {
+                remoteUpsertStoreApp(app, 'approved');
+                requestRemoteStoreSync(true);
+            } catch (err) {}
+
+            alert("Approuvée ! L'application est maintenant disponible sur le GridStore.");
+            renderPendingApps();
+            renderLiveApps();
+            renderGrid();
+        }
+
+        function rejectApp(index) {
+            const pending = JSON.parse(localStorage.getItem('aether_pending_apps') || '[]');
+            const app = pending[index];
+            pending.splice(index, 1);
+            localStorage.setItem('aether_pending_apps', JSON.stringify(pending));
+
+            try {
+                if (app && app.id) remoteDeleteStoreApp(app.id);
+                requestRemoteStoreSync(true);
+            } catch (err) {}
+            renderPendingApps();
+        }
+
+        function removeLiveApp(index) {
+            if (!confirm("Voulez-vous vraiment retirer cette application du store public ?")) return;
+            const approved = JSON.parse(localStorage.getItem('aether_approved_apps') || '[]');
+            const app = approved[index];
+            approved.splice(index, 1);
+            localStorage.setItem('aether_approved_apps', JSON.stringify(approved));
+
+            try {
+                if (app && app.id) remoteDeleteStoreApp(app.id);
+                requestRemoteStoreSync(true);
+            } catch (err) {}
+            renderLiveApps();
+            renderGrid();
+        }
+
+        function editApp(id, source) {
+            let app;
+            document.getElementById('edit-app-id').value = id;
+            document.getElementById('edit-app-source').value = source;
+
+            if (source === 'registry') {
+                const wm = window.parent.windowManager;
+                app = wm.appsRegistry.find(a => a.id === id);
+                document.getElementById('edit-name').value = app?.title || '';
+                document.getElementById('edit-icon').value = app?.icon || '';
+                document.getElementById('edit-banner').value = app?.banner || '';
+                document.getElementById('edit-dev').value = app?.creator || '';
+                document.getElementById('edit-desc').value = app?.description || '';
+                document.getElementById('edit-shots').value = (app?.shots || []).join(', ');
+            } else {
+                const approved = JSON.parse(localStorage.getItem('aether_approved_apps') || '[]');
+                app = approved.find(a => a.id === id);
+                document.getElementById('edit-name').value = app?.name || '';
+                document.getElementById('edit-icon').value = app?.icon || '';
+                document.getElementById('edit-banner').value = app?.banner || '';
+                document.getElementById('edit-dev').value = app?.dev || '';
+                document.getElementById('edit-desc').value = app?.desc || '';
+                document.getElementById('edit-shots').value = (app?.shots || []).join(', ');
+            }
+
+            document.getElementById('edit-modal').style.display = 'flex';
+        }
+
+        function saveAppEdit() {
+            const id = document.getElementById('edit-app-id').value;
+            const source = document.getElementById('edit-app-source').value;
+            const name = document.getElementById('edit-name').value;
+            const icon = document.getElementById('edit-icon').value;
+            const banner = document.getElementById('edit-banner').value;
+            const dev = document.getElementById('edit-dev').value;
+            const desc = document.getElementById('edit-desc').value;
+            const shots = document.getElementById('edit-shots').value ? document.getElementById('edit-shots').value.split(',').map(s => s.trim()) : [];
+
+            if (source === 'registry') {
+                const overrides = JSON.parse(localStorage.getItem('aether_apps_overrides') || '{}');
+                overrides[id] = { title: name, icon, creator: dev, description: desc, shots: shots, banner: banner };
+                localStorage.setItem('aether_apps_overrides', JSON.stringify(overrides));
+                try {
+                    remoteUpsertOverride(id, overrides[id]);
+                    requestRemoteStoreSync(true);
+                } catch (err) {}
+                alert("Modifications système enregistrées !");
+            } else {
+                const approved = JSON.parse(localStorage.getItem('aether_approved_apps') || '[]');
+                const appIndex = approved.findIndex(a => a.id === id);
+                if (appIndex > -1) {
+                    approved[appIndex].name = name;
+                    approved[appIndex].icon = icon;
+                    approved[appIndex].dev = dev;
+                    approved[appIndex].desc = desc;
+                    approved[appIndex].shots = shots;
+                    approved[appIndex].banner = banner;
+                    localStorage.setItem('aether_approved_apps', JSON.stringify(approved));
+                    try {
+                        remoteUpsertStoreApp(approved[appIndex], 'approved');
+                        requestRemoteStoreSync(true);
+                    } catch (err) {}
+                    alert("Application communautaire mise à jour !");
+                }
+            }
+
+            document.getElementById('edit-modal').style.display = 'none';
+            showAdminView();
+            renderLiveApps();
+            renderGrid();
+
+            if (window.parent.windowManager) {
+                window.parent.windowManager.fetchAppsRegistry();
+            }
+        }
+
+        // ==================== SYNC SUPABASE ====================
+        async function requestRemoteStoreSync(force = false) {
+            const wm = window.parent && window.parent.windowManager;
+            if (!wm || typeof wm.syncStoreCatalogFromSupabase !== 'function') return;
+            try { await wm.syncStoreCatalogFromSupabase(!!force); } catch (err) {}
+        }
+
+        function getRemoteStoreTables() {
+            const wm = window.parent && window.parent.windowManager;
+            if (wm && typeof wm.getStoreSupabaseTables === 'function') return wm.getStoreSupabaseTables();
+            return { apps: 'aether_store_apps', overrides: 'aether_store_overrides' };
+        }
+
+        function getSupabaseConfigSafe() {
+            const wm = window.parent && window.parent.windowManager;
+            if (!wm) return null;
+            if (typeof wm.resolveSetupSupabaseConfig === 'function') return wm.resolveSetupSupabaseConfig();
+            return wm.supabaseConfig || null;
+        }
+
+        function isRemoteStoreEnabled() {
+            const wm = window.parent && window.parent.windowManager;
+            const cfg = getSupabaseConfigSafe();
+            if (!wm || !cfg) return false;
+            if (typeof wm.isSupabaseApiReady === 'function') return wm.isSupabaseApiReady(cfg);
+            return !!(cfg.url && (cfg.anonKey || cfg.serviceKey));
+        }
+
+        async function remoteUpsertStoreApp(app, status) {
+            const wm = window.parent && window.parent.windowManager;
+            const cfg = getSupabaseConfigSafe();
+            if (!wm || !cfg || !isRemoteStoreEnabled()) return;
+            if (!app || !app.id) return;
+
+            const tables = getRemoteStoreTables();
+            const row = { id: String(app.id), status: status || 'pending', app };
+            await wm.supabaseRequest(`${tables.apps}?on_conflict=id`, cfg, {
+                method: 'POST',
+                headers: { Prefer: 'resolution=merge-duplicates,return=representation' },
+                body: [row]
+            });
+        }
+
+        async function remoteDeleteStoreApp(appId) {
+            const wm = window.parent && window.parent.windowManager;
+            const cfg = getSupabaseConfigSafe();
+            if (!wm || !cfg || !isRemoteStoreEnabled()) return;
+            if (!appId) return;
+
+            const tables = getRemoteStoreTables();
+            const clean = encodeURIComponent(String(appId));
+            await wm.supabaseRequest(`${tables.apps}?id=eq.${clean}`, cfg, { method: 'DELETE' });
+        }
+
+        async function remoteUpsertOverride(appId, payload) {
+            const wm = window.parent && window.parent.windowManager;
+            const cfg = getSupabaseConfigSafe();
+            if (!wm || !cfg || !isRemoteStoreEnabled()) return;
+            if (!appId) return;
+
+            const tables = getRemoteStoreTables();
+            const row = { app_id: String(appId), payload: payload || {} };
+            await wm.supabaseRequest(`${tables.overrides}?on_conflict=app_id`, cfg, {
+                method: 'POST',
+                headers: { Prefer: 'resolution=merge-duplicates,return=representation' },
+                body: [row]
+            });
+        }
+
+        // ==================== GÉNÉRATION IA ====================
+        async function generateCodeFromAI() {
+            const prompt = document.getElementById('sub-ai-prompt').value;
+            const name = document.getElementById('sub-name').value || "App Sans Nom";
+            const type = document.getElementById('submit-mode-ai-ext').classList.contains('active') ? 'extension' : 'app';
+            
+            const key = window.parent.windowManager ? window.parent.windowManager.groqApiKey : '';
+
+            if (!key) {
+                alert("Erreur: Clé API Groq manquante dans le fichier .env (AETHER_GROQ_API_KEY).");
+                return;
+            }
+            if (!prompt) {
+                alert("Veuillez décrire votre application.");
+                return;
+            }
+
+            const btn = document.querySelector('#ai-prompt-container button');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '🤖 Génération en cours...';
+            btn.disabled = true;
+
+            const systemPrompt = `You are an expert web developer. Create a single-file HTML ${type === 'extension' ? 'widget/extension' : 'application'} (HTML, CSS, JS in one file).
+            The app should be modern, responsive, and use a dark theme (background #0f172a, text white).
+            Do not use external CSS/JS links unless absolutely necessary (CDN).
+            Return ONLY the raw HTML code, no markdown backticks, no explanations.
+            The app is: ${name}. Description: ${prompt}.
+            ${type === 'extension' ? 'This is a small utility extension. Keep it compact and functional.' : ''}`;
+
+            try {
+                const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${key}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        messages: [{ role: 'user', content: systemPrompt }],
+                        model: 'llama-3.3-70b-versatile'
+                    })
+                });
+
+                const data = await response.json();
+                if (data.error) throw new Error(data.error.message);
+                
+                let code = data.choices[0].message.content;
+                code = code.replace(/```html/g, '').replace(/```/g, '').trim();
+
+                document.getElementById('sub-code').value = code;
+                alert("Code généré ! Vous pouvez maintenant le vérifier et soumettre l'application.");
+
+            } catch (err) {
+                alert("Erreur: " + err.message);
+            } finally {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
+        }
+
+        // ==================== INITIALISATION ET ÉCOUTEURS ====================
+        window.addEventListener('message', (e) => {
+            if (e.data.type === 'funnyweb_user_sync') {
+                userData = e.data;
+                checkAdminStatus();
+                renderGrid();
+            } else if (e.data.type === 'AETHER_REGISTRY_UPDATED') {
+                renderGrid();
+                renderLiveApps();
+                renderRegistryApps();
+            } else if (e.data.type === 'AETHER_STORE_SYNCED') {
+                renderGrid(document.getElementById('search').value);
+                renderPendingApps();
+                renderLiveApps();
+                renderRegistryApps();
+            }
+        });
+
+        // Initialisation
+        document.addEventListener('DOMContentLoaded', () => {
+            renderGrid();
+            setSubmitMode('html');
+            
+            // Admin par défaut pour la démo
+            userData = { userName: 'Admin' };
+            checkAdminStatus();
+
+            // Sync remote
+            requestRemoteStoreSync(true);
+            
+            storeSyncTimer = setInterval(() => {
+                if (document.hidden) return;
+                requestRemoteStoreSync(false);
+            }, 8000);
+        });
+
+        window.addEventListener('beforeunload', () => {
+            try { clearInterval(storeSyncTimer); } catch (e) {}
+        });
+
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden) requestRemoteStoreSync(false);
+        });
+
+        // Exposer les fonctions globales nécessaires
+        window.filterCat = filterCat;
+        window.filterCatTop = filterCatTop;
+        window.handleSearch = handleSearch;
+        window.showSubmitForm = showSubmitForm;
+        window.showAdminView = showAdminView;
+        window.setSubmitMode = setSubmitMode;
+        window.submitApp = submitApp;
+        window.testPendingApp = testPendingApp;
+        window.approveApp = approveApp;
+        window.rejectApp = rejectApp;
+        window.removeLiveApp = removeLiveApp;
+        window.editApp = editApp;
+        window.saveAppEdit = saveAppEdit;
+        window.actionClick = actionClick;
+        window.openDetail = openDetail;
+        window.closeDetail = closeDetail;
+        window.generateCodeFromAI = generateCodeFromAI;
+        window.installSelfApp = installSelfApp;
+    </script>
+</body>
+</html>

@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <style>
+        body {
+            background: #111;
+            color: white;
+            font-family: sans-serif;
+            height: 100vh;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #display {
+            font-size: 48px;
+            text-align: right;
+            padding: 20px;
+            background: #000;
+            flex: none;
+            height: 60px;
+            overflow: hidden;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            padding: 20px;
+            flex: 1;
+        }
+
+        button {
+            background: #333;
+            border: none;
+            color: white;
+            font-size: 24px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: 0.1s;
+        }
+
+        button:active {
+            transform: scale(0.95);
+            background: #444;
+        }
+
+        .op {
+            background: #ff9500;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="display">0</div>
+    <div class="grid">
+        <button onclick="press('C')">C</button>
+        <button onclick="press('/')">÷</button>
+        <button onclick="press('*')">×</button>
+        <button onclick="press('del')">←</button>
+        <button onclick="press('7')">7</button>
+        <button onclick="press('8')">8</button>
+        <button onclick="press('9')">9</button>
+        <button class="op" onclick="press('-')">-</button>
+        <button onclick="press('4')">4</button>
+        <button onclick="press('5')">5</button>
+        <button onclick="press('6')">6</button>
+        <button class="op" onclick="press('+')">+</button>
+        <button onclick="press('1')">1</button>
+        <button onclick="press('2')">2</button>
+        <button onclick="press('3')">3</button>
+        <button class="op" onclick="press('=')">=</button>
+        <button onclick="press('0')" style="grid-column: span 2;">0</button>
+        <button onclick="press('.')">.</button>
+    </div>
+
+    <script>
+        const d = document.getElementById('display');
+        function press(k) {
+            if (k === 'C') d.textContent = '0';
+            else if (k === 'del') d.textContent = d.textContent.slice(0, -1) || '0';
+            else if (k === '=') {
+                try { d.textContent = eval(d.textContent.replace('×', '*').replace('÷', '/')); }
+                catch { d.textContent = 'Erreur'; }
+            } else {
+                if (d.textContent === '0' || d.textContent === 'Erreur') d.textContent = k;
+                else d.textContent += k;
+            }
+        }
+    </script>
+</body>
+
+</html>

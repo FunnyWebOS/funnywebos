@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FunnyWEB! Wiki & Documentation</title>
+    <style>
+        :root {
+            --accent: #0A84FF;
+            --glass: rgba(10, 25, 45, 0.45);
+            --glass-bright: rgba(20, 40, 70, 0.6);
+            --border: rgba(255, 255, 255, 0.15);
+            --text: #ffffff;
+            --text-dim: rgba(255, 255, 255, 0.6);
+        }
+
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background: transparent;
+            color: var(--text);
+            height: 100vh;
+            box-sizing: border-box;
+            display: flex;
+            gap: 20px;
+            overflow: hidden;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 250px;
+            background: var(--glass);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            overflow-y: auto;
+        }
+
+        .sidebar h2 {
+            font-size: 1.2rem;
+            margin-bottom: 20px;
+            color: var(--accent);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .nav-item {
+            padding: 12px 16px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: var(--text-dim);
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .nav-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text);
+        }
+
+        .nav-item.active {
+            background: var(--accent);
+            color: white;
+            box-shadow: 0 4px 15px rgba(10, 132, 255, 0.3);
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            background: var(--glass);
+            backdrop-filter: blur(30px);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 40px;
+            overflow-y: auto;
+            scroll-behavior: smooth;
+        }
+
+        article {
+            display: none;
+            max-width: 800px;
+            margin: 0 auto;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        article.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-top: 0;
+        }
+
+        h2 {
+            font-size: 1.8rem;
+            margin-top: 40px;
+            color: var(--accent);
+        }
+
+        h3 {
+            font-size: 1.3rem;
+            margin-top: 30px;
+        }
+
+        p {
+            line-height: 1.6;
+            color: var(--text-dim);
+            font-size: 1.1rem;
+        }
+
+        code {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Cascadia Code', 'Consolas', monospace;
+            color: #7dd3fc;
+        }
+
+        pre {
+            background: rgba(0, 0, 0, 0.4);
+            padding: 20px;
+            border-radius: 12px;
+            overflow-x: auto;
+            border: 1px solid var(--border);
+            margin: 20px 0;
+        }
+
+        pre code {
+            background: transparent;
+            padding: 0;
+            color: #e0f2fe;
+            font-size: 0.9rem;
+        }
+
+        .card {
+            background: var(--glass-bright);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            margin-right: 10px;
+        }
+
+        .badge-premium {
+            background: var(--accent);
+            color: white;
+        }
+
+        .badge-new {
+            background: #34d399;
+            color: #064e3b;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="sidebar">
+        <h2>Documentation</h2>
+        <div class="nav-item active" onclick="showArticle('intro')">Introduction</div>
+        <div class="nav-item" onclick="showArticle('create-app')">Créer une App</div>
+        <div class="nav-item" onclick="showArticle('design-system')">Design System</div>
+        <div class="nav-item" onclick="showArticle('api-user')">API Utilisateur</div>
+        <div class="nav-item" onclick="showArticle('notifications')">Notifications</div>
+        <div class="nav-item" onclick="showArticle('vfs')">Système de Fichiers</div>
+        <div class="nav-item" onclick="showArticle('best-practices')">Bonnes Pratiques</div>
+    </div>
+
+    <div class="main-content">
+        <!-- Introduction -->
+        <article id="intro" class="active">
+            <h1>Bienvenue sur AetherOS</h1>
+            <p>AetherOS (FunnyWEB OS) est un système d'exploitation web moderne, fluide et entièrement personnalisable.
+                Conçu avec une architecture "Blue Glass", il offre une expérience utilisateur premium directement dans
+                le navigateur.</p>
+
+            <div class="card">
+                <h3>v3.0 : Singularity</h3>
+                <p>La version 3.0 standardise l’UI (dock, fenêtres, réglages) et ajoute des préférences utilisateur
+                    (dont les notifications) pour une expérience plus professionnelle.</p>
+            </div>
+
+            <h2>À quoi sert ce Wiki ?</h2>
+            <p>Ce wiki est destiné aux développeurs et aux utilisateurs curieux qui souhaitent comprendre comment
+                fonctionne l'OS ou comment créer leurs propres expériences au sein de l'écosystème FunnyWEB!.</p>
+        </article>
+
+        <!-- Créer une App -->
+        <article id="create-app">
+            <h1>Créer une Application Premium</h1>
+            <div class="badge badge-premium">Standard v3</div>
+            <p>AetherOS permet de créer des applications "ultra-fines" qui s'intègrent parfaitement à l'OS.</p>
+
+            <h3>1. Ajouter votre app</h3>
+            <ul>
+                <li>Créez un fichier <code>.html</code> dans le dossier <code>/apps/</code> (ex:
+                    <code>meteo.html</code>).</li>
+                <li><strong>En local</strong> : votre app peut apparaître automatiquement dans l'OS.</li>
+                <li><strong>Sur GitHub Pages</strong> : ajoutez une entrée dans <code>apps/registry.json</code> (pas de listing de répertoire).</li>
+            </ul>
+
+            <h3>1.1 Exemple registry.json</h3>
+            <pre><code>{
+  "id": "meteo",
+  "title": "Météo",
+  "creator": "Moi",
+  "description": "Ma première app.",
+  "category": "productivity",
+  "icon": "☀️",
+  "appFile": "meteo.html"
+}</code></pre>
+
+            <h3>2. Template de base</h3>
+            <pre><code>&lt;!DOCTYPE html&gt;
+&lt;html lang="fr"&gt;
+&lt;head&gt;
+    &lt;meta charset="UTF-8"&gt;
+    &lt;style&gt;
+        :root {
+            --accent: #0A84FF;
+            --glass: rgba(10, 25, 45, 0.45);
+        }
+        body {
+            margin: 0; padding: 40px;
+            font-family: -apple-system, system-ui, sans-serif;
+            background: transparent; color: white;
+            height: 100vh; box-sizing: border-box;
+            display: flex; flex-direction: column;
+        }
+        .main-app {
+            flex: 1;
+            background: var(--glass);
+            backdrop-filter: blur(30px);
+            border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 16px;
+            padding: 40px;
+            text-align: center;
+        }
+    &lt;/style&gt;
+&lt;/head&gt;
+&lt;body&gt;
+    &lt;div class="main-app"&gt;
+        &lt;h1&gt;Mon App FunnyWEB!&lt;/h1&gt;
+        &lt;p&gt;Prêt pour le futur.&lt;/p&gt;
+    &lt;/div&gt;
+&lt;/body&gt;
+&lt;/html&gt;</code></pre>
+        </article>
+
+        <!-- Design System -->
+        <article id="design-system">
+            <h1>Design System : Blue Glass</h1>
+            <p>Toutes les applications doivent respecter le style <strong>Bleu Vitreux</strong> pour une immersion
+                totale.</p>
+
+            <h3>Couleurs et Tokens</h3>
+            <pre><code>:root {
+    --accent: #0A84FF;           /* Bleu Action */
+    --glass: rgba(10, 25, 45, 0.45); /* Bleu Glass Pro */
+    --border: rgba(255, 255, 255, 0.15); /* Bordure subtile */
+    --text: #ffffff;
+    --text-dim: rgba(255, 255, 255, 0.6);
+}</code></pre>
+
+            <h3>Effet Glassmorphism Premium</h3>
+            <p>Le fond du body doit être transparent pour que le flou de la fenêtre agisse.</p>
+            <pre><code>body {
+    background: transparent;
+    color: var(--text);
+    margin: 0;
+}
+
+.native-card {
+    background: var(--glass);
+    backdrop-filter: blur(25px) saturate(180%);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+}</code></pre>
+        </article>
+
+        <!-- API Utilisateur -->
+        <article id="api-user">
+            <h1>API Utilisateur (Synchronization)</h1>
+            <p>AetherOS transmet l'identité de l'utilisateur à l'ouverture de chaque application.</p>
+
+            <pre><code>window.addEventListener('message', (event) => {
+    if (event.data.type === 'funnyweb_user_sync') {
+        const { userName, sessionID, profilePic, theme, uiPreferences } = event.data;
+        // Utilisez ces données pour personnaliser l'expérience
+    }
+});</code></pre>
+
+            <div class="card">
+                <h3>Données disponibles</h3>
+                <ul>
+                    <li><strong>userName</strong>: Nom affiché de l'utilisateur.</li>
+                    <li><strong>sessionID</strong>: ID unique de la session actuelle.</li>
+                    <li><strong>profilePic</strong>: Image de profil (Base64 ou Emoji).</li>
+                    <li><strong>theme</strong>: Thème actuel (light/dark).</li>
+                    <li><strong>uiPreferences</strong>: Préférences UI (dock, notifications, etc.).</li>
+                </ul>
+            </div>
+        </article>
+
+        <!-- Notifications -->
+        <article id="notifications">
+            <h1>Notifications</h1>
+            <p>Le système peut afficher des notifications (toasts). Les utilisateurs peuvent tout désactiver ou filtrer
+                par type dans <strong>Paramètres &gt; Notifications</strong>.</p>
+
+            <h3>Envoyer une notification depuis une app</h3>
+            <pre><code>window.parent?.windowManager?.notify(
+  'Mon App',
+  'Hello depuis mon app',
+  'system'
+);</code></pre>
+
+            <div class="card">
+                <h3>Types (exemples)</h3>
+                <ul>
+                    <li><strong>system</strong>: alertes générales</li>
+                    <li><strong>settings_change</strong>: changements de paramètres</li>
+                    <li><strong>accounts</strong>: connexion/déconnexion cloud</li>
+                    <li><strong>install</strong>: installation/suppression d’apps</li>
+                    <li><strong>file</strong>: opérations fichiers/VFS</li>
+                </ul>
+            </div>
+        </article>
+
+        <!-- VFS -->
+        <article id="vfs">
+            <h1>Virtual File System (VFS)</h1>
+            <p>Vous pouvez lire et écrire des fichiers dans le stockage virtuel de l'utilisateur.</p>
+
+            <h3>Écrire un fichier</h3>
+            <pre><code>window.parent.postMessage({
+    type: 'OS_VFS_WRITE',
+    path: '/Documents/mon_fichier.txt',
+    content: 'Contenu du fichier',
+    nodeType: 'file'
+}, '*');</code></pre>
+
+            <h3>Écouter les mises à jour</h3>
+            <pre><code>window.addEventListener('message', (e) => {
+    if (e.data.type === 'funnyweb_vfs_update') {
+        const vfs = e.data.vfs;
+        // Mettre à jour l'interface avec le nouveau VFS
+    }
+});</code></pre>
+        </article>
+
+        <!-- Best Practices -->
+        <article id="best-practices">
+            <h1>Règles d'or & Bonnes Pratiques</h1>
+
+            <div class="card">
+                <h3>1. Pensez Transparent</h3>
+                <p>Votre <code>body</code> doit TOUJOURS être <code>background: transparent</code>. C'est ce qui permet
+                    de voir le fond d'écran de l'OS derrière vos éléments vitreux.</p>
+            </div>
+
+            <div class="card">
+                <h3>2. Responsivité (Stretching)</h3>
+                <p>Votre application doit remplir la fenêtre. Utilisez <code>height: 100vh</code> et
+                    <code>width: 100%</code>. Utilisez Flexbox ou Grid pour organiser votre contenu.</p>
+            </div>
+
+            <div class="card">
+                <h3>3. Cohésion Visuelle</h3>
+                <p>Utilisez le bleu accent <code>#0A84FF</code> pour les actions principales. Évitez les couleurs trop
+                    flashies qui cassent l'immersion Blue Glass.</p>
+            </div>
+        </article>
+    </div>
+
+    <script>
+        function showArticle(id) {
+            // Update Sidebar
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+                if (item.getAttribute('onclick').includes(id)) {
+                    item.classList.add('active');
+                }
+            });
+
+            // Update Articles
+            document.querySelectorAll('article').forEach(art => {
+                art.classList.remove('active');
+            });
+            document.getElementById(id).classList.add('active');
+        }
+
+        // Listen for sync to maybe customize wiki path or welcome msg
+        window.addEventListener('message', (event) => {
+            if (event.data.type === 'funnyweb_user_sync') {
+                const welcomeTitle = document.querySelector('#intro h1');
+                if (welcomeTitle) welcomeTitle.innerText = `Bienvenue, ${event.data.userName} !`;
+            }
+        });
+    </script>
+</body>
+
+</html>

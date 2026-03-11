@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body {
+            margin: 0;
+            background: #000;
+            color: #0f0;
+            font-family: 'Consolas', 'Monaco', monospace;
+            padding: 15px;
+            font-size: 14px;
+            height: 100vh;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #output {
+            flex: 1;
+            overflow-y: auto;
+            white-space: pre-wrap;
+        }
+
+        #input-line {
+            display: flex;
+            margin-top: 10px;
+        }
+
+        #prompt {
+            color: #0f0;
+            margin-right: 8px;
+        }
+
+        input {
+            background: transparent;
+            border: none;
+            color: #0f0;
+            outline: none;
+            flex: 1;
+            font-family: inherit;
+            font-size: inherit;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="output">FunnyWEB [Version 11.0.0]
+        (c) 2026 FunnyCorp. All systems functional.
+
+        Type 'help' for commands.</div>
+    <div id="input-line">
+        <span id="prompt">user@funnyweb:~$</span>
+        <input type="text" id="cmd" autofocus>
+    </div>
+
+    <script>
+        const input = document.getElementById('cmd');
+        const output = document.getElementById('output');
+        const wm = window.parent.windowManager;
+
+        input.onkeydown = (e) => {
+            if (e.key === 'Enter') {
+                const cmd = input.value;
+                output.innerHTML += `\n<span style="color:#fff;">user@funnyweb:~$ ${cmd}</span>`;
+                handleCmd(cmd.toLowerCase().trim());
+                input.value = '';
+                output.scrollTop = output.scrollHeight;
+            }
+        };
+
+        function handleCmd(cmd) {
+            if (cmd === 'help') {
+                output.innerHTML += `\nCommandes: help, clear, version, whoami, open [id], notify [msg]`;
+            } else if (cmd === 'clear') {
+                output.innerHTML = '';
+            } else if (cmd === 'version') {
+                output.innerHTML += `\nFunnyWEB V11.0 - Architecture Platinum`;
+            } else if (cmd === 'whoami') {
+                output.innerHTML += `\n${wm.userName}`;
+            } else if (cmd.startsWith('notify ')) {
+                wm.notify('Terminal', cmd.replace('notify ', ''));
+            } else if (cmd.startsWith('open ')) {
+                wm.installApp(cmd.split(' ')[1]);
+            } else {
+                output.innerHTML += `\nCommande non reconnue: ${cmd}`;
+            }
+        }
+    </script>
+</body>
+
+</html>

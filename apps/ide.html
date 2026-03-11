@@ -1,0 +1,1994 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FunnyStudio - Code Editor</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.7/ace.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.7/ext-language_tools.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Codicon&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;user-select:none;}
+:root{
+  --bg-titlebar:#3c3c3c;
+  --bg-activitybar:#333333;
+  --bg-sidebar:#252526;
+  --bg-editor:#1e1e1e;
+  --bg-panel:#1e1e1e;
+  --bg-statusbar:#007acc;
+  --bg-tab-inactive:#2d2d2d;
+  --bg-tab-active:#1e1e1e;
+  --bg-tab-hover:#2a2d2e;
+  --bg-input:#3c3c3c;
+  --bg-dropdown:#252526;
+  --bg-list-hover:#2a2d2e;
+  --bg-list-active:#094771;
+  --bg-list-focus:#37373d;
+  --accent:#007acc;
+  --accent2:#0e639c;
+  --text-normal:#cccccc;
+  --text-bright:#ffffff;
+  --text-muted:#858585;
+  --text-dim:#6a6a6a;
+  --border:#3e3e42;
+  --border-focus:#007acc;
+  --shadow:rgba(0,0,0,0.36);
+  --icon-size:22px;
+  --sidebar-width:240px;
+  --actbar-width:48px;
+  --statusbar-height:22px;
+  --titlebar-height:30px;
+  --tabs-height:35px;
+  --breadcrumb-height:22px;
+  --terminal-height:200px;
+  --green:#4ec9b0;
+  --yellow:#dcdcaa;
+  --blue:#569cd6;
+  --orange:#ce9178;
+  --purple:#c586c0;
+  --red:#f48771;
+  --teal:#4fc1ff;
+}
+html,body{height:100%;overflow:hidden;font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg-editor);color:var(--text-normal);font-size:13px;}
+
+/* TITLEBAR */
+#titlebar{height:var(--titlebar-height);background:var(--bg-titlebar);display:flex;align-items:center;padding:0 10px;gap:2px;-webkit-app-region:drag;position:relative;border-bottom:1px solid rgba(0,0,0,0.3);}
+.menu-bar{display:flex;gap:1px;align-items:center;-webkit-app-region:no-drag;}
+.menu-btn{padding:4px 8px;border-radius:4px;cursor:pointer;font-size:12px;color:var(--text-normal);}
+.menu-btn:hover{background:rgba(255,255,255,0.12);color:var(--text-bright);}
+#title-center{position:absolute;left:50%;transform:translateX(-50%);font-size:12px;color:var(--text-muted);pointer-events:none;}
+.window-controls{margin-left:auto;display:flex;gap:8px;-webkit-app-region:no-drag;}
+.win-btn{width:12px;height:12px;border-radius:50%;border:none;cursor:pointer;}
+.win-close{background:#ff5f57;}
+.win-min{background:#febc2e;}
+.win-max{background:#28c840;}
+
+/* MAIN LAYOUT */
+#main{display:flex;height:calc(100vh - var(--titlebar-height) - var(--statusbar-height));overflow:hidden;}
+
+/* ACTIVITY BAR */
+#activitybar{width:var(--actbar-width);background:var(--bg-activitybar);display:flex;flex-direction:column;align-items:center;border-right:1px solid var(--border);padding:8px 0;gap:0;flex-shrink:0;}
+.act-icon{width:100%;height:48px;display:flex;align-items:center;justify-content:center;cursor:pointer;position:relative;color:var(--text-muted);font-size:22px;transition:color 0.15s;}
+.act-icon:hover{color:var(--text-bright);}
+.act-icon.active{color:var(--text-bright);}
+.act-icon.active::before{content:'';position:absolute;left:0;top:8px;bottom:8px;width:2px;background:var(--text-bright);border-radius:0 2px 2px 0;}
+.act-icon .badge{position:absolute;top:6px;right:6px;background:#cc3333;color:#fff;font-size:10px;min-width:16px;height:16px;border-radius:8px;display:flex;align-items:center;justify-content:center;padding:0 3px;}
+.act-spacer{flex:1;}
+.act-bottom{margin-top:auto;display:flex;flex-direction:column;align-items:center;gap:0;}
+
+/* SIDEBAR */
+#sidebar{width:var(--sidebar-width);background:var(--bg-sidebar);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;overflow:hidden;}
+.sidebar-section-title{height:28px;display:flex;align-items:center;padding:0 12px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text-normal);justify-content:space-between;}
+.sidebar-actions{display:flex;gap:4px;}
+.sb-action{cursor:pointer;color:var(--text-muted);font-size:16px;width:20px;height:20px;display:flex;align-items:center;justify-content:center;border-radius:3px;}
+.sb-action:hover{color:var(--text-bright);background:rgba(255,255,255,0.1);}
+
+/* FILE EXPLORER */
+#explorer-panel{flex:1;overflow:auto;font-size:13px;}
+.folder-row,.file-row{height:22px;display:flex;align-items:center;padding-left:0;cursor:pointer;white-space:nowrap;position:relative;}
+.folder-row:hover,.file-row:hover{background:var(--bg-list-hover);}
+.folder-row.focused,.file-row.focused{background:var(--bg-list-focus);}
+.folder-row.selected,.file-row.selected{background:var(--bg-list-active);}
+.tree-arrow{width:16px;height:22px;display:flex;align-items:center;justify-content:center;font-size:10px;flex-shrink:0;transition:transform 0.1s;}
+.tree-arrow.open{transform:rotate(90deg);}
+.tree-indent{display:inline-block;width:8px;flex-shrink:0;}
+.row-icon{width:18px;flex-shrink:0;font-size:14px;margin-right:4px;}
+.row-label{flex:1;overflow:hidden;text-overflow:ellipsis;color:var(--text-normal);}
+.row-label input{background:var(--bg-input);border:1px solid var(--accent);color:white;padding:1px 4px;width:100%;outline:none;font-size:13px;}
+.file-actions{display:none;position:absolute;right:4px;gap:2px;}
+.file-row:hover .file-actions,.folder-row:hover .file-actions{display:flex;}
+.file-act-btn{font-size:14px;color:var(--text-muted);cursor:pointer;padding:1px 3px;border-radius:2px;}
+.file-act-btn:hover{color:var(--text-bright);background:rgba(255,255,255,0.15);}
+
+/* EXTENSIONS PANEL */
+#extensions-panel{flex:1;overflow:auto;display:none;}
+.ext-search{padding:8px;border-bottom:1px solid var(--border);}
+.ext-search input{width:100%;background:var(--bg-input);border:1px solid var(--border);color:var(--text-normal);padding:5px 8px;border-radius:4px;outline:none;font-size:12px;}
+.ext-search input:focus{border-color:var(--accent);}
+.ext-section-title{padding:6px 12px;font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.8px;}
+.ext-item{padding:8px 12px;cursor:pointer;border-bottom:1px solid rgba(255,255,255,0.04);}
+.ext-item:hover{background:var(--bg-list-hover);}
+.ext-item.installed{opacity:1;}
+.ext-header{display:flex;align-items:center;gap:8px;margin-bottom:3px;}
+.ext-logo{width:32px;height:32px;border-radius:4px;font-size:20px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.ext-info{flex:1;}
+.ext-name{font-size:13px;color:var(--text-bright);font-weight:500;}
+.ext-author{font-size:11px;color:var(--text-muted);}
+.ext-desc{font-size:11px;color:var(--text-muted);margin-top:2px;}
+.ext-footer{display:flex;justify-content:space-between;align-items:center;margin-top:5px;}
+.ext-stars{font-size:11px;color:var(--text-muted);}
+.ext-btn{font-size:11px;padding:3px 10px;border-radius:3px;border:none;cursor:pointer;}
+.ext-btn.install{background:var(--accent);color:white;}
+.ext-btn.install:hover{background:var(--accent2);}
+.ext-btn.installed-btn{background:transparent;border:1px solid var(--border);color:var(--text-muted);}
+.ext-btn.installed-btn:hover{border-color:var(--red);color:var(--red);}
+
+/* GIT PANEL */
+#git-panel{flex:1;overflow:auto;display:none;flex-direction:column;}
+.git-commit-area{padding:8px;}
+.git-commit-area textarea{width:100%;background:var(--bg-input);border:1px solid var(--border);color:var(--text-normal);padding:6px;border-radius:4px;resize:none;height:60px;outline:none;font-size:12px;}
+.git-commit-area textarea:focus{border-color:var(--accent);}
+.git-commit-btn{width:100%;background:var(--bg-list-active);color:white;border:none;padding:5px;border-radius:4px;cursor:pointer;font-size:12px;margin-top:4px;}
+.git-commit-btn:hover{background:var(--accent);}
+.git-changes-title{padding:4px 12px;font-size:11px;color:var(--text-muted);display:flex;align-items:center;justify-content:space-between;}
+.git-file{height:22px;display:flex;align-items:center;padding:0 12px 0 24px;gap:8px;cursor:pointer;}
+.git-file:hover{background:var(--bg-list-hover);}
+.git-status{font-size:11px;color:var(--yellow);width:12px;text-align:center;}
+.git-status.A{color:var(--green);}
+.git-status.D{color:var(--red);}
+
+/* SEARCH PANEL */
+#search-panel{flex:1;overflow:auto;display:none;flex-direction:column;}
+.search-input-wrap{padding:8px;display:flex;flex-direction:column;gap:4px;}
+.search-inp{display:flex;align-items:center;background:var(--bg-input);border:1px solid var(--border);border-radius:4px;padding:4px 8px;gap:4px;}
+.search-inp:focus-within{border-color:var(--accent);}
+.search-inp input{background:transparent;border:none;color:var(--text-normal);outline:none;flex:1;font-size:12px;}
+.search-opts{display:flex;gap:6px;padding:0 8px;}
+.s-opt{font-size:11px;color:var(--text-muted);cursor:pointer;padding:2px 5px;border-radius:3px;border:1px solid transparent;}
+.s-opt:hover,.s-opt.on{background:rgba(255,255,255,0.1);border-color:var(--border);}
+.search-results{flex:1;overflow:auto;}
+.search-result-file{padding:4px 12px;font-size:12px;color:var(--blue);cursor:pointer;font-weight:600;}
+.search-result-line{padding:2px 12px 2px 24px;font-size:12px;cursor:pointer;border-left:2px solid transparent;}
+.search-result-line:hover{background:var(--bg-list-hover);border-left-color:var(--accent);}
+.s-line-num{color:var(--text-dim);margin-right:8px;min-width:28px;display:inline-block;text-align:right;}
+.s-match{background:rgba(255,200,0,0.3);color:var(--text-bright);}
+
+/* EDITOR AREA */
+#editor-area{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0;}
+#tabs-bar{height:var(--tabs-height);background:var(--bg-tab-inactive);display:flex;overflow-x:auto;overflow-y:hidden;flex-shrink:0;border-bottom:1px solid var(--border);}
+#tabs-bar::-webkit-scrollbar{height:3px;}
+#tabs-bar::-webkit-scrollbar-thumb{background:var(--border);}
+.tab{height:100%;display:flex;align-items:center;padding:0 10px 0 12px;gap:6px;cursor:pointer;border-right:1px solid var(--border);color:var(--text-muted);min-width:0;flex-shrink:0;position:relative;font-size:13px;max-width:200px;}
+.tab:hover{background:var(--bg-tab-hover);color:var(--text-normal);}
+.tab.active{background:var(--bg-tab-active);color:var(--text-bright);border-top:1px solid var(--accent);}
+.tab.dirty::after{content:'●';position:absolute;right:8px;top:50%;transform:translateY(-50%);font-size:10px;color:var(--text-muted);}
+.tab-icon{font-size:13px;flex-shrink:0;}
+.tab-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.tab-close-btn{width:18px;height:18px;border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:14px;margin-left:4px;opacity:0;flex-shrink:0;color:var(--text-muted);}
+.tab:hover .tab-close-btn,.tab.active .tab-close-btn{opacity:1;}
+.tab-close-btn:hover{background:rgba(255,255,255,0.15);color:var(--text-bright);}
+
+/* BREADCRUMB */
+#breadcrumb{height:var(--breadcrumb-height);background:var(--bg-editor);border-bottom:1px solid rgba(255,255,255,0.05);display:flex;align-items:center;padding:0 12px;font-size:12px;color:var(--text-muted);gap:4px;flex-shrink:0;}
+.bc-sep{opacity:0.5;}
+.bc-item:hover{color:var(--text-bright);cursor:pointer;}
+
+/* CODE EDITOR */
+#editor-split{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+#editor-wrap{flex:1;position:relative;min-height:100px;}
+#ace-editor{position:absolute;inset:0;}
+
+/* RESIZE HANDLE */
+.h-resizer{height:4px;background:transparent;cursor:row-resize;flex-shrink:0;transition:background 0.2s;}
+.h-resizer:hover,.h-resizer.dragging{background:var(--accent);}
+.v-resizer{width:4px;background:transparent;cursor:col-resize;flex-shrink:0;transition:background 0.2s;}
+.v-resizer:hover,.v-resizer.dragging{background:var(--accent);}
+
+/* TERMINAL/PANEL */
+#bottom-panel{flex-shrink:0;border-top:1px solid var(--border);display:flex;flex-direction:column;background:var(--bg-panel);}
+.panel-tabs{height:35px;display:flex;align-items:flex-end;padding:0 8px;border-bottom:1px solid var(--border);gap:0;}
+.panel-tab{height:100%;display:flex;align-items:center;padding:0 12px;font-size:12px;cursor:pointer;color:var(--text-muted);border-bottom:1px solid transparent;}
+.panel-tab:hover{color:var(--text-normal);}
+.panel-tab.active{color:var(--text-bright);border-bottom-color:var(--accent);}
+.panel-actions{margin-left:auto;display:flex;align-items:center;gap:6px;}
+.pan-btn{font-size:16px;color:var(--text-muted);cursor:pointer;padding:2px 6px;border-radius:3px;}
+.pan-btn:hover{color:var(--text-bright);background:rgba(255,255,255,0.1);}
+
+/* TERMINAL */
+#terminal-content{flex:1;overflow:hidden;position:relative;}
+#terminal-output{position:absolute;inset:0;overflow-y:auto;padding:8px 12px;font-family:'Consolas','Courier New',monospace;font-size:13px;color:#ccc;line-height:1.5;}
+#terminal-output::-webkit-scrollbar{width:8px;}
+#terminal-output::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px;}
+.term-line{margin-bottom:2px;}
+.term-prompt{color:var(--green);}
+.term-cmd{color:var(--text-bright);}
+.term-output{color:var(--text-muted);}
+.term-error{color:var(--red);}
+.term-warn{color:var(--yellow);}
+.term-info{color:var(--teal);}
+.term-success{color:var(--green);}
+.term-input-row{display:flex;align-items:center;gap:4px;padding:4px 12px;border-top:1px solid rgba(255,255,255,0.05);}
+.term-input-row span{color:var(--green);font-family:monospace;font-size:13px;white-space:nowrap;}
+#term-input{flex:1;background:transparent;border:none;color:var(--text-bright);font-family:'Consolas',monospace;font-size:13px;outline:none;}
+
+/* CONSOLE */
+#console-content{flex:1;overflow:auto;padding:8px 12px;font-family:'Consolas',monospace;font-size:13px;display:none;}
+.con-row{display:flex;gap:8px;padding:2px 0;border-bottom:1px solid rgba(255,255,255,0.04);}
+.con-level{width:14px;flex-shrink:0;opacity:0.7;}
+.con-msg{flex:1;color:var(--text-normal);word-break:break-all;}
+.con-msg.error{color:var(--red);}
+.con-msg.warn{color:var(--yellow);}
+.con-msg.info{color:var(--teal);}
+.con-loc{color:var(--text-dim);font-size:11px;flex-shrink:0;}
+
+/* PREVIEW */
+#preview-content{flex:1;background:white;display:none;position:relative;}
+#preview-iframe{position:absolute;inset:0;width:100%;height:100%;border:none;}
+
+/* PROBLEMS */
+#problems-content{flex:1;overflow:auto;display:none;}
+.prob-item{display:flex;align-items:center;gap:8px;padding:4px 12px;cursor:pointer;font-size:12px;}
+.prob-item:hover{background:var(--bg-list-hover);}
+.prob-icon{flex-shrink:0;font-size:14px;}
+.prob-msg{flex:1;color:var(--text-normal);}
+.prob-file{color:var(--text-muted);font-size:11px;}
+
+/* STATUSBAR */
+#statusbar{height:var(--statusbar-height);background:var(--bg-statusbar);color:white;display:flex;align-items:center;font-size:12px;padding:0;}
+.sb-item{padding:0 8px;height:100%;display:flex;align-items:center;gap:4px;cursor:pointer;white-space:nowrap;}
+.sb-item:hover{background:rgba(0,0,0,0.15);}
+.sb-sep{flex:1;}
+
+/* CONTEXT MENU */
+#ctx-menu{position:fixed;background:var(--bg-dropdown);border:1px solid var(--border);border-radius:4px;padding:4px 0;min-width:180px;z-index:9999;display:none;box-shadow:0 4px 16px var(--shadow);}
+.ctx-item{padding:5px 20px;cursor:pointer;font-size:13px;display:flex;justify-content:space-between;gap:16px;}
+.ctx-item:hover{background:var(--bg-list-active);color:white;}
+.ctx-sep{height:1px;background:var(--border);margin:4px 0;}
+.ctx-key{color:var(--text-dim);font-size:11px;}
+
+/* TOOLTIP */
+.tooltip{position:relative;}
+.tooltip:hover::after{content:attr(data-tip);position:absolute;left:100%;top:50%;transform:translateY(-50%);margin-left:8px;background:#1a1a1a;color:#eee;padding:4px 8px;border-radius:4px;font-size:12px;white-space:nowrap;pointer-events:none;border:1px solid var(--border);z-index:9998;}
+
+/* MODAL / OVERLAY */
+#modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:10000;display:none;align-items:center;justify-content:center;}
+#modal-box{background:var(--bg-sidebar);border:1px solid var(--border);border-radius:6px;padding:20px;width:360px;box-shadow:0 8px 32px var(--shadow);}
+#modal-box h3{margin-bottom:12px;font-size:14px;color:var(--text-bright);}
+#modal-box input,#modal-box select{width:100%;background:var(--bg-input);border:1px solid var(--border);color:var(--text-normal);padding:7px 10px;border-radius:4px;outline:none;font-size:13px;margin-bottom:10px;}
+#modal-box input:focus,#modal-box select:focus{border-color:var(--accent);}
+.modal-btns{display:flex;justify-content:flex-end;gap:8px;}
+.modal-btn{padding:6px 16px;border-radius:4px;border:none;cursor:pointer;font-size:13px;}
+.modal-btn.cancel{background:var(--border);color:var(--text-normal);}
+.modal-btn.ok{background:var(--accent);color:white;}
+.modal-btn.ok:hover{background:var(--accent2);}
+
+/* COMMAND PALETTE */
+#cmd-palette{position:fixed;top:60px;left:50%;transform:translateX(-50%);width:600px;max-width:95vw;background:var(--bg-sidebar);border:1px solid var(--border);border-radius:6px;z-index:10001;display:none;box-shadow:0 8px 32px var(--shadow);}
+#cmd-input{width:100%;background:transparent;border:none;color:var(--text-bright);padding:12px 16px;font-size:14px;outline:none;border-bottom:1px solid var(--border);}
+.cmd-item{padding:8px 16px;cursor:pointer;font-size:13px;display:flex;justify-content:space-between;align-items:center;}
+.cmd-item:hover,.cmd-item.selected{background:var(--bg-list-active);}
+.cmd-key{font-size:11px;color:var(--text-dim);}
+
+/* NOTIFICATIONS */
+#notifications{position:fixed;bottom:30px;right:16px;display:flex;flex-direction:column;gap:6px;z-index:9997;}
+.notif{background:#252526;border:1px solid var(--border);border-left:3px solid var(--accent);padding:10px 14px;border-radius:4px;font-size:12px;max-width:360px;display:flex;align-items:center;gap:10px;box-shadow:0 2px 8px var(--shadow);animation:slideIn 0.2s ease;}
+.notif.error{border-left-color:var(--red);}
+.notif.warn{border-left-color:var(--yellow);}
+.notif.success{border-left-color:var(--green);}
+.notif-close{margin-left:auto;cursor:pointer;color:var(--text-muted);}
+.notif-close:hover{color:var(--text-bright);}
+@keyframes slideIn{from{opacity:0;transform:translateX(20px);}to{opacity:1;transform:translateX(0);}}
+
+/* SCROLLBARS */
+::-webkit-scrollbar{width:10px;height:10px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:rgba(121,121,121,0.4);border-radius:5px;}
+::-webkit-scrollbar-thumb:hover{background:rgba(100,100,100,0.7);}
+
+/* WELCOME TAB */
+#welcome-screen{position:absolute;inset:0;background:var(--bg-editor);overflow:auto;padding:40px;display:flex;flex-direction:column;gap:24px;}
+.welcome-title{font-size:28px;font-weight:300;color:var(--text-bright);}
+.welcome-sub{font-size:14px;color:var(--text-muted);}
+.welcome-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;max-width:720px;}
+.welcome-section h3{font-size:13px;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;}
+.welcome-link{display:flex;align-items:center;gap:8px;padding:4px 0;cursor:pointer;color:var(--accent);font-size:13px;}
+.welcome-link:hover{color:var(--teal);}
+.welcome-icon{font-size:16px;}
+
+/* SETTINGS */
+#settings-panel{position:absolute;inset:0;background:var(--bg-editor);overflow:auto;display:none;padding:0;}
+.settings-layout{display:flex;height:100%;}
+.settings-nav{width:200px;border-right:1px solid var(--border);padding:16px 0;overflow:auto;}
+.settings-nav-item{padding:6px 16px;cursor:pointer;font-size:13px;}
+.settings-nav-item:hover{background:var(--bg-list-hover);}
+.settings-nav-item.active{color:var(--text-bright);background:var(--bg-list-active);}
+.settings-main{flex:1;padding:24px;overflow:auto;}
+.settings-main h2{font-size:20px;margin-bottom:20px;color:var(--text-bright);}
+.settings-group{margin-bottom:24px;}
+.settings-group h3{font-size:12px;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);margin-bottom:12px;padding-bottom:6px;border-bottom:1px solid var(--border);}
+.setting-item{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04);}
+.setting-label{font-size:13px;color:var(--text-normal);}
+.setting-desc{font-size:11px;color:var(--text-muted);margin-top:2px;}
+.setting-control select,.setting-control input[type=text]{background:var(--bg-input);border:1px solid var(--border);color:var(--text-normal);padding:4px 8px;border-radius:4px;outline:none;font-size:12px;}
+.setting-control input[type=range]{width:120px;}
+.setting-control input[type=checkbox]{width:16px;height:16px;cursor:pointer;}
+
+/* Ace Editor overrides */
+.ace_editor{font-family:'Consolas','Courier New',monospace!important;}
+
+/* MINIMAP */
+#minimap-wrap{width:80px;border-left:1px solid rgba(255,255,255,0.05);position:relative;overflow:hidden;flex-shrink:0;background:var(--bg-editor);}
+.minimap-code{padding:2px;font-size:2px;line-height:3px;color:rgba(200,200,200,0.15);white-space:pre;overflow:hidden;word-break:break-all;}
+.minimap-viewport{position:absolute;left:0;right:0;background:rgba(255,255,255,0.07);pointer-events:none;}
+
+/* HOVER-ACTIVE indicator */
+.tab-icon.html-icon{color:#e34c26;}
+.tab-icon.css-icon{color:#264de4;}
+.tab-icon.js-icon{color:#f1e05a;}
+.tab-icon.ts-icon{color:#007acc;}
+.tab-icon.py-icon{color:#3776ab;}
+.tab-icon.json-icon{color:#fbc02d;}
+.tab-icon.md-icon{color:#aaa;}
+.tab-icon.txt-icon{color:#ccc;}
+
+/* Inlay hints */
+.ace_inlay_hint{font-size:11px;color:#888;font-style:italic;}
+</style>
+</head>
+<body>
+
+<!-- TITLEBAR -->
+<div id="titlebar">
+  <div class="menu-bar">
+    <div class="menu-btn" onclick="openMenu('file')">Fichier</div>
+    <div class="menu-btn" onclick="openMenu('edit')">Édition</div>
+    <div class="menu-btn">Sélection</div>
+    <div class="menu-btn">Affichage</div>
+    <div class="menu-btn">Aller</div>
+    <div class="menu-btn" onclick="runCode()">Exécuter</div>
+    <div class="menu-btn">Terminal</div>
+    <div class="menu-btn">Aide</div>
+  </div>
+  <div id="title-center">FunnyStudio — Mon Projet</div>
+  <div class="window-controls">
+    <button class="win-btn win-min" title="Réduire"></button>
+    <button class="win-btn win-max" title="Agrandir"></button>
+    <button class="win-btn win-close" title="Fermer"></button>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div id="main">
+
+  <!-- ACTIVITY BAR -->
+  <div id="activitybar">
+    <div class="act-icon active tooltip" data-tip="Explorateur" onclick="switchPanel('explorer')" id="act-explorer">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 7h6v6H3zM3 15h6v6H3zM11 3h10v4H11zM11 9h10v4H11zM11 15h10v4H11z"/></svg>
+    </div>
+    <div class="act-icon tooltip" data-tip="Rechercher" onclick="switchPanel('search')" id="act-search">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+    </div>
+    <div class="act-icon tooltip" data-tip="Contrôle de source" onclick="switchPanel('git')" id="act-git">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="18" cy="18" r="3"/><circle cx="6" cy="6" r="3"/><path d="M6 21V9a9 9 0 0 0 9 9"/></svg>
+      <span class="badge" id="git-badge">3</span>
+    </div>
+    <div class="act-icon tooltip" data-tip="Extensions" onclick="switchPanel('extensions')" id="act-ext">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="9" height="9" rx="1"/><rect x="13" y="2" width="9" height="9" rx="1"/><rect x="2" y="13" width="9" height="9" rx="1"/><rect x="13" y="13" width="9" height="9" rx="1"/></svg>
+    </div>
+    <div class="act-spacer"></div>
+    <div class="act-bottom">
+      <div class="act-icon tooltip" data-tip="Paramètres" onclick="openSettings()" id="act-settings">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      </div>
+      <div class="act-icon tooltip" data-tip="Compte">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      </div>
+    </div>
+  </div>
+
+  <!-- SIDEBAR -->
+  <div id="sidebar">
+    <!-- EXPLORER -->
+    <div id="explorer-container" style="display:flex;flex-direction:column;height:100%;">
+      <div class="sidebar-section-title">
+        EXPLORATEUR
+        <div class="sidebar-actions">
+          <span class="sb-action" title="Nouveau fichier" onclick="newFilePrompt()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><line x1="12" y1="11" x2="12" y2="17"/><line x1="9" y1="14" x2="15" y2="14"/></svg>
+          </span>
+          <span class="sb-action" title="Nouveau dossier" onclick="newFolderPrompt()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/><line x1="12" y1="11" x2="12" y2="17"/><line x1="9" y1="14" x2="15" y2="14"/></svg>
+          </span>
+          <span class="sb-action" title="Actualiser">↻</span>
+          <span class="sb-action" title="Réduire tout">⊟</span>
+        </div>
+      </div>
+      <div id="explorer-panel" class="file-tree"></div>
+    </div>
+
+    <!-- SEARCH -->
+    <div id="search-panel" style="display:flex;flex-direction:column;height:100%;">
+      <div class="sidebar-section-title">RECHERCHER</div>
+      <div class="search-input-wrap">
+        <div class="search-inp"><input id="search-query" placeholder="Rechercher" oninput="doSearch()"></div>
+        <div class="search-inp"><input id="replace-query" placeholder="Remplacer"></div>
+        <div class="search-opts">
+          <span class="s-opt tooltip" data-tip="Respecter la casse" id="s-case">Aa</span>
+          <span class="s-opt tooltip" data-tip="Mot entier" id="s-word">ab</span>
+          <span class="s-opt tooltip" data-tip="Expression régulière" id="s-regex">.*</span>
+        </div>
+      </div>
+      <div class="search-results" id="search-results"></div>
+    </div>
+
+    <!-- GIT -->
+    <div id="git-panel" style="display:none;flex-direction:column;height:100%;">
+      <div class="sidebar-section-title">CONTRÔLE DE SOURCE</div>
+      <div class="git-commit-area">
+        <textarea placeholder="Message (Ctrl+Entrée pour valider)" id="git-msg"></textarea>
+        <button class="git-commit-btn" onclick="gitCommit()">✓ Valider</button>
+      </div>
+      <div class="git-changes-title">
+        <span>MODIFICATIONS (3)</span>
+        <span style="display:flex;gap:6px;">
+          <span class="sb-action" title="Tout indexer">+</span>
+          <span class="sb-action" title="Tout annuler">↩</span>
+        </span>
+      </div>
+      <div id="git-files"></div>
+    </div>
+
+    <!-- EXTENSIONS -->
+    <div id="extensions-panel" style="display:none;flex-direction:column;height:100%;">
+      <div class="sidebar-section-title">EXTENSIONS</div>
+      <div class="ext-search"><input placeholder="Rechercher des extensions..." id="ext-query" oninput="filterExtensions()"></div>
+      <div style="flex:1;overflow:auto;" id="ext-list"></div>
+    </div>
+  </div>
+
+  <!-- EDITOR AREA -->
+  <div id="editor-area">
+    <div id="tabs-bar" oncontextmenu="return false;"></div>
+
+    <div id="editor-split">
+      <div id="breadcrumb">
+        <span class="bc-item" onclick="switchPanel('explorer')">📁 Mon Projet</span>
+        <span class="bc-sep">›</span>
+        <span class="bc-item" id="bc-folder">src</span>
+        <span class="bc-sep">›</span>
+        <span class="bc-item" id="bc-file">index.html</span>
+      </div>
+
+      <div id="editor-wrap" style="display:flex;">
+        <div id="ace-editor" style="flex:1;"></div>
+        <div id="minimap-wrap">
+          <div id="minimap-code" class="minimap-code"></div>
+          <div id="minimap-viewport" class="minimap-viewport" style="height:80px;top:0;"></div>
+        </div>
+      </div>
+
+      <!-- Welcome screen overlaid -->
+      <div id="welcome-screen" style="display:none;">
+        <div>
+          <div class="welcome-title">FunnyStudio</div>
+          <div class="welcome-sub">Édition 2025 — Propulsé par Ace Editor</div>
+        </div>
+        <div class="welcome-grid">
+          <div>
+            <div class="welcome-section">
+              <h3>Démarrer</h3>
+              <div class="welcome-link" onclick="newFilePrompt()"><span class="welcome-icon">📄</span> Nouveau fichier</div>
+              <div class="welcome-link" onclick="newFolderPrompt()"><span class="welcome-icon">📁</span> Nouveau dossier</div>
+              <div class="welcome-link" onclick="cloneRepo()"><span class="welcome-icon">🌵</span> Cloner un dépôt Git</div>
+            </div>
+          </div>
+          <div>
+            <div class="welcome-section">
+              <h3>Récent</h3>
+              <div class="welcome-link" onclick="openFile('index.html')"><span class="welcome-icon">📄</span> index.html</div>
+              <div class="welcome-link" onclick="openFile('style.css')"><span class="welcome-icon">🎨</span> style.css</div>
+              <div class="welcome-link" onclick="openFile('app.js')"><span class="welcome-icon">⚡</span> app.js</div>
+            </div>
+          </div>
+          <div>
+            <div class="welcome-section">
+              <h3>Apprendre</h3>
+              <div class="welcome-link"><span class="welcome-icon">📚</span> Documentation</div>
+              <div class="welcome-link"><span class="welcome-icon">⌨️</span> Raccourcis clavier</div>
+              <div class="welcome-link" onclick="openSettings()"><span class="welcome-icon">⚙️</span> Paramètres</div>
+            </div>
+          </div>
+          <div>
+            <div class="welcome-section">
+              <h3>Extensions installées</h3>
+              <div class="welcome-link" onclick="switchPanel('extensions')"><span class="welcome-icon">🐍</span> Python 2024.4.0</div>
+              <div class="welcome-link" onclick="switchPanel('extensions')"><span class="welcome-icon">⚡</span> ES Lint 2.4.4</div>
+              <div class="welcome-link" onclick="switchPanel('extensions')"><span class="welcome-icon">✨</span> Prettier 10.4.0</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Settings overlay -->
+      <div id="settings-panel">
+        <div class="settings-layout">
+          <div class="settings-nav">
+            <div class="settings-nav-item active" onclick="settingsNav(this,'general')">Général</div>
+            <div class="settings-nav-item" onclick="settingsNav(this,'editor')">Éditeur de texte</div>
+            <div class="settings-nav-item" onclick="settingsNav(this,'theme')">Thèmes</div>
+            <div class="settings-nav-item" onclick="settingsNav(this,'terminal')">Terminal</div>
+            <div class="settings-nav-item" onclick="settingsNav(this,'extensions-set')">Extensions</div>
+          </div>
+          <div class="settings-main">
+            <h2>Paramètres</h2>
+            <div id="settings-general">
+              <div class="settings-group">
+                <h3>Général</h3>
+                <div class="setting-item">
+                  <div><div class="setting-label">Langue de l'interface</div><div class="setting-desc">Langue affichée dans l'IDE</div></div>
+                  <div class="setting-control"><select><option>Français</option><option>English</option><option>Español</option></select></div>
+                </div>
+                <div class="setting-item">
+                  <div><div class="setting-label">Sauvegarde automatique</div><div class="setting-desc">Enregistre après chaque modification</div></div>
+                  <div class="setting-control"><input type="checkbox" checked></div>
+                </div>
+                <div class="setting-item">
+                  <div><div class="setting-label">Minimap</div><div class="setting-desc">Afficher la minimap dans l'éditeur</div></div>
+                  <div class="setting-control"><input type="checkbox" id="set-minimap" checked onchange="toggleMinimap(this)"></div>
+                </div>
+              </div>
+            </div>
+            <div id="settings-editor" style="display:none;">
+              <div class="settings-group">
+                <h3>Éditeur</h3>
+                <div class="setting-item">
+                  <div><div class="setting-label">Taille de la police</div></div>
+                  <div class="setting-control"><input type="range" min="10" max="24" value="14" id="font-size-range" oninput="updateFontSize(this.value)"><span id="font-size-val" style="margin-left:6px;color:var(--text-muted);font-size:12px;">14px</span></div>
+                </div>
+                <div class="setting-item">
+                  <div><div class="setting-label">Thème de l'éditeur</div></div>
+                  <div class="setting-control"><select id="theme-select" onchange="changeTheme(this.value)">
+                    <option value="ace/theme/vs-dark" selected>VS Dark (défaut)</option>
+                    <option value="ace/theme/monokai">Monokai</option>
+                    <option value="ace/theme/dracula">Dracula</option>
+                    <option value="ace/theme/tomorrow_night">Tomorrow Night</option>
+                    <option value="ace/theme/one_dark">One Dark</option>
+                    <option value="ace/theme/nord_dark">Nord Dark</option>
+                    <option value="ace/theme/github_dark">Github Dark</option>
+                    <option value="ace/theme/solarized_dark">Solarized Dark</option>
+                  </select></div>
+                </div>
+                <div class="setting-item">
+                  <div><div class="setting-label">Taille de la tabulation</div></div>
+                  <div class="setting-control"><select id="tab-size-sel" onchange="updateTabSize(this.value)">
+                    <option value="2">2</option><option value="4" selected>4</option><option value="8">8</option>
+                  </select></div>
+                </div>
+                <div class="setting-item">
+                  <div><div class="setting-label">Retour à la ligne</div></div>
+                  <div class="setting-control"><input type="checkbox" id="word-wrap-cb" onchange="toggleWordWrap(this)"></div>
+                </div>
+                <div class="setting-item">
+                  <div><div class="setting-label">Numéros de ligne</div></div>
+                  <div class="setting-control"><input type="checkbox" checked onchange="aceEditor.renderer.setShowGutter(this.checked)"></div>
+                </div>
+                <div class="setting-item">
+                  <div><div class="setting-label">Autocomplétion</div></div>
+                  <div class="setting-control"><input type="checkbox" checked id="autocomplete-cb" onchange="toggleAutocomplete(this)"></div>
+                </div>
+              </div>
+            </div>
+            <div id="settings-theme" style="display:none;">
+              <div class="settings-group">
+                <h3>Thèmes de couleur</h3>
+                <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-top:8px;">
+                  <div onclick="changeTheme('ace/theme/vs-dark')" style="background:#1e1e1e;border:2px solid var(--accent);border-radius:6px;padding:12px;cursor:pointer;font-size:12px;color:#ccc;">VS Dark</div>
+                  <div onclick="changeTheme('ace/theme/monokai')" style="background:#272822;border:2px solid transparent;border-radius:6px;padding:12px;cursor:pointer;font-size:12px;color:#ccc;">Monokai</div>
+                  <div onclick="changeTheme('ace/theme/dracula')" style="background:#282a36;border:2px solid transparent;border-radius:6px;padding:12px;cursor:pointer;font-size:12px;color:#ccc;">Dracula</div>
+                  <div onclick="changeTheme('ace/theme/tomorrow_night')" style="background:#1d1f21;border:2px solid transparent;border-radius:6px;padding:12px;cursor:pointer;font-size:12px;color:#ccc;">Tomorrow Night</div>
+                  <div onclick="changeTheme('ace/theme/nord_dark')" style="background:#2e3440;border:2px solid transparent;border-radius:6px;padding:12px;cursor:pointer;font-size:12px;color:#ccc;">Nord Dark</div>
+                  <div onclick="changeTheme('ace/theme/github_dark')" style="background:#0d1117;border:2px solid transparent;border-radius:6px;padding:12px;cursor:pointer;font-size:12px;color:#ccc;">Github Dark</div>
+                </div>
+              </div>
+            </div>
+            <div id="settings-terminal" style="display:none;">
+              <div class="settings-group">
+                <h3>Terminal</h3>
+                <div class="setting-item">
+                  <div><div class="setting-label">Shell par défaut</div></div>
+                  <div class="setting-control"><select><option>bash</option><option>zsh</option><option>cmd</option><option>powershell</option></select></div>
+                </div>
+                <div class="setting-item">
+                  <div><div class="setting-label">Taille de la police</div></div>
+                  <div class="setting-control"><input type="range" min="10" max="20" value="13"></div>
+                </div>
+              </div>
+            </div>
+            <div id="settings-extensions-set" style="display:none;">
+              <div class="settings-group">
+                <h3>Extensions</h3>
+                <p style="color:var(--text-muted);font-size:13px;">Gérez vos extensions depuis le panneau Extensions dans la barre d'activité.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div style="position:absolute;top:8px;right:12px;cursor:pointer;font-size:20px;color:var(--text-muted);" onclick="closeSettings()">✕</div>
+      </div>
+    </div>
+
+    <!-- RESIZER -->
+    <div class="h-resizer" id="h-resizer"></div>
+
+    <!-- BOTTOM PANEL -->
+    <div id="bottom-panel" style="height:var(--terminal-height);">
+      <div class="panel-tabs">
+        <div class="panel-tab active" onclick="switchBottomTab('terminal',this)">TERMINAL</div>
+        <div class="panel-tab" onclick="switchBottomTab('console',this)">CONSOLE</div>
+        <div class="panel-tab" onclick="switchBottomTab('preview',this)">APERÇU</div>
+        <div class="panel-tab" onclick="switchBottomTab('problems',this)">PROBLÈMES <span id="prob-badge" style="background:#cc3333;color:#fff;border-radius:8px;padding:0 5px;font-size:10px;margin-left:4px;">2</span></div>
+        <div class="panel-actions">
+          <span class="pan-btn" title="Nouveau terminal" onclick="addTerminal()">+</span>
+          <span class="pan-btn" title="Fractionner le terminal">⧉</span>
+          <span class="pan-btn" title="Fermer le panneau" onclick="togglePanel()">✕</span>
+          <span class="pan-btn" title="Agrandir" onclick="maximizePanel()">⬆</span>
+        </div>
+      </div>
+
+      <!-- TERMINAL -->
+      <div id="terminal-content" style="flex:1;display:flex;flex-direction:column;overflow:hidden;">
+        <div id="terminal-output"></div>
+        <div class="term-input-row">
+          <span id="term-prompt-label">user@funnystudio:~/projet$</span>
+          <input id="term-input" spellcheck="false" autocomplete="off" placeholder="" onkeydown="handleTermInput(event)">
+        </div>
+      </div>
+
+      <!-- CONSOLE -->
+      <div id="console-content" style="flex:1;overflow:auto;display:none;padding:8px 12px;font-family:Consolas,monospace;font-size:13px;"></div>
+
+      <!-- PREVIEW -->
+      <div id="preview-content" style="flex:1;background:white;display:none;position:relative;">
+        <iframe id="preview-iframe" style="position:absolute;inset:0;width:100%;height:100%;border:none;" sandbox="allow-scripts allow-modals allow-same-origin"></iframe>
+      </div>
+
+      <!-- PROBLEMS -->
+      <div id="problems-content" style="flex:1;overflow:auto;display:none;"></div>
+    </div>
+  </div>
+
+</div>
+
+<!-- STATUSBAR -->
+<div id="statusbar">
+  <div class="sb-item" onclick="switchPanel('git')" title="Git">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="18" r="3"/><circle cx="6" cy="6" r="3"/><path d="M6 21V9a9 9 0 0 0 9 9"/></svg>
+    <span id="sb-branch">main</span>
+  </div>
+  <div class="sb-item" id="sb-errors" title="Erreurs et avertissements">
+    <span>⊗ 0</span>
+    <span>⚠ 0</span>
+  </div>
+  <div class="sb-sep"></div>
+  <div class="sb-item" id="sb-cursor" title="Aller à la ligne">Ln 1, Col 1</div>
+  <div class="sb-item" id="sb-spaces">Espaces: 4</div>
+  <div class="sb-item">UTF-8</div>
+  <div class="sb-item">LF</div>
+  <div class="sb-item" id="sb-lang" onclick="changeLangPrompt()">HTML</div>
+  <div class="sb-item" id="sb-prettier" title="Formater avec Prettier">✨ Prettier</div>
+  <div class="sb-item" id="sb-lsp" style="color:#4ec9b0;">⬤ Python</div>
+  <div class="sb-item" title="Notifications">🔔</div>
+</div>
+
+<!-- CONTEXT MENU -->
+<div id="ctx-menu">
+  <div class="ctx-item" onclick="ctxAction('reveal')">Révéler dans l'explorateur</div>
+  <div class="ctx-item" onclick="ctxAction('rename')">Renommer <span class="ctx-key">F2</span></div>
+  <div class="ctx-item" onclick="ctxAction('delete')">Supprimer <span class="ctx-key">Del</span></div>
+  <div class="ctx-sep"></div>
+  <div class="ctx-item" onclick="ctxAction('copy-path')">Copier le chemin</div>
+  <div class="ctx-item" onclick="ctxAction('copy-rel')">Copier le chemin relatif</div>
+  <div class="ctx-sep"></div>
+  <div class="ctx-item" onclick="ctxAction('new-file')">Nouveau fichier ici</div>
+  <div class="ctx-item" onclick="ctxAction('new-folder')">Nouveau dossier ici</div>
+</div>
+
+<!-- MODAL -->
+<div id="modal-overlay">
+  <div id="modal-box">
+    <h3 id="modal-title">Nouveau fichier</h3>
+    <input type="text" id="modal-input" placeholder="">
+    <div class="modal-btns">
+      <button class="modal-btn cancel" onclick="closeModal()">Annuler</button>
+      <button class="modal-btn ok" id="modal-ok-btn">Créer</button>
+    </div>
+  </div>
+</div>
+
+<!-- COMMAND PALETTE -->
+<div id="cmd-palette">
+  <input id="cmd-input" placeholder="> Taper une commande..." oninput="filterCommands()" onkeydown="handleCmdKey(event)">
+  <div id="cmd-list"></div>
+</div>
+
+<!-- NOTIFICATIONS -->
+<div id="notifications"></div>
+
+<script>
+// ============================================================
+//  VIRTUAL FILE SYSTEM
+// ============================================================
+const vfs = {
+  folders: ['src','public','node_modules/.bin','test'],
+  files: {
+    'index.html': {content:`<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mon App</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1 id="title">Bienvenue sur FunnyStudio</h1>
+        <p>L'éditeur de code ultime avec prévisualisation en direct.</p>
+        <button onclick="sayHello()">Clique-moi !</button>
+        <div id="counter">0</div>
+    </div>
+    <script src="app.js"><\/script>
+</body>
+</html>`, lang:'html', dirty:false},
+    'style.css': {content:`/* Style principal */
+:root {
+    --primary: #007acc;
+    --bg: #f0f2f5;
+}
+
+* { box-sizing: border-box; }
+
+body {
+    background: var(--bg);
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    margin: 0;
+}
+
+.container {
+    background: white;
+    padding: 40px;
+    border-radius: 16px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+    text-align: center;
+    max-width: 500px;
+    width: 90%;
+}
+
+h1 {
+    color: var(--primary);
+    margin-bottom: 16px;
+}
+
+button {
+    background: var(--primary);
+    color: white;
+    border: none;
+    padding: 12px 28px;
+    border-radius: 8px;
+    font-size: 15px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+button:hover {
+    background: #005f9e;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,122,204,0.3);
+}
+
+#counter {
+    font-size: 48px;
+    font-weight: bold;
+    color: var(--primary);
+    margin-top: 16px;
+}`, lang:'css', dirty:false},
+    'app.js': {content:`// FunnyStudio App - app.js
+let count = 0;
+
+function sayHello() {
+    count++;
+    document.getElementById('counter').textContent = count;
+    console.log(\`Bouton cliqué \${count} fois\`);
+    
+    if (count % 5 === 0) {
+        console.warn(\`Milestone atteint: \${count} clics !\`);
+    }
+}
+
+// Init
+document.addEventListener('DOMContentLoaded', () => {
+    console.log('✅ Application démarrée avec succès');
+    console.log('Version: 1.0.0 | Env: development');
+});`, lang:'javascript', dirty:false},
+    'package.json': {content:`{
+  "name": "mon-projet",
+  "version": "1.0.0",
+  "description": "Mon super projet FunnyStudio",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js",
+    "dev": "nodemon app.js",
+    "test": "jest",
+    "build": "webpack --mode production",
+    "lint": "eslint ."
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "axios": "^1.6.2"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2",
+    "eslint": "^8.55.0",
+    "jest": "^29.7.0",
+    "webpack": "^5.89.0"
+  },
+  "author": "FunnyWEB",
+  "license": "MIT"
+}`, lang:'json', dirty:false},
+    'README.md': {content:`# Mon Projet FunnyStudio
+
+Bienvenue dans ce projet créé avec **FunnyStudio IDE**.
+
+## Installation
+
+\`\`\`bash
+npm install
+\`\`\`
+
+## Développement
+
+\`\`\`bash
+npm run dev
+\`\`\`
+
+## Production
+
+\`\`\`bash
+npm run build
+\`\`\`
+
+## Structure
+
+\`\`\`
+mon-projet/
+├── index.html
+├── style.css
+├── app.js
+├── package.json
+└── README.md
+\`\`\`
+
+## Licence
+
+MIT © FunnyWEB 2025`, lang:'markdown', dirty:false},
+    '.eslintrc.json': {content:`{
+  "env": {
+    "browser": true,
+    "es2021": true,
+    "node": true
+  },
+  "extends": ["eslint:recommended"],
+  "parserOptions": {
+    "ecmaVersion": "latest",
+    "sourceType": "module"
+  },
+  "rules": {
+    "no-console": "warn",
+    "no-unused-vars": "error",
+    "semi": ["error", "always"],
+    "quotes": ["warn", "single"],
+    "indent": ["warn", 2]
+  }
+}`, lang:'json', dirty:false},
+    'server.py': {content:`#!/usr/bin/env python3
+"""Serveur HTTP simple avec Flask"""
+
+from http.server import HTTPServer, BaseHTTPRequestHandler
+import json
+
+class Handler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        if self.path == '/api/status':
+            self.send_response(200)
+            self.send_header('Content-Type', 'application/json')
+            self.end_headers()
+            data = {
+                'status': 'ok',
+                'version': '1.0.0',
+                'server': 'FunnyStudio Python Server'
+            }
+            self.wfile.write(json.dumps(data).encode())
+        else:
+            self.send_response(404)
+            self.end_headers()
+    
+    def log_message(self, format, *args):
+        print(f"[{self.address_string()}] {format % args}")
+
+if __name__ == '__main__':
+    server = HTTPServer(('localhost', 8000), Handler)
+    print('🐍 Serveur Python démarré sur http://localhost:8000')
+    server.serve_forever()`, lang:'python', dirty:false},
+  }
+};
+
+// ============================================================
+//  EDITOR STATE
+// ============================================================
+let currentFile = null;
+let openTabs = [];
+let aceEditor = null;
+let activePanel = 'explorer';
+let terminalHistory = [];
+let termHistoryIdx = -1;
+let panelHidden = false;
+let ctxTarget = null;
+
+// ============================================================
+//  FILE ICONS
+// ============================================================
+function getIcon(name) {
+  const ext = (name.match(/\.[^.]+$/) || [''])[0].toLowerCase();
+  const icons = {
+    '.html': '<span style="color:#e34c26;font-weight:bold;font-size:12px;">H</span>',
+    '.css':  '<span style="color:#264de4;font-weight:bold;font-size:12px;">#</span>',
+    '.js':   '<span style="color:#f1e05a;font-weight:bold;font-size:12px;">JS</span>',
+    '.ts':   '<span style="color:#007acc;font-weight:bold;font-size:12px;">TS</span>',
+    '.json': '<span style="color:#fbc02d;font-weight:bold;font-size:12px;">{}</span>',
+    '.py':   '<span style="color:#3776ab;font-weight:bold;font-size:12px;">🐍</span>',
+    '.md':   '<span style="color:#aaa;font-size:13px;">MD</span>',
+    '.txt':  '📄',
+    '.png':  '🖼️',
+    '.jpg':  '🖼️',
+    '.svg':  '🎨',
+    '.gitignore': '<span style="color:#f05033;">⊙</span>',
+  };
+  if (name.startsWith('.')) return icons[name] || '⚙️';
+  return icons[ext] || '📄';
+}
+function getLangMode(name) {
+  const e = (name.match(/\.[^.]+$/) || [''])[0].toLowerCase();
+  const m = {'.html':'html','.css':'css','.js':'javascript','.ts':'typescript','.json':'json','.py':'python','.md':'markdown','.sh':'sh','.xml':'xml','.yaml':'yaml','.yml':'yaml','.php':'php','.java':'java','.c':'c_cpp','.cpp':'c_cpp','.rb':'ruby','.rs':'rust','.go':'golang'};
+  return m[e] || 'text';
+}
+function getLangName(name) {
+  const m = {'.html':'HTML','.css':'CSS','.js':'JavaScript','.ts':'TypeScript','.json':'JSON','.py':'Python','.md':'Markdown','.sh':'Shell','.xml':'XML','.yaml':'YAML','.yml':'YAML','.php':'PHP'};
+  const e = (name.match(/\.[^.]+$/) || [''])[0].toLowerCase();
+  return m[e] || 'Text';
+}
+
+// ============================================================
+//  ACE EDITOR INIT
+// ============================================================
+function initEditor() {
+  ace.require("ace/ext/language_tools");
+  aceEditor = ace.edit("ace-editor");
+  aceEditor.setTheme("ace/theme/vs-dark");
+  aceEditor.setOptions({
+    enableBasicAutocompletion: true,
+    enableSnippets: true,
+    enableLiveAutocompletion: true,
+    fontSize: "14px",
+    showPrintMargin: false,
+    displayIndentGuides: true,
+    highlightActiveLine: true,
+    highlightSelectedWord: true,
+    showLineNumbers: true,
+    tabSize: 4,
+    useSoftTabs: true,
+    wrap: false,
+    cursorStyle: "ace",
+    animatedScroll: true,
+    scrollPastEnd: 0.5,
+    showFoldWidgets: true,
+    fadeFoldWidgets: true,
+    highlightGutterLine: true,
+    fixedWidthGutter: false,
+  });
+
+  // Cursor position in status bar
+  aceEditor.selection.on('changeCursor', () => {
+    const pos = aceEditor.getCursorPosition();
+    document.getElementById('sb-cursor').textContent = `Ln ${pos.row+1}, Col ${pos.column+1}`;
+  });
+
+  // Auto-save to vfs + mark dirty
+  aceEditor.session.on('change', () => {
+    if (currentFile && vfs.files[currentFile]) {
+      vfs.files[currentFile].content = aceEditor.getValue();
+      markDirty(currentFile, true);
+      updateMinimap();
+    }
+  });
+
+  // Keyboard shortcuts
+  aceEditor.commands.addCommand({
+    name:'save', bindKey:{win:'Ctrl-S',mac:'Cmd-S'},
+    exec: () => { saveFile(); livePreview(); }
+  });
+  aceEditor.commands.addCommand({
+    name:'commandPalette', bindKey:{win:'Ctrl-Shift-P',mac:'Cmd-Shift-P'},
+    exec: () => openCmdPalette()
+  });
+  aceEditor.commands.addCommand({
+    name:'quickOpen', bindKey:{win:'Ctrl-P',mac:'Cmd-P'},
+    exec: () => openQuickOpen()
+  });
+  aceEditor.commands.addCommand({
+    name:'format', bindKey:{win:'Shift-Alt-F',mac:'Shift-Alt-F'},
+    exec: () => formatCode()
+  });
+  aceEditor.commands.addCommand({
+    name:'find', bindKey:{win:'Ctrl-F',mac:'Cmd-F'},
+    exec: () => aceEditor.execCommand('find')
+  });
+  aceEditor.commands.addCommand({
+    name:'toggleTerminal', bindKey:{win:'Ctrl-`',mac:'Ctrl-`'},
+    exec: () => togglePanel()
+  });
+}
+
+// ============================================================
+//  FILE TREE RENDERING
+// ============================================================
+function renderFileTree() {
+  const panel = document.getElementById('explorer-panel');
+  panel.innerHTML = '';
+
+  // Project root
+  const root = document.createElement('div');
+  root.className = 'folder-row';
+  root.innerHTML = `<div class="tree-arrow open">▶</div><span class="row-icon">📁</span><span class="row-label" style="color:#ccc;font-weight:600;text-transform:uppercase;font-size:11px;letter-spacing:0.5px;">MON_PROJET</span>`;
+  panel.appendChild(root);
+
+  // Files (root level)
+  const rootFiles = Object.keys(vfs.files).filter(f => !f.includes('/'));
+  rootFiles.forEach(name => addFileRow(panel, name, 1));
+}
+
+function addFileRow(parent, name, indent) {
+  const row = document.createElement('div');
+  row.className = 'file-row' + (name === currentFile ? ' selected' : '');
+  row.dataset.file = name;
+  row.innerHTML = `
+    <div style="width:${indent*16}px;flex-shrink:0;"></div>
+    <div class="tree-arrow" style="opacity:0;">▶</div>
+    <div class="row-icon">${getIcon(name)}</div>
+    <div class="row-label">${name}</div>
+    <div class="file-actions">
+      <span class="file-act-btn" title="Renommer" onclick="renameFileInline(event,'${name}')">✎</span>
+      <span class="file-act-btn" title="Supprimer" onclick="deleteFileConfirm(event,'${name}')">🗑</span>
+    </div>
+  `;
+  row.onclick = () => openFile(name);
+  row.oncontextmenu = (e) => { e.preventDefault(); showCtxMenu(e, name); };
+  parent.appendChild(row);
+}
+
+// ============================================================
+//  TABS
+// ============================================================
+function renderTabs() {
+  const bar = document.getElementById('tabs-bar');
+  bar.innerHTML = '';
+  openTabs.forEach(name => {
+    const tab = document.createElement('div');
+    tab.className = 'tab' + (name === currentFile ? ' active' : '') + (vfs.files[name]?.dirty ? ' dirty' : '');
+    tab.dataset.file = name;
+    tab.innerHTML = `
+      <span class="tab-icon">${getIcon(name)}</span>
+      <span class="tab-name">${name}</span>
+      <span class="tab-close-btn" onclick="closeTab(event,'${name}')">✕</span>
+    `;
+    tab.onclick = (e) => { if(!e.target.classList.contains('tab-close-btn')) openFile(name); };
+    tab.oncontextmenu = (e) => { e.preventDefault(); showTabCtxMenu(e, name); };
+    bar.appendChild(tab);
+  });
+}
+
+function markDirty(name, dirty) {
+  if (vfs.files[name]) vfs.files[name].dirty = dirty;
+  renderTabs();
+}
+
+// ============================================================
+//  OPEN / CLOSE FILES
+// ============================================================
+function openFile(name) {
+  if (!vfs.files[name]) return;
+  document.getElementById('welcome-screen').style.display = 'none';
+  document.getElementById('settings-panel').style.display = 'none';
+  document.getElementById('ace-editor').style.display = 'block';
+
+  if (!openTabs.includes(name)) openTabs.push(name);
+  currentFile = name;
+
+  const file = vfs.files[name];
+  aceEditor.setValue(file.content, -1);
+  aceEditor.session.setMode('ace/mode/' + getLangMode(name));
+  aceEditor.focus();
+
+  document.getElementById('sb-lang').textContent = getLangName(name);
+  document.getElementById('bc-file').textContent = name;
+
+  renderTabs();
+  renderFileTree();
+  updateMinimap();
+  setTimeout(() => aceEditor.resize(), 10);
+}
+
+function closeTab(e, name) {
+  e.stopPropagation();
+  openTabs = openTabs.filter(t => t !== name);
+  if (currentFile === name) {
+    if (openTabs.length > 0) openFile(openTabs[openTabs.length - 1]);
+    else {
+      currentFile = null;
+      aceEditor.setValue('', -1);
+      document.getElementById('welcome-screen').style.display = 'flex';
+    }
+  }
+  renderTabs();
+}
+
+function saveFile() {
+  if (!currentFile) return;
+  markDirty(currentFile, false);
+  showNotification('Fichier sauvegardé', 'success');
+}
+
+// ============================================================
+//  LIVE PREVIEW
+// ============================================================
+function livePreview() {
+  let html = vfs.files['index.html']?.content || '<h1>index.html introuvable</h1>';
+
+  // Inject CSS
+  const cssLink = html.match(/<link[^>]+href=["']([^"']+\.css)["'][^>]*>/);
+  if (cssLink && vfs.files[cssLink[1]]) {
+    html = html.replace(cssLink[0], `<style>${vfs.files[cssLink[1]].content}</style>`);
+  }
+
+  // Console interceptor
+  const interceptor = `<script>
+    (function(){
+      ['log','warn','error','info'].forEach(m=>{
+        const orig = console[m];
+        console[m] = function(...a){
+          window.parent.postMessage({type:'con',level:m,msg:a.map(x=>typeof x==='object'?JSON.stringify(x):String(x)).join(' ')},'*');
+          orig.apply(console,a);
+        };
+      });
+      window.onerror=(msg,src,line)=>{
+        window.parent.postMessage({type:'con',level:'error',msg:msg+' (L:'+line+')'},'*');
+      };
+    })();
+  <\/script>`;
+
+  // Inject JS
+  const jsLink = html.match(/<script[^>]+src=["']([^"']+\.js)["'][^>]*><\/script>/);
+  if (jsLink && vfs.files[jsLink[1]]) {
+    html = html.replace(jsLink[0], interceptor + `<script>${vfs.files[jsLink[1]].content}<\/script>`);
+  } else {
+    html = html.replace('</head>', interceptor + '</head>');
+  }
+
+  document.getElementById('preview-iframe').srcdoc = html;
+  clearConsole();
+  addConsoleMsg('✅ Prévisualisation actualisée', 'info');
+}
+
+function runCode() {
+  saveFile();
+  livePreview();
+  switchBottomTab('preview', document.querySelector('.panel-tab:nth-child(3)'));
+  showNotification('Code exécuté avec succès ▶', 'success');
+}
+
+window.addEventListener('message', e => {
+  if (e.data?.type === 'con') addConsoleMsg(e.data.msg, e.data.level);
+});
+
+function addConsoleMsg(msg, level='log') {
+  const box = document.getElementById('console-content');
+  const levelIcons = {log:'›',warn:'⚠',error:'✕',info:'ℹ'};
+  const row = document.createElement('div');
+  row.className = 'con-row';
+  row.innerHTML = `<span class="con-level">${levelIcons[level]||'›'}</span><span class="con-msg ${level==='error'?'error':level==='warn'?'warn':level==='info'?'info':''}">${escHtml(msg)}</span>`;
+  box.appendChild(row);
+  box.scrollTop = box.scrollHeight;
+  document.getElementById('terminal-output').scrollTop = document.getElementById('terminal-output').scrollHeight;
+}
+
+function clearConsole() {
+  document.getElementById('console-content').innerHTML = '';
+}
+
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ============================================================
+//  PANEL SWITCHING
+// ============================================================
+function switchPanel(panel) {
+  // Reset icons
+  document.querySelectorAll('.act-icon').forEach(i => i.classList.remove('active'));
+
+  // Hide all panels
+  document.getElementById('explorer-container').style.display = 'none';
+  document.getElementById('search-panel').style.display = 'none';
+  document.getElementById('git-panel').style.display = 'none';
+  document.getElementById('extensions-panel').style.display = 'none';
+
+  activePanel = panel;
+  const actMap = {explorer:'act-explorer',search:'act-search',git:'act-git',extensions:'act-ext'};
+  if (actMap[panel]) document.getElementById(actMap[panel])?.classList.add('active');
+
+  if (panel === 'explorer') {
+    document.getElementById('explorer-container').style.display = 'flex';
+  } else if (panel === 'search') {
+    document.getElementById('search-panel').style.display = 'flex';
+    document.getElementById('search-query').focus();
+  } else if (panel === 'git') {
+    document.getElementById('git-panel').style.display = 'flex';
+    renderGit();
+  } else if (panel === 'extensions') {
+    document.getElementById('extensions-panel').style.display = 'flex';
+    renderExtensions();
+  }
+}
+
+// ============================================================
+//  BOTTOM PANEL
+// ============================================================
+function switchBottomTab(tab, el) {
+  document.querySelectorAll('.panel-tab').forEach(t => t.classList.remove('active'));
+  if (el) el.classList.add('active');
+
+  document.getElementById('terminal-content').style.display = 'none';
+  document.getElementById('console-content').style.display = 'none';
+  document.getElementById('preview-content').style.display = 'none';
+  document.getElementById('problems-content').style.display = 'none';
+
+  if (tab === 'terminal') {
+    document.getElementById('terminal-content').style.display = 'flex';
+    document.getElementById('term-input').focus();
+  } else if (tab === 'console') {
+    document.getElementById('console-content').style.display = 'block';
+  } else if (tab === 'preview') {
+    document.getElementById('preview-content').style.display = 'block';
+    livePreview();
+  } else if (tab === 'problems') {
+    document.getElementById('problems-content').style.display = 'block';
+    renderProblems();
+  }
+}
+
+function togglePanel() {
+  const bp = document.getElementById('bottom-panel');
+  panelHidden = !panelHidden;
+  bp.style.display = panelHidden ? 'none' : 'flex';
+  aceEditor && aceEditor.resize();
+}
+
+function maximizePanel() {
+  const bp = document.getElementById('bottom-panel');
+  const ew = document.getElementById('editor-wrap');
+  const current = bp.style.height;
+  if (current === '70%') {
+    bp.style.height = 'var(--terminal-height)';
+    ew.style.display = 'flex';
+  } else {
+    bp.style.height = '70%';
+    ew.style.display = 'none';
+  }
+  aceEditor && aceEditor.resize();
+}
+
+// ============================================================
+//  TERMINAL EMULATOR
+// ============================================================
+const termCmds = {
+  'help': () => printTerm(['Available commands: help, clear, ls, pwd, node, python, npm, git, echo, date, whoami, cat, mkdir, touch, rm'], 'output'),
+  'clear': () => { document.getElementById('terminal-output').innerHTML = ''; return []; },
+  'pwd': () => ['/home/user/projet'],
+  'whoami': () => ['user'],
+  'date': () => [new Date().toLocaleString('fr-FR')],
+  'ls': () => [...Object.keys(vfs.files), ...vfs.folders].map(f => f),
+  'ls -la': () => ['total 48', 'drwxr-xr-x  2 user user 4096 Jan 15 10:23 .', ...Object.keys(vfs.files).map(f=>`-rw-r--r-- 1 user user ${vfs.files[f].content.length.toString().padStart(5)} Jan 15 10:23 ${f}`)],
+  'node -v': () => ['v20.11.0'],
+  'node --version': () => ['v20.11.0'],
+  'python --version': () => ['Python 3.12.1'],
+  'python3 --version': () => ['Python 3.12.1'],
+  'npm -v': () => ['10.2.4'],
+  'npm --version': () => ['10.2.4'],
+  'git --version': () => ['git version 2.43.0'],
+  'git status': () => ['On branch main','Changes not staged for commit:','  modified:   app.js','  modified:   style.css','Untracked files:','  server.py',''],
+  'git log --oneline': () => ['a3f2b1c (HEAD -> main) feat: initial commit','b8d4e7f feat: add styles','c1a9f3e init: project setup'],
+  'git branch': () => ['* main','  develop','  feature/new-ui'],
+  'git diff': () => ['diff --git a/app.js b/app.js','--- a/app.js','+++ b/app.js','@@ -1,5 +1,8 @@','// FunnyStudio App','+let count = 0;'],
+  'npm install': () => {addTermLines(['','npm warn deprecated inflight@1.0.6','added 752 packages in 3.241s','','128 packages are looking for funding'],'output'); showNotification('npm install terminé','success'); return [];},
+  'npm run dev': () => { addTermLines(['> mon-projet@1.0.0 dev',`> nodemon app.js`,'[nodemon] 3.0.2','[nodemon] watching: *.*','[nodemon] starting `node app.js`','🚀 Serveur démarré sur http://localhost:3000'],'success'); return []; },
+  'npm run build': () => { setTimeout(()=>{addTermLines(['asset main.js 42.3 KiB','asset index.html 1.2 KiB','webpack 5.89.0 compiled successfully in 1234 ms'],'success');showNotification('Build réussi ✓','success');},800); return ['> mon-projet@1.0.0 build','> webpack --mode production','Building...'];},
+  'npm test': () => { addTermLines(['PASS  test/app.test.js','  ✓ should load page (23ms)','  ✓ should handle click (12ms)','','Test Suites: 1 passed, 1 total','Tests:       2 passed, 2 total'],'success'); return []; },
+};
+
+function printTerm(lines, cls='output') { addTermLines(lines, cls); }
+
+function addTermLines(lines, cls='output') {
+  const out = document.getElementById('terminal-output');
+  lines.forEach(line => {
+    const d = document.createElement('div');
+    d.className = `term-line term-${cls}`;
+    d.textContent = line;
+    out.appendChild(d);
+  });
+  out.scrollTop = out.scrollHeight;
+}
+
+function handleTermInput(e) {
+  const input = document.getElementById('term-input');
+  const val = input.value.trim();
+
+  if (e.key === 'ArrowUp') {
+    e.preventDefault();
+    if (termHistoryIdx < terminalHistory.length - 1) {
+      termHistoryIdx++;
+      input.value = terminalHistory[terminalHistory.length - 1 - termHistoryIdx] || '';
+    }
+    return;
+  }
+  if (e.key === 'ArrowDown') {
+    e.preventDefault();
+    if (termHistoryIdx > 0) { termHistoryIdx--; input.value = terminalHistory[terminalHistory.length - 1 - termHistoryIdx] || ''; }
+    else { termHistoryIdx = -1; input.value = ''; }
+    return;
+  }
+  if (e.key === 'Tab') {
+    e.preventDefault();
+    const files = Object.keys(vfs.files).filter(f => f.startsWith(val));
+    if (files.length === 1) input.value = files[0];
+    return;
+  }
+  if (e.key !== 'Enter') return;
+
+  if (!val) return;
+
+  // Print prompt + command
+  const out = document.getElementById('terminal-output');
+  const cmdLine = document.createElement('div');
+  cmdLine.className = 'term-line';
+  cmdLine.innerHTML = `<span class="term-prompt">user@funnystudio:~/projet$</span> <span class="term-cmd">${escHtml(val)}</span>`;
+  out.appendChild(cmdLine);
+
+  terminalHistory.push(val);
+  termHistoryIdx = -1;
+  input.value = '';
+
+  // Process command
+  let output = null;
+
+  // Echo
+  if (val.startsWith('echo ')) {
+    addTermLines([val.slice(5)], 'output');
+  } else if (val.startsWith('cat ')) {
+    const fname = val.slice(4).trim();
+    if (vfs.files[fname]) addTermLines(vfs.files[fname].content.split('\n'), 'output');
+    else addTermLines([`cat: ${fname}: No such file or directory`], 'error');
+  } else if (val.startsWith('mkdir ')) {
+    const dname = val.slice(6).trim();
+    if (!vfs.folders.includes(dname)) { vfs.folders.push(dname); addTermLines([`mkdir: created directory '${dname}'`], 'success'); renderFileTree(); }
+    else addTermLines([`mkdir: cannot create directory '${dname}': File exists`], 'error');
+  } else if (val.startsWith('touch ')) {
+    const fname = val.slice(6).trim();
+    if (!vfs.files[fname]) { vfs.files[fname] = {content:'',lang:'text',dirty:false}; addTermLines([''], 'output'); renderFileTree(); }
+  } else if (val.startsWith('rm ') && !val.includes('-r')) {
+    const fname = val.slice(3).trim();
+    if (vfs.files[fname]) { delete vfs.files[fname]; openTabs = openTabs.filter(t=>t!==fname); if(currentFile===fname){currentFile=null;} renderFileTree(); renderTabs(); addTermLines([''], 'output'); }
+    else addTermLines([`rm: ${fname}: No such file or directory`], 'error');
+  } else if (val.startsWith('code ')) {
+    const fname = val.slice(5).trim();
+    if (vfs.files[fname]) openFile(fname);
+    else { vfs.files[fname]={content:'',lang:'text',dirty:false}; renderFileTree(); openFile(fname); }
+    addTermLines([`Ouverture de ${fname}...`], 'info');
+  } else if (val.startsWith('node ') && !val.includes('-v') && !val.includes('--v')) {
+    const fname = val.slice(5).trim();
+    if (vfs.files[fname]) {
+      addTermLines([`Exécution de ${fname}...`], 'info');
+      try {
+        const origLog = console.log;
+        let logs = [];
+        console.log = (...a) => logs.push(a.join(' '));
+        new Function(vfs.files[fname].content)();
+        console.log = origLog;
+        if (logs.length) addTermLines(logs, 'output');
+        else addTermLines(['(Aucune sortie)'], 'output');
+      } catch(err) { addTermLines([`Error: ${err.message}`], 'error'); }
+    } else addTermLines([`Error: Cannot find module '${fname}'`], 'error');
+  } else if (val.startsWith('python ') || val.startsWith('python3 ')) {
+    const parts = val.split(' ');
+    const fname = parts[1];
+    if (fname && vfs.files[fname]) addTermLines([`🐍 Simulation Python: ${fname}`,'Note: Exécution Python réelle nécessite un backend.'], 'info');
+    else addTermLines(['Usage: python <fichier.py>'], 'output');
+  } else if (termCmds[val]) {
+    const result = termCmds[val]();
+    if (result && result.length) addTermLines(result, 'output');
+  } else {
+    addTermLines([`bash: ${val.split(' ')[0]}: command not found`], 'error');
+  }
+
+  out.scrollTop = out.scrollHeight;
+}
+
+function addTerminal() {
+  addTermLines(['--- Nouveau terminal ---'], 'info');
+}
+
+// ============================================================
+//  RESIZER (horizontal)
+// ============================================================
+function initResizer() {
+  const resizer = document.getElementById('h-resizer');
+  const bottomPanel = document.getElementById('bottom-panel');
+  const editorArea = document.getElementById('editor-area');
+  let dragging = false, startY, startH;
+
+  resizer.addEventListener('mousedown', e => {
+    dragging = true;
+    startY = e.clientY;
+    startH = bottomPanel.offsetHeight;
+    resizer.classList.add('dragging');
+    document.getElementById('preview-iframe').style.pointerEvents = 'none';
+    document.body.style.cursor = 'row-resize';
+  });
+  window.addEventListener('mousemove', e => {
+    if (!dragging) return;
+    const delta = startY - e.clientY;
+    const newH = Math.max(80, Math.min(startH + delta, editorArea.offsetHeight - 150));
+    bottomPanel.style.height = newH + 'px';
+    aceEditor && aceEditor.resize();
+  });
+  window.addEventListener('mouseup', () => {
+    if (dragging) {
+      dragging = false;
+      resizer.classList.remove('dragging');
+      document.getElementById('preview-iframe').style.pointerEvents = 'auto';
+      document.body.style.cursor = '';
+    }
+  });
+}
+
+// ============================================================
+//  EXTENSIONS
+// ============================================================
+const extensions = [
+  {id:'python',name:'Python',author:'Microsoft',desc:'IntelliSense, linting, debugging pour Python',icon:'🐍',stars:'★4.9',dl:'80M',installed:true,version:'2024.4.0'},
+  {id:'eslint',name:'ESLint',author:'Microsoft',desc:'Intègre ESLint JavaScript dans VS Code',icon:'⚡',stars:'★4.8',dl:'45M',installed:true,version:'2.4.4'},
+  {id:'prettier',name:'Prettier - Code formatter',author:'Prettier',desc:'Formatteur de code',icon:'✨',stars:'★4.7',dl:'42M',installed:true,version:'10.4.0'},
+  {id:'gitlens',name:'GitLens — Git supercharged',author:'GitKraken',desc:'Supercharge Git avec blame, historique, etc.',icon:'🔍',stars:'★4.7',dl:'30M',installed:true,version:'14.9.1'},
+  {id:'nodejs',name:'Node.js Extension Pack',author:'waderyan',desc:'Pack d\'extensions pour développement Node.js',icon:'🟢',stars:'★4.6',dl:'12M',installed:true,version:'1.2.0'},
+  {id:'docker',name:'Docker',author:'Microsoft',desc:'Gérez vos conteneurs, images et registres',icon:'🐳',stars:'★4.6',dl:'25M',installed:false,version:'1.29.0'},
+  {id:'remote-ssh',name:'Remote - SSH',author:'Microsoft',desc:'Ouvrez des dossiers sur des machines distantes',icon:'🖥️',stars:'★4.5',dl:'18M',installed:false,version:'0.110.2023'},
+  {id:'liveshare',name:'Live Share',author:'Microsoft',desc:'Collaboration en temps réel',icon:'👥',stars:'★4.8',dl:'20M',installed:false,version:'1.0.5918'},
+  {id:'tailwind',name:'Tailwind CSS IntelliSense',author:'Tailwind Labs',desc:'IntelliSense pour Tailwind CSS',icon:'🎨',stars:'★4.9',dl:'15M',installed:false,version:'0.11.4'},
+  {id:'react',name:'ES7+ React/Redux/React-Native',author:'dsznajder',desc:'Snippets React, Redux, React-Native',icon:'⚛️',stars:'★4.5',dl:'14M',installed:false,version:'4.4.3'},
+  {id:'rust',name:'rust-analyzer',author:'The Rust Programming Language',desc:'Support du langage Rust',icon:'🦀',stars:'★4.8',dl:'8M',installed:false,version:'0.3.1819'},
+  {id:'go',name:'Go',author:'Go Team at Google',desc:'Support du langage Go',icon:'🐹',stars:'★4.7',dl:'10M',installed:false,version:'0.41.2'},
+];
+
+function renderExtensions(filter='') {
+  const list = document.getElementById('ext-list');
+  list.innerHTML = '';
+
+  const installed = extensions.filter(e => e.installed && (!filter || e.name.toLowerCase().includes(filter.toLowerCase())));
+  const available = extensions.filter(e => !e.installed && (!filter || e.name.toLowerCase().includes(filter.toLowerCase())));
+
+  if (installed.length) {
+    const t = document.createElement('div');
+    t.className = 'ext-section-title';
+    t.textContent = `— INSTALLÉES (${installed.length}) —`;
+    list.appendChild(t);
+    installed.forEach(ext => list.appendChild(buildExtItem(ext)));
+  }
+  if (available.length) {
+    const t = document.createElement('div');
+    t.className = 'ext-section-title';
+    t.textContent = `— POPULAIRES —`;
+    list.appendChild(t);
+    available.forEach(ext => list.appendChild(buildExtItem(ext)));
+  }
+}
+
+function buildExtItem(ext) {
+  const item = document.createElement('div');
+  item.className = 'ext-item' + (ext.installed ? ' installed' : '');
+  item.innerHTML = `
+    <div class="ext-header">
+      <div class="ext-logo">${ext.icon}</div>
+      <div class="ext-info">
+        <div class="ext-name">${ext.name}</div>
+        <div class="ext-author">${ext.author}</div>
+      </div>
+    </div>
+    <div class="ext-desc">${ext.desc}</div>
+    <div class="ext-footer">
+      <span class="ext-stars">${ext.stars} · ${ext.dl} · v${ext.version}</span>
+      ${ext.installed
+        ? `<button class="ext-btn installed-btn" onclick="uninstallExt(event,'${ext.id}')">Désinstaller</button>`
+        : `<button class="ext-btn install" onclick="installExt(event,'${ext.id}')">Installer</button>`
+      }
+    </div>
+  `;
+  return item;
+}
+
+function filterExtensions() {
+  renderExtensions(document.getElementById('ext-query').value);
+}
+
+function installExt(e, id) {
+  e.stopPropagation();
+  const ext = extensions.find(x => x.id === id);
+  if (ext) {
+    ext.installed = true;
+    renderExtensions(document.getElementById('ext-query').value);
+    showNotification(`✓ ${ext.name} installé`, 'success');
+  }
+}
+
+function uninstallExt(e, id) {
+  e.stopPropagation();
+  const ext = extensions.find(x => x.id === id);
+  if (ext) {
+    ext.installed = false;
+    renderExtensions(document.getElementById('ext-query').value);
+    showNotification(`${ext.name} désinstallé`, 'info');
+  }
+}
+
+// ============================================================
+//  GIT
+// ============================================================
+function renderGit() {
+  const container = document.getElementById('git-files');
+  container.innerHTML = '';
+  const changes = [
+    {name:'app.js', status:'M'},
+    {name:'style.css', status:'M'},
+    {name:'server.py', status:'A'},
+  ];
+  changes.forEach(c => {
+    const row = document.createElement('div');
+    row.className = 'git-file';
+    row.innerHTML = `<span class="git-status ${c.status}">${c.status}</span><span style="flex:1;">${c.name}</span>
+    <span class="file-act-btn" title="Indexer" onclick="event.stopPropagation();showNotification('${c.name} indexé','success')">+</span>
+    <span class="file-act-btn" title="Annuler les modifications" onclick="event.stopPropagation()">↩</span>`;
+    row.onclick = () => openFile(c.name);
+    container.appendChild(row);
+  });
+}
+
+function gitCommit() {
+  const msg = document.getElementById('git-msg').value.trim();
+  if (!msg) { showNotification('Entrez un message de commit', 'warn'); return; }
+  document.getElementById('git-msg').value = '';
+  document.getElementById('git-badge').style.display = 'none';
+  showNotification(`✓ Commit: "${msg}"`, 'success');
+  addTermLines([`[main a3f2b1c] ${msg}`, ' 3 files changed, 47 insertions(+), 12 deletions(-)'], 'success');
+}
+
+// ============================================================
+//  PROBLEMS
+// ============================================================
+function renderProblems() {
+  const c = document.getElementById('problems-content');
+  c.innerHTML = '';
+  const probs = [
+    {icon:'⊗',msg:"'count' is assigned a value but never used.",file:'app.js:3',cls:'error'},
+    {icon:'⚠',msg:"Unexpected console statement.",file:'app.js:8',cls:'warn'},
+    {icon:'ℹ',msg:"Consider using 'const' instead of 'let'.",file:'app.js:1',cls:'info'},
+  ];
+  probs.forEach(p => {
+    const row = document.createElement('div');
+    row.className = 'prob-item';
+    row.innerHTML = `<span class="prob-icon" style="color:${p.cls==='error'?'#f48771':p.cls==='warn'?'#cca700':'#75beff'}">${p.icon}</span><span class="prob-msg">${p.msg}</span><span class="prob-file">${p.file}</span>`;
+    c.appendChild(row);
+  });
+}
+
+// ============================================================
+//  SEARCH
+// ============================================================
+function doSearch() {
+  const q = document.getElementById('search-query').value;
+  const results = document.getElementById('search-results');
+  results.innerHTML = '';
+  if (!q) return;
+
+  Object.keys(vfs.files).forEach(fname => {
+    const lines = vfs.files[fname].content.split('\n');
+    const matches = [];
+    lines.forEach((line, i) => {
+      const idx = line.toLowerCase().indexOf(q.toLowerCase());
+      if (idx !== -1) matches.push({line:i+1, text:line, idx, q});
+    });
+    if (!matches.length) return;
+
+    const fileEl = document.createElement('div');
+    fileEl.className = 'search-result-file';
+    fileEl.textContent = `${fname} (${matches.length})`;
+    results.appendChild(fileEl);
+
+    matches.forEach(m => {
+      const row = document.createElement('div');
+      row.className = 'search-result-line';
+      const before = escHtml(m.text.substring(0, m.idx));
+      const match = escHtml(m.text.substring(m.idx, m.idx + q.length));
+      const after = escHtml(m.text.substring(m.idx + q.length));
+      row.innerHTML = `<span class="s-line-num">${m.line}</span>${before}<span class="s-match">${match}</span>${after}`;
+      row.onclick = () => {
+        openFile(fname);
+        setTimeout(() => aceEditor.gotoLine(m.line, m.idx, true), 100);
+      };
+      results.appendChild(row);
+    });
+  });
+
+  if (!results.innerHTML) {
+    results.innerHTML = `<div style="padding:12px;color:var(--text-muted);font-size:12px;">Aucun résultat pour "${escHtml(q)}"</div>`;
+  }
+}
+
+// ============================================================
+//  COMMAND PALETTE
+// ============================================================
+const commands = [
+  {label:'Fichier: Nouveau fichier',key:'Ctrl+N', action:()=>newFilePrompt()},
+  {label:'Fichier: Ouvrir fichier',key:'Ctrl+O', action:()=>{}},
+  {label:'Fichier: Sauvegarder',key:'Ctrl+S', action:()=>saveFile()},
+  {label:'Fichier: Fermer onglet',key:'Ctrl+W', action:()=>currentFile&&closeTab(new Event(''),currentFile)},
+  {label:'Affichage: Basculer terminal',key:'Ctrl+`', action:()=>togglePanel()},
+  {label:'Affichage: Basculer minimap', action:()=>{document.getElementById('minimap-wrap').style.display=document.getElementById('minimap-wrap').style.display==='none'?'block':'none';}},
+  {label:'Exécuter: Exécuter le code',key:'F5', action:()=>runCode()},
+  {label:'Exécuter: Aperçu HTML', action:()=>{switchBottomTab('preview',null);livePreview();}},
+  {label:'Éditeur: Formater le document',key:'Shift+Alt+F', action:()=>formatCode()},
+  {label:'Éditeur: Thème VS Dark', action:()=>changeTheme('ace/theme/vs-dark')},
+  {label:'Éditeur: Thème Monokai', action:()=>changeTheme('ace/theme/monokai')},
+  {label:'Éditeur: Thème Dracula', action:()=>changeTheme('ace/theme/dracula')},
+  {label:'Paramètres: Ouvrir les paramètres',key:'Ctrl+,', action:()=>openSettings()},
+  {label:'Terminal: Nouveau terminal',action:()=>{addTerminal();togglePanel();}},
+  {label:'Git: Valider',action:()=>switchPanel('git')},
+  {label:'Extensions: Ouvrir', action:()=>switchPanel('extensions')},
+  {label:'Naviguer vers fichier: index.html', action:()=>openFile('index.html')},
+  {label:'Naviguer vers fichier: style.css', action:()=>openFile('style.css')},
+  {label:'Naviguer vers fichier: app.js', action:()=>openFile('app.js')},
+];
+
+let cmdSelected = 0;
+function openCmdPalette() {
+  document.getElementById('cmd-palette').style.display = 'block';
+  document.getElementById('cmd-input').value = '> ';
+  document.getElementById('cmd-input').focus();
+  filterCommands();
+}
+function openQuickOpen() {
+  document.getElementById('cmd-palette').style.display = 'block';
+  document.getElementById('cmd-input').value = '';
+  document.getElementById('cmd-input').focus();
+  filterCommands();
+}
+function filterCommands() {
+  const q = document.getElementById('cmd-input').value.replace(/^>\s*/,'').toLowerCase();
+  const list = document.getElementById('cmd-list');
+  list.innerHTML = '';
+  cmdSelected = 0;
+  const src = q ? commands.filter(c => c.label.toLowerCase().includes(q)) : commands;
+  src.slice(0,10).forEach((c,i) => {
+    const item = document.createElement('div');
+    item.className = 'cmd-item' + (i===0?' selected':'');
+    item.innerHTML = `<span>${c.label}</span>${c.key?`<span class="cmd-key">${c.key}</span>`:''}`;
+    item.onclick = () => { c.action(); closeCmdPalette(); };
+    list.appendChild(item);
+  });
+}
+function handleCmdKey(e) {
+  const items = document.querySelectorAll('.cmd-item');
+  if (e.key === 'Escape') closeCmdPalette();
+  else if (e.key === 'ArrowDown') {
+    e.preventDefault();
+    items[cmdSelected]?.classList.remove('selected');
+    cmdSelected = (cmdSelected+1) % items.length;
+    items[cmdSelected]?.classList.add('selected');
+    items[cmdSelected]?.scrollIntoView({block:'nearest'});
+  } else if (e.key === 'ArrowUp') {
+    e.preventDefault();
+    items[cmdSelected]?.classList.remove('selected');
+    cmdSelected = (cmdSelected-1+items.length) % items.length;
+    items[cmdSelected]?.classList.add('selected');
+    items[cmdSelected]?.scrollIntoView({block:'nearest'});
+  } else if (e.key === 'Enter') {
+    e.preventDefault();
+    items[cmdSelected]?.click();
+  }
+}
+function closeCmdPalette() { document.getElementById('cmd-palette').style.display = 'none'; }
+
+// ============================================================
+//  CONTEXT MENU
+// ============================================================
+function showCtxMenu(e, filename) {
+  ctxTarget = filename;
+  const m = document.getElementById('ctx-menu');
+  m.style.display = 'block';
+  m.style.left = Math.min(e.clientX, window.innerWidth - 200) + 'px';
+  m.style.top = Math.min(e.clientY, window.innerHeight - 200) + 'px';
+}
+function showTabCtxMenu(e, filename) {
+  ctxTarget = filename;
+  showCtxMenu(e, filename);
+}
+function ctxAction(action) {
+  hideCtxMenu();
+  if (!ctxTarget) return;
+  if (action === 'rename') { renameFilePrompt(ctxTarget); }
+  else if (action === 'delete') { deleteFileConfirm(null, ctxTarget); }
+  else if (action === 'copy-path') { showNotification('Chemin copié: /projet/' + ctxTarget, 'info'); }
+  else if (action === 'reveal') { switchPanel('explorer'); }
+  else if (action === 'new-file') { newFilePrompt(); }
+  else if (action === 'new-folder') { newFolderPrompt(); }
+  else if (action === 'copy-rel') { showNotification('Chemin relatif copié: ./' + ctxTarget, 'info'); }
+}
+function hideCtxMenu() { document.getElementById('ctx-menu').style.display = 'none'; }
+document.addEventListener('click', hideCtxMenu);
+
+// ============================================================
+//  FILE MANAGEMENT MODALS
+// ============================================================
+let modalCallback = null;
+function showModal(title, placeholder, defaultVal, cb) {
+  document.getElementById('modal-title').textContent = title;
+  document.getElementById('modal-input').placeholder = placeholder;
+  document.getElementById('modal-input').value = defaultVal || '';
+  document.getElementById('modal-overlay').style.display = 'flex';
+  document.getElementById('modal-input').focus();
+  modalCallback = cb;
+  document.getElementById('modal-ok-btn').onclick = () => {
+    const val = document.getElementById('modal-input').value.trim();
+    closeModal();
+    if (val) cb(val);
+  };
+  document.getElementById('modal-input').onkeydown = (e) => { if(e.key==='Enter') document.getElementById('modal-ok-btn').click(); };
+}
+function closeModal() { document.getElementById('modal-overlay').style.display = 'none'; }
+
+function newFilePrompt() {
+  showModal('Nouveau fichier', 'Nom du fichier (ex: main.ts)', '', name => {
+    if (vfs.files[name]) { showNotification('Ce fichier existe déjà !', 'warn'); return; }
+    const ext = (name.match(/\.[^.]+$/) || [''])[0].toLowerCase();
+    const templates = {
+      '.html':'<!DOCTYPE html>\n<html lang="fr">\n<head>\n    <meta charset="UTF-8">\n    <title>Document</title>\n</head>\n<body>\n    \n</body>\n</html>',
+      '.css':'/* Styles */\n:root {\n    \n}\n',
+      '.js':'// Script\n',
+      '.ts':'// TypeScript\n',
+      '.py':'# Python\n',
+      '.json':'{\n  \n}',
+    };
+    vfs.files[name] = { content: templates[ext]||'', lang: getLangMode(name), dirty: false };
+    renderFileTree();
+    openFile(name);
+    showNotification(`Fichier créé: ${name}`, 'success');
+  });
+}
+
+function newFolderPrompt() {
+  showModal('Nouveau dossier', 'Nom du dossier', '', name => {
+    if (!vfs.folders.includes(name)) {
+      vfs.folders.push(name);
+      renderFileTree();
+      showNotification(`Dossier créé: ${name}`, 'success');
+    }
+  });
+}
+
+function renameFilePrompt(name) {
+  showModal('Renommer', 'Nouveau nom', name, newName => {
+    if (newName === name) return;
+    if (vfs.files[newName]) { showNotification('Un fichier avec ce nom existe déjà', 'warn'); return; }
+    vfs.files[newName] = {...vfs.files[name]};
+    delete vfs.files[name];
+    openTabs = openTabs.map(t => t === name ? newName : t);
+    if (currentFile === name) { currentFile = newName; aceEditor.session.setMode('ace/mode/' + getLangMode(newName)); }
+    renderFileTree();
+    renderTabs();
+    showNotification(`Renommé: ${name} → ${newName}`, 'success');
+  });
+}
+
+function renameFileInline(e, name) {
+  e.stopPropagation();
+  renameFilePrompt(name);
+}
+
+function deleteFileConfirm(e, name) {
+  if (e) e.stopPropagation();
+  if (!confirm(`Supprimer "${name}" ? Cette action est irréversible.`)) return;
+  delete vfs.files[name];
+  openTabs = openTabs.filter(t => t !== name);
+  if (currentFile === name) {
+    currentFile = openTabs.length ? openTabs[openTabs.length-1] : null;
+    if (currentFile) openFile(currentFile);
+    else { aceEditor.setValue('',''); document.getElementById('welcome-screen').style.display='flex'; }
+  }
+  renderFileTree();
+  renderTabs();
+  showNotification(`Supprimé: ${name}`, 'warn');
+}
+
+// ============================================================
+//  SETTINGS
+// ============================================================
+function openSettings() {
+  document.getElementById('settings-panel').style.display = 'block';
+  document.getElementById('welcome-screen').style.display = 'none';
+}
+function closeSettings() {
+  document.getElementById('settings-panel').style.display = 'none';
+}
+function settingsNav(el, section) {
+  document.querySelectorAll('.settings-nav-item').forEach(i => i.classList.remove('active'));
+  el.classList.add('active');
+  ['general','editor','theme','terminal','extensions-set'].forEach(s => {
+    const e = document.getElementById('settings-'+s);
+    if (e) e.style.display = s===section?'block':'none';
+  });
+}
+function changeTheme(theme) {
+  aceEditor.setTheme(theme);
+  showNotification('Thème changé', 'success');
+}
+function updateFontSize(val) {
+  aceEditor.setFontSize(val+'px');
+  document.getElementById('font-size-val').textContent = val+'px';
+}
+function updateTabSize(val) {
+  aceEditor.session.setTabSize(parseInt(val));
+  document.getElementById('sb-spaces').textContent = `Espaces: ${val}`;
+}
+function toggleWordWrap(cb) {
+  aceEditor.session.setUseWrapMode(cb.checked);
+}
+function toggleAutocomplete(cb) {
+  aceEditor.setOptions({ enableBasicAutocompletion: cb.checked, enableLiveAutocompletion: cb.checked });
+}
+function toggleMinimap(cb) {
+  document.getElementById('minimap-wrap').style.display = cb.checked ? 'block' : 'none';
+}
+
+// ============================================================
+//  MINIMAP
+// ============================================================
+function updateMinimap() {
+  if (!currentFile) return;
+  const code = vfs.files[currentFile]?.content || '';
+  document.getElementById('minimap-code').textContent = code;
+}
+
+// ============================================================
+//  FORMAT CODE
+// ============================================================
+function formatCode() {
+  if (!currentFile) return;
+  const lang = getLangMode(currentFile);
+  let code = aceEditor.getValue();
+  if (lang === 'json') {
+    try { code = JSON.stringify(JSON.parse(code), null, 2); aceEditor.setValue(code, -1); showNotification('✨ JSON formaté', 'success'); return; } catch(e) { showNotification('JSON invalide', 'error'); return; }
+  }
+  // Basic HTML format: re-indent
+  showNotification('✨ Document formaté avec Prettier', 'success');
+}
+
+// ============================================================
+//  NOTIFICATIONS
+// ============================================================
+function showNotification(msg, type='info') {
+  const n = document.getElementById('notifications');
+  const item = document.createElement('div');
+  item.className = `notif ${type}`;
+  item.innerHTML = `<span>${msg}</span><span class="notif-close" onclick="this.parentElement.remove()">✕</span>`;
+  n.appendChild(item);
+  setTimeout(() => item.remove(), 3500);
+}
+
+// ============================================================
+//  MENU ACTIONS
+// ============================================================
+function openMenu(menu) {
+  if (menu === 'file') {
+    const opts = ['Nouveau fichier\tCtrl+N','Ouvrir fichier\tCtrl+O','Sauvegarder\tCtrl+S','Sauvegarder sous...','──────','Fermer l\'éditeur\tCtrl+W','Quitter'];
+    // Basic popup - in real VSC this is a full dropdown
+    openCmdPalette();
+  }
+}
+
+function cloneRepo() {
+  showModal('Cloner un dépôt', 'URL du dépôt Git', 'https://github.com/', url => {
+    showNotification(`Clonage de ${url}...`, 'info');
+    setTimeout(() => showNotification('Dépôt cloné avec succès', 'success'), 1500);
+  });
+}
+
+function changeLangPrompt() {
+  openCmdPalette();
+}
+
+// ============================================================
+//  KEYBOARD SHORTCUTS (Global)
+// ============================================================
+document.addEventListener('keydown', e => {
+  if ((e.ctrlKey||e.metaKey) && e.shiftKey && e.key === 'P') {
+    e.preventDefault(); openCmdPalette();
+  }
+  if ((e.ctrlKey||e.metaKey) && e.key === 'p' && !e.shiftKey) {
+    e.preventDefault(); openQuickOpen();
+  }
+  if ((e.ctrlKey||e.metaKey) && e.key === 'n') {
+    e.preventDefault(); newFilePrompt();
+  }
+  if ((e.ctrlKey||e.metaKey) && e.key === ',') {
+    e.preventDefault(); openSettings();
+  }
+  if (e.key === 'F5') {
+    e.preventDefault(); runCode();
+  }
+  if (e.key === 'Escape') {
+    closeCmdPalette();
+    hideCtxMenu();
+    closeModal();
+  }
+  if (e.ctrlKey && e.key === '`') {
+    e.preventDefault(); togglePanel();
+  }
+});
+
+// ============================================================
+//  BOOT
+// ============================================================
+window.onload = () => {
+  initEditor();
+  initResizer();
+  renderFileTree();
+  openFile('index.html');
+
+  // Terminal welcome
+  addTermLines([
+    '╔══════════════════════════════════════╗',
+    '║   FunnyStudio Terminal  v2.0.0       ║',
+    '║   Node.js v20.11.0 | Python 3.12.1  ║',
+    '╚══════════════════════════════════════╝',
+    '',
+    'Tapez "help" pour voir les commandes disponibles.',
+    '',
+  ], 'info');
+
+  // Status bar hints
+  showNotification('FunnyStudio chargé — Bienvenue ! 🚀', 'success');
+
+  // Auto-preview after 500ms
+  setTimeout(livePreview, 500);
+};
+</script>
+</body>
+</html>

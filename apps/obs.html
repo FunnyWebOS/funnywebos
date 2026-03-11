@@ -1,0 +1,1027 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>OBS Lite</title>
+  <style>
+    :root{
+      --bg:#0b0d10;
+      --panel:#121723;
+      --panel2:#0f131c;
+      --border:rgba(255,255,255,.10);
+      --text:#e9eef7;
+      --muted:rgba(255,255,255,.65);
+      --accent:#3ea6ff;
+      --danger:#ff3b30;
+      --r:10px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --font: system-ui, -apple-system, Segoe UI, Roboto, Arial;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      background:linear-gradient(180deg,#0a0c10,#07090c);
+      color:var(--text);
+      font:13px var(--font);
+      overflow:hidden;
+    }
+    button,input,select{font:inherit}
+    .app{height:100%; display:flex; flex-direction:column;}
+    .top{
+      height:40px;
+      display:flex;
+      align-items:center;
+      gap:10px;
+      padding:0 12px;
+      border-bottom:1px solid var(--border);
+      background:rgba(255,255,255,.04);
+    }
+    .brand{font-weight:900; display:flex; align-items:center; gap:8px;}
+    .dot{width:10px;height:10px;border-radius:3px;background:var(--accent);box-shadow:0 0 0 3px rgba(62,166,255,.15)}
+    .chip{
+      padding:4px 8px;
+      border:1px solid var(--border);
+      border-radius:999px;
+      color:var(--muted);
+      background:rgba(255,255,255,.04);
+      font-family:var(--mono);
+      font-size:11px;
+    }
+    .sp{flex:1}
+    .btn{
+      border:1px solid var(--border);
+      background:rgba(255,255,255,.06);
+      color:var(--text);
+      padding:7px 10px;
+      border-radius:10px;
+      cursor:pointer;
+      font-weight:900;
+    }
+    .btn:hover{background:rgba(255,255,255,.09)}
+    .btn.primary{border-color:rgba(62,166,255,.35);background:rgba(62,166,255,.12)}
+    .btn.primary:hover{background:rgba(62,166,255,.16)}
+    .btn.danger{border-color:rgba(255,59,48,.35);background:rgba(255,59,48,.10)}
+    .btn.danger:hover{background:rgba(255,59,48,.14)}
+    .main{
+      flex:1;
+      display:grid;
+      grid-template-columns: 1fr 420px;
+      gap:10px;
+      padding:10px;
+      min-height:0;
+    }
+    .col{display:flex; flex-direction:column; gap:10px; min-height:0;}
+    .panel{
+      background:var(--panel);
+      border:1px solid var(--border);
+      border-radius:var(--r);
+      overflow:hidden;
+      display:flex;
+      flex-direction:column;
+      min-height:0;
+    }
+    .preview{
+      background:var(--panel2);
+      border:1px solid var(--border);
+      border-radius:var(--r);
+      overflow:hidden;
+      display:flex;
+      flex-direction:column;
+      min-height:0;
+      flex:1;
+    }
+    .h{
+      height:34px;
+      display:flex;
+      align-items:center;
+      gap:8px;
+      padding:0 10px;
+      border-bottom:1px solid var(--border);
+      background:rgba(255,255,255,.04);
+      font-size:12px;
+    }
+    .h b{font-weight:950}
+    .meta{margin-left:auto;color:var(--muted);font-family:var(--mono);font-size:11px}
+    .b{padding:8px; overflow:auto; min-height:0}
+    .grid{display:grid; grid-template-columns:1fr 1fr; gap:10px; min-height:0;}
+    .pv{
+      flex:1;
+      position:relative;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:10px;
+      background:radial-gradient(500px 240px at 20% 15%, rgba(62,166,255,.10), transparent 60%), #0b0e13;
+      min-height:0;
+    }
+    #cv{
+      background:#111;
+      border-radius:8px;
+      box-shadow:0 18px 60px rgba(0,0,0,.55);
+      outline:1px solid rgba(255,255,255,.06);
+      max-width:100%;
+      max-height:100%;
+    }
+    .sel{
+      position:absolute;
+      border:1px solid rgba(62,166,255,.95);
+      display:none;
+      pointer-events:none;
+    }
+    .hdl{
+      position:absolute;
+      width:9px;height:9px;
+      background:rgba(62,166,255,.95);
+      box-shadow:0 0 0 2px rgba(0,0,0,.55);
+    }
+    .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+    .list{display:flex;flex-direction:column;gap:6px}
+    .it{
+      display:flex;align-items:center;gap:8px;
+      padding:8px;border-radius:10px;
+      border:1px solid rgba(255,255,255,.08);
+      background:rgba(0,0,0,.12);
+      cursor:pointer;user-select:none;
+    }
+    .it:hover{background:rgba(255,255,255,.05)}
+    .it.on{background:rgba(62,166,255,.12);border-color:rgba(62,166,255,.25)}
+    .ico{width:18px;text-align:center;opacity:.9}
+    .nm{flex:1;min-width:0;font-weight:950;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .badge{
+      font-family:var(--mono);
+      font-size:10px;
+      padding:2px 6px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.12);
+      color:rgba(255,255,255,.75);
+      background:rgba(255,255,255,.05);
+    }
+    .mix{
+      display:grid;
+      grid-template-columns: 1fr 120px 36px;
+      gap:8px;
+      align-items:center;
+      padding:8px;
+      border-radius:10px;
+      border:1px solid rgba(255,255,255,.08);
+      background:rgba(0,0,0,.12);
+    }
+    .label{font-size:11px;color:var(--muted)}
+    .input,.select{
+      border:1px solid rgba(255,255,255,.12);
+      background:rgba(255,255,255,.05);
+      color:var(--text);
+      border-radius:10px;
+      padding:8px 9px;
+      outline:none;
+      font-size:12px;
+    }
+    .box{
+      margin-top:10px;
+      border:1px dashed rgba(255,255,255,.16);
+      border-radius:10px;
+      padding:10px;
+      background:rgba(255,255,255,.04);
+      color:var(--muted);
+      font-size:12px;
+      line-height:1.45;
+    }
+    .toast{
+      position:fixed;
+      left:50%;
+      bottom:14px;
+      transform:translateX(-50%);
+      background:rgba(18,23,35,.92);
+      border:1px solid rgba(255,255,255,.12);
+      padding:9px 12px;
+      border-radius:999px;
+      color:rgba(255,255,255,.85);
+      font-size:12px;
+      display:none;
+      pointer-events:none;
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="top">
+      <div class="brand"><span class="dot"></span> OBS Lite</div>
+      <span class="chip" id="chip-proj">1280×720 @ 30</span>
+      <span class="chip" id="chip-scene">Scene: —</span>
+      <div class="sp"></div>
+      <button class="btn" id="btn-save">Sauver</button>
+      <button class="btn" id="btn-load">Charger</button>
+      <button class="btn" id="btn-reset">Reset</button>
+    </div>
+
+    <div class="main">
+      <div class="col">
+        <div class="preview">
+          <div class="h"><b>Preview</b><span class="meta" id="meta-rec">Idle</span></div>
+          <div class="pv" id="pv">
+            <canvas id="cv" width="1280" height="720"></canvas>
+            <div class="sel" id="sel">
+              <div class="hdl" data-h="nw"></div>
+              <div class="hdl" data-h="ne"></div>
+              <div class="hdl" data-h="sw"></div>
+              <div class="hdl" data-h="se"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid">
+          <div class="panel">
+            <div class="h"><b>Scenes</b><span class="meta" id="meta-scenes">0</span></div>
+            <div class="b">
+              <div class="row" style="margin-bottom:8px">
+                <button class="btn" id="sc-add">＋</button>
+                <button class="btn" id="sc-dup">⧉</button>
+                <button class="btn danger" id="sc-del">🗑</button>
+              </div>
+              <div class="list" id="scenes"></div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="h"><b>Sources</b><span class="meta" id="meta-sources">0</span></div>
+            <div class="b">
+              <div class="row" style="margin-bottom:8px">
+                <button class="btn" id="src-add">＋ Ajouter</button>
+                <button class="btn" id="src-up">⬆</button>
+                <button class="btn" id="src-down">⬇</button>
+                <button class="btn danger" id="src-del">🗑</button>
+              </div>
+              <div class="list" id="sources"></div>
+              <div class="box">
+                Types: <span class="badge">display</span> <span class="badge">camera</span> <span class="badge">mic</span>
+                <span class="badge">image</span> <span class="badge">text</span> <span class="badge">color</span><br>
+                Double-clic sur une source = visibilité. Delete = supprime la source sélectionnée.
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col">
+        <div class="panel">
+          <div class="h"><b>Audio Mixer</b><span class="meta" id="meta-mix">—</span></div>
+          <div class="b" id="mixer"></div>
+        </div>
+
+        <div class="panel">
+          <div class="h"><b>Controls</b><span class="meta" id="meta-mime">—</span></div>
+          <div class="b">
+            <div class="row">
+              <button class="btn primary" id="rec">● Start Recording</button>
+              <button class="btn" id="shot">📸 Screenshot</button>
+              <button class="btn" id="settings">⚙ Settings</button>
+            </div>
+
+            <div class="box" id="settings-box" style="display:none">
+              <div class="row">
+                <div style="flex:1">
+                  <div class="label">Résolution</div>
+                  <select class="select" id="set-res">
+                    <option value="1280x720">1280×720</option>
+                    <option value="1920x1080">1920×1080</option>
+                    <option value="854x480">854×480</option>
+                  </select>
+                </div>
+                <div style="width:140px">
+                  <div class="label">FPS</div>
+                  <select class="select" id="set-fps">
+                    <option value="30">30</option>
+                    <option value="60">60</option>
+                    <option value="24">24</option>
+                  </select>
+                </div>
+              </div>
+              <div style="margin-top:8px">
+                <div class="label">Background</div>
+                <input class="input" id="set-bg" value="#111111" />
+              </div>
+              <div class="row" style="margin-top:8px">
+                <button class="btn primary" id="apply">Appliquer</button>
+              </div>
+              <div style="margin-top:8px">
+                Limites navigateur: pas de RTMP “comme OBS” sans serveur. Ici: preview + enregistrement WebM (MediaRecorder).
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+  <input id="file-img" type="file" accept="image/*" style="display:none" />
+  <script>
+    const LS_KEY = 'aether_obs_lite_project_v1';
+    const uid = () => 'id_' + Math.random().toString(36).slice(2, 8) + Date.now().toString(36).slice(-4);
+    const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
+    const $ = (id) => document.getElementById(id);
+
+    const state = {
+      proj: {
+        name: 'obs-lite',
+        w: 1280,
+        h: 720,
+        fps: 30,
+        bg: '#111111',
+        scenes: [],
+        active: null
+      },
+      selSrc: null,
+      drag: null,
+      resize: null,
+      scale: { s: 1, ox: 0, oy: 0, dw: 1280, dh: 720 },
+      media: { audioCtx: null, mixDest: null, byId: new Map() },
+      rec: { r: null, chunks: [], started: 0, timer: null, mime: '' }
+    };
+
+    const cv = $('cv');
+    const ctx = cv.getContext('2d');
+
+    function toast(msg, dur = 2200) {
+      const t = $('toast');
+      t.textContent = msg;
+      t.style.display = 'block';
+      clearTimeout(t._t);
+      t._t = setTimeout(() => (t.style.display = 'none'), dur);
+    }
+
+    function fmtTime(ms) {
+      const s = Math.max(0, Math.floor(ms / 1000));
+      const mm = String(Math.floor(s / 60)).padStart(2, '0');
+      const ss = String(s % 60).padStart(2, '0');
+      return `${mm}:${ss}`;
+    }
+
+    function sc() {
+      return state.proj.scenes.find(x => x.id === state.proj.active) || null;
+    }
+
+    function findSrc(scene, id) {
+      return scene && Array.isArray(scene.sources) ? (scene.sources.find(s => s.id === id) || null) : null;
+    }
+
+    function sortSrc(scene) {
+      return (scene && Array.isArray(scene.sources) ? scene.sources : []).slice().sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+    }
+
+    function ensureAudio() {
+      if (state.media.audioCtx) return;
+      const ac = new (window.AudioContext || window.webkitAudioContext)();
+      state.media.audioCtx = ac;
+      state.media.mixDest = ac.createMediaStreamDestination();
+    }
+
+    function connectAudio(id, stream, vol = 0.85) {
+      ensureAudio();
+      const ac = state.media.audioCtx;
+      const entry = state.media.byId.get(id) || {};
+      entry.volume = vol;
+      entry.muted = false;
+      entry.stream = stream;
+
+      try { entry.gain && entry.gain.disconnect(); } catch {}
+      try { entry.node && entry.node.disconnect(); } catch {}
+
+      const track = stream && stream.getAudioTracks ? stream.getAudioTracks()[0] : null;
+      if (!track) {
+        entry.hasAudio = false;
+        state.media.byId.set(id, entry);
+        return;
+      }
+
+      entry.hasAudio = true;
+      const src = ac.createMediaStreamSource(new MediaStream([track]));
+      const gain = ac.createGain();
+      gain.gain.value = vol;
+      src.connect(gain).connect(state.media.mixDest);
+      entry.node = src;
+      entry.gain = gain;
+      state.media.byId.set(id, entry);
+    }
+
+    function setVol(id, v) {
+      const e = state.media.byId.get(id);
+      if (!e || !e.gain) return;
+      e.volume = v;
+      e.gain.gain.value = e.muted ? 0 : v;
+    }
+
+    function setMute(id, muted) {
+      const e = state.media.byId.get(id);
+      if (!e || !e.gain) return;
+      e.muted = muted;
+      e.gain.gain.value = muted ? 0 : (e.volume ?? 0.85);
+    }
+
+    function attachVideo(id, stream) {
+      const v = document.createElement('video');
+      v.playsInline = true;
+      v.muted = true;
+      v.srcObject = stream;
+      v.play().catch(() => {});
+      const e = state.media.byId.get(id) || {};
+      e.stream = stream;
+      e.video = v;
+      state.media.byId.set(id, e);
+    }
+
+    function cleanup(id) {
+      const e = state.media.byId.get(id);
+      if (!e) return;
+      try { e.gain && e.gain.disconnect(); } catch {}
+      try { e.node && e.node.disconnect(); } catch {}
+      try { e.stream && e.stream.getTracks && e.stream.getTracks().forEach(t => t.stop()); } catch {}
+      state.media.byId.delete(id);
+    }
+
+    function newProject() {
+      state.proj = {
+        name: 'obs-lite',
+        w: 1280,
+        h: 720,
+        fps: 30,
+        bg: '#111111',
+        scenes: [{ id: uid(), name: 'Scene 1', sources: [] }],
+        active: null
+      };
+      state.proj.active = state.proj.scenes[0].id;
+      state.selSrc = null;
+      renderAll();
+    }
+
+    function saveProject() {
+      localStorage.setItem(LS_KEY, JSON.stringify(state.proj));
+      toast('Sauvé (localStorage)');
+    }
+
+    function loadProject() {
+      const raw = localStorage.getItem(LS_KEY);
+      if (!raw) return toast('Aucune sauvegarde');
+      try {
+        for (const [id] of state.media.byId.entries()) cleanup(id);
+        const p = JSON.parse(raw);
+        if (!p || !Array.isArray(p.scenes) || p.scenes.length === 0) throw new Error('Projet invalide');
+        state.proj = p;
+        if (!state.proj.active) state.proj.active = state.proj.scenes[0].id;
+        state.selSrc = null;
+        renderAll();
+        toast('Chargé');
+      } catch (e) {
+        toast('Erreur: ' + (e && e.message ? e.message : String(e)), 3200);
+      }
+    }
+
+    function applyCanvas() {
+      cv.width = state.proj.w;
+      cv.height = state.proj.h;
+      $('chip-proj').textContent = `${state.proj.w}×${state.proj.h} @ ${state.proj.fps}`;
+      const scene = sc();
+      $('chip-scene').textContent = `Scene: ${scene ? scene.name : '—'}`;
+    }
+
+    function drawPlaceholder(s, label) {
+      ctx.fillStyle = 'rgba(255,255,255,.06)';
+      ctx.fillRect(s.x, s.y, s.w, s.h);
+      ctx.strokeStyle = 'rgba(255,255,255,.16)';
+      ctx.strokeRect(s.x + 0.5, s.y + 0.5, s.w - 1, s.h - 1);
+      ctx.fillStyle = 'rgba(255,255,255,.65)';
+      ctx.font = '900 12px system-ui';
+      ctx.fillText(label, s.x + 10, s.y + 18);
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, cv.width, cv.height);
+      ctx.fillStyle = state.proj.bg || '#111';
+      ctx.fillRect(0, 0, cv.width, cv.height);
+
+      const scene = sc();
+      const list = sortSrc(scene);
+      for (const s of list) {
+        if (!s.visible) continue;
+        ctx.save();
+        ctx.globalAlpha = s.opacity ?? 1;
+
+        if (s.type === 'display' || s.type === 'camera') {
+          const v = state.media.byId.get(s.id)?.video;
+          if (v && v.readyState >= 2) ctx.drawImage(v, s.x, s.y, s.w, s.h);
+          else drawPlaceholder(s, 'VIDEO');
+        } else if (s.type === 'image') {
+          if (!s._img && s.props?.src) {
+            const img = new Image();
+            img.onload = () => { s._img = img; };
+            img.src = s.props.src;
+          }
+          if (s._img) ctx.drawImage(s._img, s.x, s.y, s.w, s.h);
+          else drawPlaceholder(s, 'IMAGE');
+        } else if (s.type === 'text') {
+          ctx.font = s.props?.font || '950 48px system-ui';
+          ctx.fillStyle = s.props?.color || '#fff';
+          ctx.textBaseline = 'top';
+          const lines = String(s.props?.text || '').split('\\n');
+          const fs = parseInt((ctx.font.match(/(\\d+)px/) || [])[1] || '48', 10);
+          const lh = Math.max(18, Math.round(fs * 1.15));
+          let y = s.y;
+          for (const line of lines) {
+            ctx.fillText(line, s.x, y, s.w);
+            y += lh;
+          }
+        } else if (s.type === 'mic') {
+          const e = state.media.byId.get(s.id) || {};
+          ctx.fillStyle = 'rgba(0,0,0,.35)';
+          ctx.fillRect(s.x, s.y, s.w, s.h);
+          ctx.strokeStyle = 'rgba(255,255,255,.14)';
+          ctx.strokeRect(s.x + 0.5, s.y + 0.5, s.w - 1, s.h - 1);
+          ctx.fillStyle = e.muted ? 'rgba(255,59,48,.9)' : 'rgba(45,212,191,.9)';
+          ctx.font = '950 16px system-ui';
+          ctx.fillText(e.muted ? 'MIC MUTED' : 'MIC LIVE', s.x + 10, s.y + 10);
+        } else if (s.type === 'color') {
+          ctx.fillStyle = s.props?.color || '#2b2f36';
+          ctx.fillRect(s.x, s.y, s.w, s.h);
+        }
+
+        ctx.restore();
+      }
+    }
+
+    function iconForType(t) {
+      if (t === 'display') return '🖥️';
+      if (t === 'camera') return '📷';
+      if (t === 'mic') return '🎙️';
+      if (t === 'image') return '🖼️';
+      if (t === 'text') return '🅣';
+      if (t === 'color') return '⬛';
+      return '📦';
+    }
+
+    function esc(s) {
+      return String(s ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/\"/g, '&quot;');
+    }
+
+    function renderScenes() {
+      const el = $('scenes');
+      el.innerHTML = '';
+      $('meta-scenes').textContent = String(state.proj.scenes.length);
+      for (const s of state.proj.scenes) {
+        const d = document.createElement('div');
+        d.className = 'it' + (s.id === state.proj.active ? ' on' : '');
+        d.innerHTML = `<div class="ico">🎬</div><div class="nm">${esc(s.name)}</div><span class="badge">${(s.sources || []).length}</span>`;
+        d.onclick = () => { state.proj.active = s.id; state.selSrc = null; renderAll(); };
+        el.appendChild(d);
+      }
+    }
+
+    function renderSources() {
+      const scene = sc();
+      const el = $('sources');
+      el.innerHTML = '';
+      const list = (scene?.sources || []).slice().sort((a, b) => (b.order ?? 0) - (a.order ?? 0));
+      $('meta-sources').textContent = String(list.length);
+      for (const s of list) {
+        const d = document.createElement('div');
+        d.className = 'it' + (s.id === state.selSrc ? ' on' : '');
+        d.innerHTML = `<div class="ico">${s.visible ? '👁' : '🚫'}</div><div class="ico">${iconForType(s.type)}</div><div class="nm">${esc(s.name || s.type)}</div><span class="badge">${esc(s.type)}</span>`;
+        d.onclick = () => { state.selSrc = s.id; renderAll(); };
+        d.ondblclick = () => { s.visible = !s.visible; renderAll(); };
+        el.appendChild(d);
+      }
+    }
+
+    function renderMixer() {
+      const scene = sc();
+      const el = $('mixer');
+      el.innerHTML = '';
+      const aud = (scene?.sources || []).filter(s => s.type === 'mic' || s.type === 'display');
+      $('meta-mix').textContent = String(aud.length);
+      if (!aud.length) {
+        el.innerHTML = '<div style="color:var(--muted);font-size:12px;line-height:1.45">Ajoute une source <b>mic</b> ou <b>display</b> (avec audio) pour voir le mixer.</div>';
+        return;
+      }
+      for (const s of aud) {
+        const e = state.media.byId.get(s.id) || {};
+        const vol = typeof e.volume === 'number' ? e.volume : 0.85;
+        const muted = !!e.muted;
+        const row = document.createElement('div');
+        row.className = 'mix';
+        row.innerHTML = `
+          <div style="min-width:0">
+            <div style="font-weight:950;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(s.name || 'Audio')}</div>
+            <div style="color:var(--muted);font-size:11px">${esc(s.type)}</div>
+          </div>
+          <input type="range" min="0" max="1" step="0.01" value="${vol}">
+          <button class="btn ${muted ? 'danger' : ''}" style="padding:6px 0;width:36px">${muted ? 'M' : '🔊'}</button>
+        `;
+        const slider = row.querySelector('input');
+        const btn = row.querySelector('button');
+        slider.oninput = async () => {
+          if (state.media.audioCtx?.state === 'suspended') await state.media.audioCtx.resume().catch(() => {});
+          setVol(s.id, parseFloat(slider.value));
+        };
+        btn.onclick = async () => {
+          if (state.media.audioCtx?.state === 'suspended') await state.media.audioCtx.resume().catch(() => {});
+          const next = !(state.media.byId.get(s.id) || {}).muted;
+          setMute(s.id, next);
+          renderMixer();
+          draw();
+        };
+        el.appendChild(row);
+      }
+    }
+
+    function updateScale() {
+      const rect = $('pv').getBoundingClientRect();
+      const pad = 10;
+      const maxW = rect.width - pad * 2;
+      const maxH = rect.height - pad * 2;
+      const s = Math.min(maxW / state.proj.w, maxH / state.proj.h);
+      state.scale.s = s;
+      state.scale.dw = state.proj.w * s;
+      state.scale.dh = state.proj.h * s;
+      state.scale.ox = rect.left + (rect.width - state.scale.dw) / 2;
+      state.scale.oy = rect.top + (rect.height - state.scale.dh) / 2;
+      cv.style.width = state.scale.dw + 'px';
+      cv.style.height = state.scale.dh + 'px';
+    }
+
+    function toCanvas(e) {
+      return { x: (e.clientX - state.scale.ox) / state.scale.s, y: (e.clientY - state.scale.oy) / state.scale.s };
+    }
+
+    function pickTop(scene, x, y) {
+      const list = sortSrc(scene);
+      for (let i = list.length - 1; i >= 0; i--) {
+        const s = list[i];
+        if (!s.visible) continue;
+        if (x >= s.x && x <= s.x + s.w && y >= s.y && y <= s.y + s.h) return s;
+      }
+      return null;
+    }
+
+    function hitHandle(s, x, y) {
+      const r = 10;
+      const pts = {
+        nw: { x: s.x, y: s.y },
+        ne: { x: s.x + s.w, y: s.y },
+        sw: { x: s.x, y: s.y + s.h },
+        se: { x: s.x + s.w, y: s.y + s.h }
+      };
+      for (const k of Object.keys(pts)) {
+        const p = pts[k];
+        if (Math.abs(x - p.x) <= r && Math.abs(y - p.y) <= r) return k;
+      }
+      return null;
+    }
+
+    function renderSel() {
+      const scene = sc();
+      const s = findSrc(scene, state.selSrc);
+      const box = $('sel');
+      if (!s) { box.style.display = 'none'; return; }
+      const left = state.scale.ox + s.x * state.scale.s;
+      const top = state.scale.oy + s.y * state.scale.s;
+      const w = s.w * state.scale.s;
+      const h = s.h * state.scale.s;
+      box.style.display = 'block';
+      box.style.left = left + 'px';
+      box.style.top = top + 'px';
+      box.style.width = w + 'px';
+      box.style.height = h + 'px';
+      box.querySelectorAll('.hdl').forEach(hd => {
+        const k = hd.getAttribute('data-h');
+        let x = 0, y = 0;
+        if (k === 'nw') { x = -5; y = -5; }
+        if (k === 'ne') { x = w - 4; y = -5; }
+        if (k === 'sw') { x = -5; y = h - 4; }
+        if (k === 'se') { x = w - 4; y = h - 4; }
+        hd.style.left = x + 'px';
+        hd.style.top = y + 'px';
+      });
+    }
+
+    async function pickImg() {
+      return new Promise(resolve => {
+        const i = $('file-img');
+        i.value = '';
+        i.onchange = () => resolve(i.files?.[0] || null);
+        i.click();
+      });
+    }
+
+    function fileToDataURL(file) {
+      return new Promise((resolve, reject) => {
+        const r = new FileReader();
+        r.onload = () => resolve(String(r.result || ''));
+        r.onerror = () => reject(new Error('Lecture fichier impossible'));
+        r.readAsDataURL(file);
+      });
+    }
+
+    function nextOrder(scene) {
+      return (scene?.sources || []).reduce((m, s) => Math.max(m, s.order ?? 0), -1) + 1;
+    }
+
+    async function addSource() {
+      const scene = sc();
+      if (!scene) return;
+      const t = (prompt('Type source ? (display/camera/mic/image/text/color)', 'display') || '').trim().toLowerCase();
+      if (!t) return;
+      const base = { id: uid(), name: '', type: t, visible: true, locked: false, x: 120, y: 80, w: 640, h: 360, opacity: 1, order: nextOrder(scene), props: {} };
+      try {
+        if (t === 'display') {
+          base.name = 'Display Capture';
+          const stream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
+          attachVideo(base.id, stream);
+          connectAudio(base.id, stream, 0.85);
+        } else if (t === 'camera') {
+          base.name = 'Camera';
+          const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+          attachVideo(base.id, stream);
+        } else if (t === 'mic') {
+          base.name = 'Mic/Aux';
+          const stream = await navigator.mediaDevices.getUserMedia({ video: false, audio: true });
+          connectAudio(base.id, stream, 0.85);
+          base.w = 320; base.h = 90;
+        } else if (t === 'image') {
+          base.name = 'Image';
+          const file = await pickImg();
+          if (!file) return;
+          base.props.src = await fileToDataURL(file);
+          base.w = 640; base.h = 360;
+        } else if (t === 'text') {
+          base.name = 'Text';
+          base.props.text = prompt('Texte ?', 'Hello OBS') ?? '';
+          base.props.font = '950 48px system-ui';
+          base.props.color = '#ffffff';
+          base.w = 700; base.h = 120;
+        } else if (t === 'color') {
+          base.name = 'Color';
+          base.props.color = prompt('Couleur (#rrggbb) ?', '#2b2f36') || '#2b2f36';
+          base.x = 0; base.y = 0; base.w = state.proj.w; base.h = state.proj.h; base.order = -999;
+        } else {
+          return toast('Type non supporté: ' + t, 2600);
+        }
+        scene.sources.push(base);
+        state.selSrc = base.id;
+        renderAll();
+      } catch (e) {
+        toast('Erreur: ' + (e && e.message ? e.message : String(e)), 3200);
+      }
+    }
+
+    function delSource() {
+      const scene = sc();
+      if (!scene || !state.selSrc) return;
+      const s = findSrc(scene, state.selSrc);
+      if (!s) return;
+      if (!confirm(`Supprimer "${s.name}" ?`)) return;
+      cleanup(s.id);
+      scene.sources = scene.sources.filter(x => x.id !== s.id);
+      state.selSrc = null;
+      renderAll();
+    }
+
+    function moveSource(delta) {
+      const scene = sc();
+      if (!scene || !state.selSrc) return;
+      const idx = scene.sources.findIndex(x => x.id === state.selSrc);
+      if (idx < 0) return;
+      const next = clamp(idx + delta, 0, scene.sources.length - 1);
+      if (next === idx) return;
+      const [it] = scene.sources.splice(idx, 1);
+      scene.sources.splice(next, 0, it);
+      scene.sources.forEach((s, i) => (s.order = i));
+      renderAll();
+    }
+
+    function addScene() {
+      const name = prompt('Nom de la scène ?', `Scene ${state.proj.scenes.length + 1}`);
+      if (!name) return;
+      state.proj.scenes.push({ id: uid(), name, sources: [] });
+      state.proj.active = state.proj.scenes[state.proj.scenes.length - 1].id;
+      state.selSrc = null;
+      renderAll();
+    }
+
+    function dupScene() {
+      const scene = sc();
+      if (!scene) return;
+      const copy = JSON.parse(JSON.stringify(scene));
+      copy.id = uid();
+      copy.name = scene.name + ' (copy)';
+      (copy.sources || []).forEach(s => { s.id = uid(); });
+      state.proj.scenes.push(copy);
+      state.proj.active = copy.id;
+      state.selSrc = null;
+      renderAll();
+    }
+
+    function delScene() {
+      if (state.proj.scenes.length <= 1) return toast('Au moins une scène requise');
+      const scene = sc();
+      if (!scene) return;
+      if (!confirm(`Supprimer "${scene.name}" ?`)) return;
+      (scene.sources || []).forEach(s => cleanup(s.id));
+      state.proj.scenes = state.proj.scenes.filter(x => x.id !== scene.id);
+      state.proj.active = state.proj.scenes[0].id;
+      state.selSrc = null;
+      renderAll();
+    }
+
+    function pickMime() {
+      const cand = ['video/webm;codecs=vp9,opus', 'video/webm;codecs=vp8,opus', 'video/webm;codecs=vp9', 'video/webm'];
+      for (const m of cand) if (MediaRecorder.isTypeSupported(m)) return m;
+      return '';
+    }
+
+    function startRec() {
+      if (state.rec.r) return;
+      ensureAudio();
+      state.media.audioCtx.resume().catch(() => {});
+      const v = cv.captureStream(parseInt(state.proj.fps, 10) || 30);
+      const out = new MediaStream();
+      v.getVideoTracks().forEach(t => out.addTrack(t));
+      state.media.mixDest?.stream?.getAudioTracks().forEach(t => out.addTrack(t));
+      const mime = pickMime();
+      state.rec.mime = mime;
+      $('meta-mime').textContent = 'MediaRecorder: ' + (mime || 'default');
+      const r = new MediaRecorder(out, mime ? { mimeType: mime } : undefined);
+      state.rec.chunks = [];
+      r.ondataavailable = (e) => { if (e.data?.size) state.rec.chunks.push(e.data); };
+      r.onstop = () => {
+        const blob = new Blob(state.rec.chunks, { type: mime || 'video/webm' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `obs-lite-${Date.now()}.webm`;
+        a.click();
+        setTimeout(() => URL.revokeObjectURL(url), 8000);
+        toast('Enregistrement téléchargé');
+      };
+      r.start(250);
+      state.rec.r = r;
+      state.rec.started = Date.now();
+      $('rec').textContent = '■ Stop Recording';
+      $('rec').classList.add('danger');
+      state.rec.timer = setInterval(() => renderAll(), 250);
+      toast('REC…');
+    }
+
+    function stopRec() {
+      if (!state.rec.r) return;
+      try { state.rec.r.stop(); } catch {}
+      state.rec.r = null;
+      clearInterval(state.rec.timer);
+      state.rec.timer = null;
+      $('rec').textContent = '● Start Recording';
+      $('rec').classList.remove('danger');
+      renderAll();
+    }
+
+    function screenshot() {
+      cv.toBlob((blob) => {
+        if (!blob) return toast('Screenshot impossible', 2600);
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `obs-lite-shot-${Date.now()}.png`;
+        a.click();
+        setTimeout(() => URL.revokeObjectURL(url), 8000);
+      }, 'image/png');
+      toast('Screenshot');
+    }
+
+    function applySettings() {
+      const [w, h] = $('set-res').value.split('x').map(n => parseInt(n, 10));
+      state.proj.w = w;
+      state.proj.h = h;
+      state.proj.fps = parseInt($('set-fps').value, 10) || 30;
+      state.proj.bg = $('set-bg').value || '#111111';
+      toast('Settings appliqués');
+      renderAll();
+    }
+
+    function onDown(e) {
+      const scene = sc();
+      if (!scene) return;
+      updateScale();
+      const p = toCanvas(e);
+      const s = pickTop(scene, p.x, p.y);
+      if (!s) { state.selSrc = null; renderAll(); return; }
+      state.selSrc = s.id;
+      renderAll();
+      if (s.locked) return;
+      const h = hitHandle(s, p.x, p.y);
+      if (h) state.resize = { id: s.id, h, start: { x: p.x, y: p.y, sx: s.x, sy: s.y, sw: s.w, sh: s.h } };
+      else state.drag = { id: s.id, start: { x: p.x, y: p.y, sx: s.x, sy: s.y } };
+      e.preventDefault();
+    }
+
+    function onMove(e) {
+      const scene = sc();
+      if (!scene) return;
+      if (!state.drag && !state.resize) return;
+      const p = toCanvas(e);
+      const s = findSrc(scene, (state.drag || state.resize).id);
+      if (!s) return;
+      if (state.drag) {
+        const st = state.drag.start;
+        s.x = Math.round(st.sx + (p.x - st.x));
+        s.y = Math.round(st.sy + (p.y - st.y));
+      } else {
+        const st = state.resize.start;
+        const dx = p.x - st.x;
+        const dy = p.y - st.y;
+        if (state.resize.h.includes('e')) s.w = Math.max(20, Math.round(st.sw + dx));
+        if (state.resize.h.includes('s')) s.h = Math.max(20, Math.round(st.sh + dy));
+        if (state.resize.h.includes('w')) {
+          const nw = Math.max(20, Math.round(st.sw - dx));
+          s.x = Math.round(st.sx + (st.sw - nw));
+          s.w = nw;
+        }
+        if (state.resize.h.includes('n')) {
+          const nh = Math.max(20, Math.round(st.sh - dy));
+          s.y = Math.round(st.sy + (st.sh - nh));
+          s.h = nh;
+        }
+      }
+      draw();
+      renderSel();
+      e.preventDefault();
+    }
+
+    function onUp() { state.drag = null; state.resize = null; }
+
+    function renderAll() {
+      applyCanvas();
+      renderScenes();
+      renderSources();
+      renderMixer();
+      draw();
+      updateScale();
+      renderSel();
+      $('meta-rec').textContent = state.rec.r ? ('REC ' + fmtTime(Date.now() - state.rec.started)) : 'Idle';
+    }
+
+    $('sc-add').onclick = addScene;
+    $('sc-dup').onclick = dupScene;
+    $('sc-del').onclick = delScene;
+    $('src-add').onclick = addSource;
+    $('src-del').onclick = delSource;
+    $('src-up').onclick = () => moveSource(-1);
+    $('src-down').onclick = () => moveSource(1);
+    $('btn-save').onclick = saveProject;
+    $('btn-load').onclick = loadProject;
+    $('btn-reset').onclick = () => {
+      if (!confirm('Reset projet ?')) return;
+      for (const [id] of state.media.byId.entries()) cleanup(id);
+      newProject();
+    };
+    $('settings').onclick = () => {
+      $('settings-box').style.display = $('settings-box').style.display === 'none' ? 'block' : 'none';
+    };
+    $('apply').onclick = applySettings;
+    $('rec').onclick = async () => {
+      ensureAudio();
+      if (state.media.audioCtx?.state === 'suspended') await state.media.audioCtx.resume().catch(() => {});
+      state.rec.r ? stopRec() : startRec();
+    };
+    $('shot').onclick = screenshot;
+    $('pv').addEventListener('pointerdown', onDown);
+    window.addEventListener('pointermove', onMove);
+    window.addEventListener('pointerup', onUp);
+    window.addEventListener('resize', () => { updateScale(); renderSel(); });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Delete') delSource(); });
+
+    function boot() {
+      const raw = localStorage.getItem(LS_KEY);
+      if (raw) {
+        try {
+          state.proj = JSON.parse(raw);
+          if (!state.proj?.scenes?.length) throw new Error('invalid');
+          if (!state.proj.active) state.proj.active = state.proj.scenes[0].id;
+        } catch {
+          newProject();
+        }
+      } else {
+        newProject();
+      }
+      $('meta-mime').textContent = 'MediaRecorder: ' + (pickMime() || 'default');
+      renderAll();
+      requestAnimationFrame(function loop() { draw(); requestAnimationFrame(loop); });
+      toast('OBS Lite prêt');
+    }
+
+    window.addEventListener('load', boot);
+  </script>
+</body>
+</html>
