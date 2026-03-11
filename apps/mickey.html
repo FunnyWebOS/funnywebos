@@ -216,8 +216,8 @@
       <div>
         <div class="field-label">Cle API Groq</div>
         <div class="field-row">
-          <input type="password" class="field-input" id="groq-key" placeholder="gsk_..." autocomplete="off" style="flex:1" />
-          <button class="btn primary" id="btn-save-key">Enregistrer</button>
+          <input type="password" class="field-input" id="groq-key" placeholder="gsk_..." autocomplete="off" style="flex:1" disabled />
+          <button class="btn primary" id="btn-save-key">Intégrée</button>
         </div>
         <div id="key-status">Chargement...</div>
       </div>
@@ -360,8 +360,16 @@
   }
 
   function getGroqKey() {
-    var fromWm = (wm && wm.groqApiKey) ? String(wm.groqApiKey).trim() : '';
-    return fromWm || lsGet(SK.groqKey).trim();
+    // Never embed API keys in client-side code. Use localStorage or a server-side proxy.
+    var fromLs = lsGet(SK.groqKey).trim();
+    if (fromLs) return fromLs;
+    try {
+      if (wm && typeof wm.getStoredGroqApiKey === 'function') {
+        var k = String(wm.getStoredGroqApiKey() || '').trim();
+        if (k) return k;
+      }
+    } catch (e) { }
+    return '';
   }
 
   function maskKey(k) {
@@ -629,6 +637,7 @@
     try { runtimeEnv = window.AETHER_RUNTIME_ENV || (window.parent && window.parent.AETHER_RUNTIME_ENV) || {}; } catch(e) {}
 
     var proxyBase = String(runtimeEnv.AETHER_AI_PROXY_URL || '').trim();
+    if (proxyBase && !/^https?:\/\//i.test(proxyBase)) proxyBase = 'https://' + proxyBase;
     var endpoint = proxyBase
       ? proxyBase.replace(/\/$/, '') + '/openai/v1/chat/completions'
       : 'https://api.groq.com/openai/v1/chat/completions';

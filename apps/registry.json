@@ -596,6 +596,168 @@
         "url": "https://paper-io.com/"
     },
     {
+        "id": "crazygames",
+        "title": "CrazyGames",
+        "creator": "CrazyGames",
+        "description": "Portail de jeux web (type CrazyGames) avec plein de jeux à lancer vite.",
+        "category": "games",
+        "icon": "🕹️",
+        "url": "https://www.crazygames.com/"
+    },
+    {
+        "id": "poki",
+        "title": "Poki",
+        "creator": "Poki",
+        "description": "Catalogue de jeux gratuits (Poki).",
+        "category": "games",
+        "icon": "🎮",
+        "url": "https://poki.com/"
+    },
+    {
+        "id": "itchio_games",
+        "title": "itch.io (Games)",
+        "creator": "itch.io",
+        "description": "Indie games : découverte, top charts et nouveautés.",
+        "category": "games",
+        "icon": "🧩",
+        "url": "https://itch.io/games"
+    },
+    {
+        "id": "lagged",
+        "title": "Lagged",
+        "creator": "Lagged",
+        "description": "Jeux web rapides (puzzle, arcade, multi).",
+        "category": "games",
+        "icon": "⚡",
+        "url": "https://lagged.com/"
+    },
+    {
+        "id": "playpager",
+        "title": "Playpager",
+        "creator": "Playpager",
+        "description": "Petits jeux web instantanés (gratuits, sans install).",
+        "category": "games",
+        "icon": "📄",
+        "url": "https://playpager.com/"
+    },
+    {
+        "id": "smashkarts",
+        "title": "Smash Karts",
+        "creator": "Tall Team",
+        "description": "Kart multijoueur rapide (arena).",
+        "category": "games",
+        "icon": "🏎️",
+        "url": "https://smashkarts.io/"
+    },
+    {
+        "id": "survivio",
+        "title": "surviv.io",
+        "creator": "Community",
+        "description": "Battle royale 2D (surviv.io).",
+        "category": "games",
+        "icon": "🪖",
+        "appFile": "webwrap.html#name=surviv.io&icon=🪖&url=https%3A%2F%2Fsurviv.io%2F"
+    },
+    {
+        "id": "krunkerhub",
+        "title": "Krunker Hub",
+        "creator": "Krunker",
+        "description": "Communauté, maps et modes autour de Krunker.",
+        "category": "games",
+        "icon": "🧭",
+        "appFile": "webwrap.html#name=Krunker%20Hub&icon=🧭&url=https%3A%2F%2Fkrunker.io%2Fsocial.html"
+    },
+    {
+        "id": "gartic",
+        "title": "Gartic.io",
+        "creator": "Gartic",
+        "description": "Dessine et fais deviner (Gartic.io).",
+        "category": "games",
+        "icon": "🎨",
+        "appFile": "webwrap.html#name=Gartic.io&icon=🎨&url=https%3A%2F%2Fgartic.io%2F"
+    },
+    {
+        "id": "littlealchemy2",
+        "title": "Little Alchemy 2",
+        "creator": "Recloak",
+        "description": "Combine des éléments et découvre des recettes.",
+        "category": "games",
+        "icon": "🧪",
+        "appFile": "webwrap.html#name=Little%20Alchemy%202&icon=🧪&url=https%3A%2F%2Flittlealchemy2.com%2F"
+    },
+    {
+        "id": "geoguessr_free",
+        "title": "GeoGuessr (Accueil)",
+        "creator": "GeoGuessr",
+        "description": "Jeu de géographie (accueil / modes).",
+        "category": "games",
+        "icon": "🗺️",
+        "appFile": "webwrap.html#name=GeoGuessr&icon=🗺️&url=https%3A%2F%2Fwww.geoguessr.com%2F"
+    },
+    {
+        "id": "slope",
+        "title": "Slope",
+        "creator": "Game",
+        "description": "Course infinie 3D (Slope) via Poki.",
+        "category": "games",
+        "icon": "🌀",
+        "appFile": "webwrap.html#name=Slope&icon=🌀&url=https%3A%2F%2Fpoki.com%2Fen%2Fg%2Fslope"
+    },
+    {
+        "id": "templerun2",
+        "title": "Temple Run 2",
+        "creator": "Imangi",
+        "description": "Runner classique (Temple Run 2) via Poki.",
+        "category": "games",
+        "icon": "🏃",
+        "appFile": "webwrap.html#name=Temple%20Run%202&icon=🏃&url=https%3A%2F%2Fpoki.com%2Fen%2Fg%2Ftemple-run-2"
+    },
+    {
+        "id": "stickmanhook",
+        "title": "Stickman Hook",
+        "creator": "Madbox",
+        "description": "Swing / plateforme (Stickman Hook) via Poki.",
+        "category": "games",
+        "icon": "🪝",
+        "appFile": "webwrap.html#name=Stickman%20Hook&icon=🪝&url=https%3A%2F%2Fpoki.com%2Fen%2Fg%2Fstickman-hook"
+    },
+    {
+        "id": "narrowone",
+        "title": "Narrow.One",
+        "creator": "Pelican Party Studios",
+        "description": "Archerie multijoueur (Narrow.One).",
+        "category": "games",
+        "icon": "🏹",
+        "appFile": "webwrap.html#name=Narrow.One&icon=🏹&url=https%3A%2F%2Fnarrow.one%2F"
+    },
+    {
+        "id": "sketchful",
+        "title": "Sketchful.io",
+        "creator": "Sketchful",
+        "description": "Dessine et fais deviner (sketchful.io).",
+        "category": "games",
+        "icon": "🖊️",
+        "appFile": "webwrap.html#name=Sketchful.io&icon=🖊️&url=https%3A%2F%2Fsketchful.io%2F"
+    },
+    {
+        "id": "tetrio_lobby",
+        "title": "TETR.IO (Lobby)",
+        "creator": "TETR.IO",
+        "description": "Vers le lobby TETR.IO directement.",
+        "category": "games",
+        "icon": "🧱",
+        "appFile": "webwrap.html#name=TETR.IO&icon=🧱&url=https%3A%2F%2Ftetr.io%2F"
+    },
+    {
+        "id": "chessarena",
+        "title": "Chess Arena",
+        "creator": "ChessArena",
+        "description": "Échecs en ligne rapides (chessarena.com).",
+        "category": "games",
+        "icon": "♟️",
+        "appFile": "webwrap.html#name=Chess%20Arena&icon=♟️&url=https%3A%2F%2Fwww.chessarena.com%2F"
+    },
+    {
         "id": "obs",
         "title": "OBS Lite",
         "creator": "FunnyCorp",
