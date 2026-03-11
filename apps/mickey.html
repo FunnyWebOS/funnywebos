@@ -671,12 +671,27 @@
       var headers = { 'Content-Type': 'application/json' };
       if (!proxyBase) headers['Authorization'] = 'Bearer ' + key;
 
-      var res = await fetch(endpoint, {
-        method: 'POST',
-        headers: headers,
-        body: JSON.stringify({ model: chosenModel, messages: messages }),
-        signal: signal
-      });
+      var res = null;
+      try {
+        res = await fetch(endpoint, {
+          method: 'POST',
+          headers: headers,
+          body: JSON.stringify({ model: chosenModel, messages: messages }),
+          signal: signal
+        });
+      } catch (netErr) {
+        var origin = '';
+        try { origin = location.origin; } catch(e) {}
+        var online = 'unknown';
+        try { online = navigator.onLine ? 'online' : 'offline'; } catch(e) {}
+        var msg = 'Failed to fetch' +
+          '\nEndpoint: ' + endpoint +
+          '\nOrigin: ' + (origin || '(unknown)') +
+          '\nProxy: ' + (proxyBase ? 'ON' : 'OFF') +
+          '\nNetwork: ' + online +
+          '\nTip: verifie que l\'URL a bien https:// et que le proxy autorise ton origin (ALLOWED_ORIGINS) + CORS.';
+        throw new Error(msg);
+      }
 
       var rawText = '';
       try { rawText = await res.text(); } catch(e) {}
