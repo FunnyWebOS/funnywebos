@@ -515,6 +515,24 @@
         "url": "https://krunker.io/"
     },
     {
+        "id": "deadshot",
+        "title": "Deadshot",
+        "creator": "Deadshot.io",
+        "description": "FPS multijoueur en ligne (deadshot.io).",
+        "category": "games",
+        "icon": "🎯",
+        "appFile": "deadshot.html"
+    },
+    {
+        "id": "krunkerstrike",
+        "title": "Krunker Strike",
+        "creator": "Krunker",
+        "description": "Version wrapper pour lancer Krunker en plein écran.",
+        "category": "games",
+        "icon": "💥",
+        "appFile": "krunkerstrike.html"
+    },
+    {
         "id": "animesama",
         "title": "Anime-sama",
         "creator": "anime-sama.tv",

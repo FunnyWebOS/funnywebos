@@ -1,0 +1,1188 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>StoryForge • AetherOS</title>
+  <style>
+    /* ========== DESIGN SYSTEM ========== */
+    :root {
+      --accent: #0A84FF;
+      --glass: rgba(10, 25, 45, 0.45);
+      --border: rgba(255, 255, 255, 0.15);
+      --text: #ffffff;
+      --text-dim: rgba(255, 255, 255, 0.6);
+      --gold: #FFD60A;
+      --parchment: rgba(255, 248, 220, 0.15);
+      --ink: #2C1810;
+      --magic-purple: #BF5AF0;
+      --magic-blue: #0A84FF;
+      --magic-gold: #FFD60A;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      height: 100vh;
+      background: transparent;
+      color: var(--text);
+      font-family: 'Georgia', 'Times New Roman', 'Palatino', serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      overflow: hidden;
+    }
+
+    /* Effet de particules magiques en arrière-plan */
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: radial-gradient(circle at 20% 50%, rgba(10, 132, 255, 0.1) 0%, transparent 50%),
+                  radial-gradient(circle at 80% 80%, rgba(191, 90, 240, 0.1) 0%, transparent 50%);
+      pointer-events: none;
+      z-index: -1;
+    }
+
+    .app-container {
+      width: 100%;
+      max-width: 1400px;
+      height: 100%;
+      background: var(--glass);
+      backdrop-filter: blur(30px) saturate(180%);
+      border: 1px solid var(--border);
+      border-radius: 32px;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      box-shadow: 0 30px 60px -20px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(255, 215, 0, 0.1) inset;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Effet de parchemin doré sur les bords */
+    .app-container::after {
+      content: '';
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      right: 10px;
+      bottom: 10px;
+      border: 1px solid rgba(255, 215, 0, 0.15);
+      border-radius: 24px;
+      pointer-events: none;
+    }
+
+    /* ========== HEADER ========== */
+    .app-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 16px;
+      border-bottom: 1px solid rgba(255, 215, 0, 0.2);
+      position: relative;
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .app-icon {
+      font-size: 2.5rem;
+      filter: drop-shadow(0 0 10px var(--magic-gold));
+      animation: float 3s ease-in-out infinite;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-5px); }
+    }
+
+    .app-title h1 {
+      font-size: 2.2rem;
+      font-weight: 600;
+      background: linear-gradient(135deg, #fff, var(--magic-gold), var(--magic-purple));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      letter-spacing: 2px;
+      text-shadow: 0 0 20px rgba(255, 215, 0, 0.3);
+    }
+
+    .app-title p {
+      color: var(--text-dim);
+      font-size: 0.9rem;
+      font-style: italic;
+    }
+
+    .user-greeting {
+      background: rgba(0, 0, 0, 0.3);
+      padding: 8px 20px;
+      border-radius: 40px;
+      border: 1px solid var(--gold);
+      font-weight: 500;
+      backdrop-filter: blur(5px);
+      box-shadow: 0 0 15px rgba(255, 214, 0, 0.2);
+    }
+
+    /* ========== MODE SELECTOR ========== */
+    .mode-selector {
+      display: flex;
+      gap: 16px;
+      justify-content: center;
+    }
+
+    .mode-btn {
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 12px 30px;
+      border-radius: 40px;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-family: 'Georgia', serif;
+      letter-spacing: 1px;
+      backdrop-filter: blur(5px);
+    }
+
+    .mode-btn:hover {
+      border-color: var(--magic-gold);
+      transform: translateY(-2px);
+      box-shadow: 0 5px 20px rgba(255, 214, 0, 0.3);
+    }
+
+    .mode-btn.active {
+      background: linear-gradient(135deg, rgba(10, 132, 255, 0.3), rgba(191, 90, 240, 0.3));
+      border-color: var(--magic-gold);
+      box-shadow: 0 0 20px rgba(255, 214, 0, 0.4);
+    }
+
+    /* ========== MAIN CONTENT ========== */
+    .main-content {
+      flex: 1;
+      min-height: 0;
+      position: relative;
+    }
+
+    /* ========== MODE CRÉATION ========== */
+    .creation-mode {
+      height: 100%;
+      display: flex;
+      gap: 20px;
+    }
+
+    /* Panel des histoires */
+    .stories-panel {
+      width: 300px;
+      background: rgba(0, 0, 0, 0.25);
+      border-radius: 24px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      border: 1px solid rgba(255, 215, 0, 0.15);
+      backdrop-filter: blur(5px);
+    }
+
+    .panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .panel-header h2 {
+      font-size: 1.2rem;
+      font-weight: 600;
+      color: var(--magic-gold);
+    }
+
+    .new-story-btn {
+      background: var(--magic-purple);
+      border: none;
+      color: white;
+      width: 36px;
+      height: 36px;
+      border-radius: 12px;
+      font-size: 1.5rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+      border: 1px solid var(--magic-gold);
+    }
+
+    .new-story-btn:hover {
+      transform: rotate(90deg) scale(1.1);
+      background: var(--magic-blue);
+    }
+
+    .stories-list {
+      flex: 1;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      padding-right: 4px;
+    }
+
+    .story-card {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 215, 0, 0.2);
+      border-radius: 16px;
+      padding: 16px;
+      cursor: pointer;
+      transition: all 0.2s;
+      position: relative;
+      backdrop-filter: blur(5px);
+    }
+
+    .story-card:hover {
+      background: rgba(255, 255, 255, 0.08);
+      transform: translateX(4px);
+      border-color: var(--magic-gold);
+    }
+
+    .story-card.selected {
+      background: linear-gradient(135deg, rgba(10, 132, 255, 0.2), rgba(191, 90, 240, 0.2));
+      border-color: var(--magic-gold);
+      box-shadow: 0 0 20px rgba(255, 214, 0, 0.2);
+    }
+
+    .story-title {
+      font-weight: 600;
+      font-size: 1.1rem;
+      margin-bottom: 4px;
+      color: var(--text);
+    }
+
+    .story-meta {
+      display: flex;
+      gap: 10px;
+      font-size: 0.8rem;
+      color: var(--text-dim);
+    }
+
+    .story-branch-count {
+      background: rgba(255, 215, 0, 0.2);
+      padding: 2px 8px;
+      border-radius: 20px;
+      font-size: 0.7rem;
+    }
+
+    /* Éditeur d'histoire */
+    .story-editor {
+      flex: 1;
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: 24px;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      border: 1px solid rgba(255, 215, 0, 0.15);
+      backdrop-filter: blur(5px);
+      overflow-y: auto;
+    }
+
+    .editor-title {
+      font-size: 1.5rem;
+      color: var(--magic-gold);
+      margin-bottom: 8px;
+      font-weight: 600;
+      text-shadow: 0 0 10px rgba(255, 214, 0, 0.3);
+    }
+
+    .story-title-input {
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid rgba(255, 215, 0, 0.3);
+      border-radius: 16px;
+      padding: 16px;
+      color: var(--text);
+      font-size: 1.3rem;
+      font-weight: 600;
+      outline: none;
+      width: 100%;
+      font-family: 'Georgia', serif;
+    }
+
+    .story-title-input:focus {
+      border-color: var(--magic-gold);
+      box-shadow: 0 0 20px rgba(255, 214, 0, 0.2);
+    }
+
+    /* Branches */
+    .branches-container {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .branch-card {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid rgba(255, 215, 0, 0.15);
+      border-radius: 20px;
+      padding: 20px;
+      position: relative;
+    }
+
+    .branch-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .branch-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .branch-number {
+      background: var(--magic-purple);
+      color: white;
+      width: 28px;
+      height: 28px;
+      border-radius: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      font-size: 0.9rem;
+    }
+
+    .branch-input {
+      background: rgba(0, 0, 0, 0.2);
+      border: 1px solid rgba(255, 215, 0, 0.2);
+      border-radius: 12px;
+      padding: 10px;
+      color: var(--text);
+      width: 100%;
+      margin-bottom: 10px;
+      font-family: 'Georgia', serif;
+    }
+
+    .branch-textarea {
+      background: rgba(0, 0, 0, 0.2);
+      border: 1px solid rgba(255, 215, 0, 0.2);
+      border-radius: 16px;
+      padding: 16px;
+      color: var(--text);
+      width: 100%;
+      min-height: 100px;
+      font-family: 'Georgia', serif;
+      line-height: 1.6;
+      resize: vertical;
+      margin-bottom: 15px;
+    }
+
+    .choices-container {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 15px;
+    }
+
+    .choice-item {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .choice-input {
+      flex: 1;
+      background: rgba(0, 0, 0, 0.2);
+      border: 1px solid rgba(255, 215, 0, 0.2);
+      border-radius: 10px;
+      padding: 10px;
+      color: var(--text);
+    }
+
+    .choice-target {
+      width: 80px;
+      background: rgba(0, 0, 0, 0.2);
+      border: 1px solid rgba(255, 215, 0, 0.2);
+      border-radius: 10px;
+      padding: 10px;
+      color: var(--text);
+    }
+
+    .remove-choice {
+      background: none;
+      border: none;
+      color: #FF453A;
+      cursor: pointer;
+      font-size: 1.2rem;
+    }
+
+    .add-choice-btn {
+      background: rgba(10, 132, 255, 0.3);
+      border: 1px dashed var(--magic-blue);
+      color: var(--text);
+      padding: 8px;
+      border-radius: 10px;
+      cursor: pointer;
+      margin-top: 10px;
+      width: 100%;
+      font-family: 'Georgia', serif;
+    }
+
+    .delete-branch {
+      background: none;
+      border: none;
+      color: #FF453A;
+      cursor: pointer;
+      font-size: 1.2rem;
+    }
+
+    .add-branch-btn {
+      background: linear-gradient(135deg, rgba(10, 132, 255, 0.3), rgba(191, 90, 240, 0.3));
+      border: 2px dashed var(--magic-gold);
+      color: var(--text);
+      padding: 16px;
+      border-radius: 20px;
+      cursor: pointer;
+      font-size: 1rem;
+      font-family: 'Georgia', serif;
+      transition: all 0.3s;
+    }
+
+    .add-branch-btn:hover {
+      background: linear-gradient(135deg, rgba(10, 132, 255, 0.5), rgba(191, 90, 240, 0.5));
+      border-style: solid;
+    }
+
+    .save-story-btn {
+      background: var(--magic-gold);
+      border: none;
+      color: #2C1810;
+      padding: 16px;
+      border-radius: 40px;
+      font-size: 1.2rem;
+      font-weight: bold;
+      cursor: pointer;
+      margin-top: 20px;
+      font-family: 'Georgia', serif;
+      transition: all 0.3s;
+    }
+
+    .save-story-btn:hover {
+      transform: scale(1.02);
+      box-shadow: 0 0 30px rgba(255, 214, 0, 0.5);
+    }
+
+    /* ========== MODE LECTURE ========== */
+    .reading-mode {
+      height: 100%;
+      display: flex;
+      gap: 20px;
+    }
+
+    .story-selector {
+      width: 300px;
+      background: rgba(0, 0, 0, 0.25);
+      border-radius: 24px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      border: 1px solid rgba(255, 215, 0, 0.15);
+    }
+
+    .reader-panel {
+      flex: 1;
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: 24px;
+      padding: 40px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid rgba(255, 215, 0, 0.15);
+      position: relative;
+      overflow-y: auto;
+    }
+
+    .book-page {
+      max-width: 600px;
+      width: 100%;
+      background: rgba(255, 248, 220, 0.08);
+      backdrop-filter: blur(5px);
+      border: 1px solid var(--magic-gold);
+      border-radius: 32px;
+      padding: 40px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4), 0 0 0 2px rgba(255, 215, 0, 0.1) inset;
+      position: relative;
+    }
+
+    .book-page::before {
+      content: '';
+      position: absolute;
+      left: 20px;
+      top: 20px;
+      bottom: 20px;
+      width: 2px;
+      background: linear-gradient(to bottom, transparent, var(--magic-gold), transparent);
+    }
+
+    .book-title {
+      font-size: 2rem;
+      color: var(--magic-gold);
+      margin-bottom: 30px;
+      text-align: center;
+      text-shadow: 0 0 15px rgba(255, 214, 0, 0.4);
+    }
+
+    .book-content {
+      font-size: 1.2rem;
+      line-height: 1.8;
+      color: var(--text);
+      margin-bottom: 40px;
+      font-style: italic;
+    }
+
+    .book-choices {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .choice-btn {
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 16px 24px;
+      border-radius: 40px;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: all 0.3s;
+      text-align: left;
+      font-family: 'Georgia', serif;
+      backdrop-filter: blur(5px);
+    }
+
+    .choice-btn:hover {
+      border-color: var(--magic-gold);
+      transform: translateX(10px);
+      background: rgba(255, 215, 0, 0.1);
+      box-shadow: 0 0 20px rgba(255, 214, 0, 0.3);
+    }
+
+    .restart-btn {
+      background: var(--magic-purple);
+      border: none;
+      color: white;
+      padding: 12px 30px;
+      border-radius: 40px;
+      cursor: pointer;
+      margin-top: 30px;
+      font-family: 'Georgia', serif;
+      border: 1px solid var(--magic-gold);
+    }
+
+    .no-story-selected {
+      color: var(--text-dim);
+      font-size: 1.3rem;
+      font-style: italic;
+    }
+
+    /* ========== PARTICULES MAGIQUES ========== */
+    .magic-particle {
+      position: fixed;
+      pointer-events: none;
+      background: radial-gradient(circle, var(--magic-gold), transparent);
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      animation: float-particle 10s linear infinite;
+    }
+
+    @keyframes float-particle {
+      0% {
+        transform: translateY(100vh) translateX(0);
+        opacity: 0;
+      }
+      10% {
+        opacity: 0.5;
+      }
+      90% {
+        opacity: 0.5;
+      }
+      100% {
+        transform: translateY(-100vh) translateX(100px);
+        opacity: 0;
+      }
+    }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: var(--magic-gold);
+      border-radius: 8px;
+      opacity: 0.5;
+    }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <!-- Header -->
+    <div class="app-header">
+      <div class="header-left">
+        <div class="app-icon">📖✨</div>
+        <div class="app-title">
+          <h1>StoryForge</h1>
+          <p>Forgez vos légendes, vivez vos histoires</p>
+        </div>
+      </div>
+      <div class="user-greeting" id="userGreeting">📜 Conteur invité</div>
+    </div>
+
+    <!-- Mode Selector -->
+    <div class="mode-selector">
+      <button class="mode-btn active" onclick="switchMode('creation')">
+        <span>⚒️</span> Mode Création
+      </button>
+      <button class="mode-btn" onclick="switchMode('reading')">
+        <span>📖</span> Mode Lecture
+      </button>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content" id="mainContent">
+      <!-- Le contenu est injecté par JS -->
+    </div>
+  </div>
+
+  <script>
+    // ========== ÉTAT DE L'APPLICATION ==========
+    let currentMode = 'creation';
+    let userName = 'Conteur invité';
+    let stories = [];
+    let selectedStoryId = null;
+    let currentBranchId = 'start';
+    let selectedStoryForReading = null;
+
+    // ========== DONNÉES EXEMPLE ==========
+    const exampleStories = [
+      {
+        id: 'story1',
+        title: 'Le Manoir Oublié',
+        branches: {
+          start: {
+            id: 'start',
+            title: 'L\'entrée du manoir',
+            text: 'Vous arrivez devant un vieux manoir victorien, perdu dans la brume. La porte grince légèrement, comme si elle vous invitait à entrer. Une lumière vacille à l\'intérieur...',
+            choices: [
+              { text: 'Entrer par la porte principale', target: 'entree' },
+              { text: 'Faire le tour par le jardin', target: 'jardin' }
+            ]
+          },
+          entree: {
+            id: 'entree',
+            title: 'Le grand hall',
+            text: 'Le hall d\'entrée est immense. Un lustre poussiéreux pend au plafond. Vous voyez un escalier qui monte et une porte sous l\'escalier.',
+            choices: [
+              { text: 'Monter l\'escalier', target: 'etage' },
+              { text: 'Ouvrir la porte sous l\'escalier', target: 'cave' }
+            ]
+          },
+          jardin: {
+            id: 'jardin',
+            title: 'Le jardin sauvage',
+            text: 'Le jardin est envahi par les ronces. Vous apercevez une fenêtre éclairée au rez-de-chaussée et une tour à l\'arrière.',
+            choices: [
+              { text: 'Regarder par la fenêtre', target: 'cuisine' },
+              { text: 'Aller vers la tour', target: 'tour' }
+            ]
+          },
+          etage: {
+            id: 'etage',
+            title: 'Le couloir sombre',
+            text: 'À l\'étage, un long couloir s\'étend. Vous entendez des pleurs venant d\'une chambre. Au fond, un tableau semble vous observer.',
+            choices: [
+              { text: 'Ouvrir la porte qui pleure', target: 'chambre' },
+              { text: 'Examiner le tableau', target: 'tableau' }
+            ]
+          },
+          cave: {
+            id: 'cave',
+            title: 'La cave humide',
+            text: 'La cave est glaciale. Des toiles d\'araignée partout. Vous voyez un vieux coffre et un passage secret.',
+            choices: [
+              { text: 'Ouvrir le coffre', target: 'coffre' },
+              { text: 'Prendre le passage secret', target: 'passage' }
+            ]
+          },
+          chambre: {
+            id: 'chambre',
+            title: 'La chambre hantée',
+            text: 'La chambre est vide, mais le lit est défait. Un journal intime traîne sur la table de nuit...',
+            choices: [
+              { text: 'Lire le journal', target: 'journal' },
+              { text: 'Resortir rapidement', target: 'etage' }
+            ]
+          },
+          tableau: {
+            id: 'tableau',
+            title: 'Le tableau magique',
+            text: 'Le tableau représente une femme élégante. Ses yeux semblent bouger. Soudain, elle vous parle : "Aide-moi à retrouver mon médaillon dans la cave !"',
+            choices: [
+              { text: 'Aller chercher le médaillon', target: 'cave' },
+              { text: 'Prendre peur et fuir', target: 'start' }
+            ]
+          }
+        },
+        createdAt: Date.now() - 86400000,
+        branchCount: 7
+      },
+      {
+        id: 'story2',
+        title: 'La Quête du Cristal',
+        branches: {
+          start: {
+            id: 'start',
+            title: 'Le village',
+            text: 'Vous êtes un jeune aventurier dans le village de Brumeval. Le sage vous confie une mission : retrouver le Cristal de Lune dans la forêt enchantée.',
+            choices: [
+              { text: 'Accepter la quête', target: 'foret' },
+              { text: 'Refuser et rester au village', target: 'fin_lache' }
+            ]
+          },
+          foret: {
+            id: 'foret',
+            title: 'La forêt enchantée',
+            text: 'La forêt est magique. Des fées volent autour de vous. Deux chemins s\'offrent à vous : un sentier lumineux et un chemin sombre.',
+            choices: [
+              { text: 'Prendre le sentier lumineux', target: 'clairiere' },
+              { text: 'S\'aventurer dans le chemin sombre', target: 'grotte' }
+            ]
+          },
+          fin_lache: {
+            id: 'fin_lache',
+            title: 'FIN - Le lâche',
+            text: 'Vous restez au village à cultiver des navets. Une vie paisible, mais sans gloire. Le cristal restera à jamais perdu...',
+            choices: [
+              { text: 'Recommencer l\'aventure', target: 'start' }
+            ]
+          }
+        },
+        createdAt: Date.now() - 43200000,
+        branchCount: 3
+      }
+    ];
+
+    // Initialisation
+    stories = JSON.parse(JSON.stringify(exampleStories));
+    if (stories.length > 0) {
+      selectedStoryId = stories[0].id;
+      selectedStoryForReading = stories[0].id;
+    }
+
+    // ========== FONCTIONS PRINCIPALES ==========
+
+    // Changement de mode
+    function switchMode(mode) {
+      currentMode = mode;
+      document.querySelectorAll('.mode-btn').forEach(btn => btn.classList.remove('active'));
+      event.target.closest('.mode-btn').classList.add('active');
+      renderMainContent();
+    }
+
+    // Rendu du contenu principal
+    function renderMainContent() {
+      const container = document.getElementById('mainContent');
+      
+      if (currentMode === 'creation') {
+        container.innerHTML = renderCreationMode();
+        attachCreationEvents();
+      } else {
+        container.innerHTML = renderReadingMode();
+        attachReadingEvents();
+      }
+    }
+
+    // ========== MODE CRÉATION ==========
+    function renderCreationMode() {
+      const selectedStory = stories.find(s => s.id === selectedStoryId);
+      
+      return `
+        <div class="creation-mode">
+          <!-- Panneau des histoires -->
+          <div class="stories-panel">
+            <div class="panel-header">
+              <h2>📚 Vos Histoires</h2>
+              <button class="new-story-btn" onclick="createNewStory()">+</button>
+            </div>
+            <div class="stories-list">
+              ${stories.map(story => `
+                <div class="story-card ${story.id === selectedStoryId ? 'selected' : ''}" 
+                     onclick="selectStory('${story.id}')">
+                  <div class="story-title">${story.title}</div>
+                  <div class="story-meta">
+                    <span>📖 ${Object.keys(story.branches).length} branches</span>
+                    <span class="story-branch-count">✨ ${new Date(story.createdAt).toLocaleDateString()}</span>
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+
+          <!-- Éditeur d'histoire -->
+          <div class="story-editor">
+            ${selectedStory ? renderStoryEditor(selectedStory) : '<p class="no-story-selected">Sélectionnez ou créez une histoire</p>'}
+          </div>
+        </div>
+      `;
+    }
+
+    function renderStoryEditor(story) {
+      return `
+        <div class="editor-title">✍️ Forgez votre légende</div>
+        
+        <input type="text" class="story-title-input" id="storyTitleInput" 
+               value="${story.title}" placeholder="Titre de l'histoire...">
+
+        <div class="branches-container" id="branchesContainer">
+          ${Object.values(story.branches).map(branch => renderBranchEditor(branch, story)).join('')}
+        </div>
+
+        <button class="add-branch-btn" onclick="addNewBranch()">
+          + Ajouter une nouvelle branche
+        </button>
+
+        <button class="save-story-btn" onclick="saveCurrentStory()">
+          🔮 Sauvegarder l'histoire
+        </button>
+      `;
+    }
+
+    function renderBranchEditor(branch, story) {
+      return `
+        <div class="branch-card" data-branch-id="${branch.id}">
+          <div class="branch-header">
+            <div class="branch-title">
+              <span class="branch-number">${branch.id === 'start' ? '🌟' : '📌'}</span>
+              <input type="text" class="branch-input" value="${branch.title}" 
+                     placeholder="Titre de la branche" onchange="updateBranchTitle('${branch.id}', this.value)">
+            </div>
+            ${branch.id !== 'start' ? `
+              <button class="delete-branch" onclick="deleteBranch('${branch.id}')">🗑️</button>
+            ` : ''}
+          </div>
+
+          <textarea class="branch-textarea" placeholder="Le récit..." 
+                    onchange="updateBranchText('${branch.id}', this.value)">${branch.text}</textarea>
+
+          <div class="choices-container" id="choices-${branch.id}">
+            ${branch.choices.map((choice, index) => `
+              <div class="choice-item">
+                <input type="text" class="choice-input" value="${choice.text}" 
+                       placeholder="Texte du choix..." 
+                       onchange="updateChoiceText('${branch.id}', ${index}, this.value)">
+                <select class="choice-target" onchange="updateChoiceTarget('${branch.id}', ${index}, this.value)">
+                  ${Object.keys(story.branches).map(branchId => `
+                    <option value="${branchId}" ${branchId === choice.target ? 'selected' : ''}>
+                      ${story.branches[branchId]?.title || branchId}
+                    </option>
+                  `).join('')}
+                </select>
+                <button class="remove-choice" onclick="removeChoice('${branch.id}', ${index})">✖</button>
+              </div>
+            `).join('')}
+          </div>
+
+          <button class="add-choice-btn" onclick="addChoice('${branch.id}')">
+            + Ajouter un choix
+          </button>
+        </div>
+      `;
+    }
+
+    // ========== MODE LECTURE ==========
+    function renderReadingMode() {
+      const story = stories.find(s => s.id === selectedStoryForReading);
+      
+      return `
+        <div class="reading-mode">
+          <!-- Sélecteur d'histoire -->
+          <div class="story-selector">
+            <div class="panel-header">
+              <h2>📖 Choisissez une histoire</h2>
+            </div>
+            <div class="stories-list">
+              ${stories.map(story => `
+                <div class="story-card ${story.id === selectedStoryForReading ? 'selected' : ''}" 
+                     onclick="selectStoryForReading('${story.id}')">
+                  <div class="story-title">${story.title}</div>
+                  <div class="story-meta">
+                    <span>📚 ${Object.keys(story.branches).length} branches</span>
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+
+          <!-- Lecteur -->
+          <div class="reader-panel">
+            ${story ? renderBookPage(story) : '<p class="no-story-selected">Sélectionnez une histoire à lire</p>'}
+          </div>
+        </div>
+      `;
+    }
+
+    function renderBookPage(story) {
+      const branch = story.branches[currentBranchId];
+      
+      return `
+        <div class="book-page">
+          <div class="book-title">${story.title}</div>
+          <div class="book-content">
+            ${branch.text}
+          </div>
+          
+          <div class="book-choices">
+            ${branch.choices.map(choice => `
+              <button class="choice-btn" onclick="makeChoice('${choice.target}')">
+                ➤ ${choice.text}
+              </button>
+            `).join('')}
+          </div>
+
+          <button class="restart-btn" onclick="restartStory()">
+            🔄 Recommencer l'histoire
+          </button>
+        </div>
+      `;
+    }
+
+    // ========== FONCTIONS DE CRÉATION ==========
+    function createNewStory() {
+      const newId = 'story_' + Date.now();
+      const newStory = {
+        id: newId,
+        title: 'Nouvelle histoire',
+        branches: {
+          start: {
+            id: 'start',
+            title: 'Début de l\'aventure',
+            text: 'Il était une fois...',
+            choices: []
+          }
+        },
+        createdAt: Date.now(),
+        branchCount: 1
+      };
+      
+      stories.push(newStory);
+      selectedStoryId = newId;
+      renderMainContent();
+    }
+
+    function selectStory(storyId) {
+      selectedStoryId = storyId;
+      renderMainContent();
+    }
+
+    function addNewBranch() {
+      const story = stories.find(s => s.id === selectedStoryId);
+      const newId = 'branch_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4);
+      
+      story.branches[newId] = {
+        id: newId,
+        title: 'Nouvelle branche',
+        text: 'Écrivez votre récit ici...',
+        choices: []
+      };
+      
+      renderMainContent();
+    }
+
+    function updateBranchTitle(branchId, title) {
+      const story = stories.find(s => s.id === selectedStoryId);
+      story.branches[branchId].title = title;
+    }
+
+    function updateBranchText(branchId, text) {
+      const story = stories.find(s => s.id === selectedStoryId);
+      story.branches[branchId].text = text;
+    }
+
+    function addChoice(branchId) {
+      const story = stories.find(s => s.id === selectedStoryId);
+      const branch = story.branches[branchId];
+      
+      if (!branch.choices) branch.choices = [];
+      
+      // Trouver une cible par défaut (la première branche ou la même)
+      const defaultTarget = Object.keys(story.branches)[0] || branchId;
+      
+      branch.choices.push({
+        text: 'Nouveau choix',
+        target: defaultTarget
+      });
+      
+      renderMainContent();
+    }
+
+    function updateChoiceText(branchId, choiceIndex, text) {
+      const story = stories.find(s => s.id === selectedStoryId);
+      story.branches[branchId].choices[choiceIndex].text = text;
+    }
+
+    function updateChoiceTarget(branchId, choiceIndex, target) {
+      const story = stories.find(s => s.id === selectedStoryId);
+      story.branches[branchId].choices[choiceIndex].target = target;
+    }
+
+    function removeChoice(branchId, choiceIndex) {
+      const story = stories.find(s => s.id === selectedStoryId);
+      story.branches[branchId].choices.splice(choiceIndex, 1);
+      renderMainContent();
+    }
+
+    function deleteBranch(branchId) {
+      const story = stories.find(s => s.id === selectedStoryId);
+      
+      // Vérifier que ce n'est pas la branche start
+      if (branchId === 'start') {
+        alert('Impossible de supprimer la branche de départ !');
+        return;
+      }
+      
+      // Supprimer les choix qui pointent vers cette branche
+      Object.values(story.branches).forEach(branch => {
+        if (branch.choices) {
+          branch.choices = branch.choices.filter(c => c.target !== branchId);
+        }
+      });
+      
+      // Supprimer la branche
+      delete story.branches[branchId];
+      
+      renderMainContent();
+    }
+
+    function saveCurrentStory() {
+      const story = stories.find(s => s.id === selectedStoryId);
+      const titleInput = document.getElementById('storyTitleInput');
+      
+      if (titleInput) {
+        story.title = titleInput.value;
+      }
+      
+      story.branchCount = Object.keys(story.branches).length;
+      
+      // Notification
+      window.parent?.windowManager?.notify(
+        '📖 StoryForge',
+        `"${story.title}" a été sauvegardé dans les archives magiques`,
+        'system'
+      );
+      
+      alert('Histoire sauvegardée ! ✨');
+      renderMainContent();
+    }
+
+    // ========== FONCTIONS DE LECTURE ==========
+    function selectStoryForReading(storyId) {
+      selectedStoryForReading = storyId;
+      currentBranchId = 'start';
+      renderMainContent();
+    }
+
+    function makeChoice(targetBranchId) {
+      currentBranchId = targetBranchId;
+      renderMainContent();
+      
+      // Effet de "page qui tourne"
+      createMagicEffect();
+    }
+
+    function restartStory() {
+      currentBranchId = 'start';
+      renderMainContent();
+    }
+
+    // ========== EFFETS MAGIQUES ==========
+    function createMagicEffect() {
+      for (let i = 0; i < 10; i++) {
+        setTimeout(() => {
+          const particle = document.createElement('div');
+          particle.className = 'magic-particle';
+          particle.style.left = Math.random() * 100 + '%';
+          particle.style.animationDuration = (3 + Math.random() * 5) + 's';
+          particle.style.background = `radial-gradient(circle, ${i % 3 === 0 ? '#FFD60A' : '#BF5AF0'}, transparent)`;
+          document.body.appendChild(particle);
+          
+          setTimeout(() => particle.remove(), 5000);
+        }, i * 100);
+      }
+    }
+
+    // ========== API AETHEROS ==========
+    window.addEventListener('message', (event) => {
+      if (event.data && event.data.type === 'funnyweb_user_sync') {
+        const { userName: username } = event.data;
+        if (username) {
+          userName = username;
+          document.getElementById('userGreeting').innerHTML = `📜 Conteur ${username}`;
+        }
+      }
+    });
+
+    // ========== INITIALISATION ==========
+    document.addEventListener('DOMContentLoaded', () => {
+      renderMainContent();
+      createMagicEffect();
+      setInterval(createMagicEffect, 30000); // Nouvelles particules toutes les 30s
+    });
+
+    // Fonctions globales nécessaires pour les événements onclick
+    window.switchMode = switchMode;
+    window.createNewStory = createNewStory;
+    window.selectStory = selectStory;
+    window.addNewBranch = addNewBranch;
+    window.updateBranchTitle = updateBranchTitle;
+    window.updateBranchText = updateBranchText;
+    window.addChoice = addChoice;
+    window.updateChoiceText = updateChoiceText;
+    window.updateChoiceTarget = updateChoiceTarget;
+    window.removeChoice = removeChoice;
+    window.deleteBranch = deleteBranch;
+    window.saveCurrentStory = saveCurrentStory;
+    window.selectStoryForReading = selectStoryForReading;
+    window.makeChoice = makeChoice;
+    window.restartStory = restartStory;
+
+    // Attachement des événements dynamiques
+    function attachCreationEvents() {
+      // Les événements sont gérés par les attributs onclick
+    }
+
+    function attachReadingEvents() {
+      // Les événements sont gérés par les attributs onclick
+    }
+  </script>
+</body>
+</html>

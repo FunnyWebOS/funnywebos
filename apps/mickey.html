@@ -1,1072 +1,916 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="fr" data-theme="dark">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Mickey</title>
   <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
-      --bg: #050a14;
-      --panel: rgba(15, 23, 42, 0.72);
-      --panel-2: rgba(15, 23, 42, 0.55);
-      --border: rgba(255, 255, 255, 0.12);
-      --text: #f8fafc;
-      --muted: rgba(248, 250, 252, 0.62);
-      --muted-2: rgba(248, 250, 252, 0.38);
-      --accent: #c084fc;
-      --accent-2: #38bdf8;
-      --shadow: 0 30px 90px rgba(0, 0, 0, 0.55);
-      --radius: 18px;
-      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-      --font: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+      --bg: #212121; --sidebar: #171717; --panel: #2f2f2f; --panel-hover: #3a3a3a;
+      --border: rgba(255,255,255,0.08); --text: #ececec; --muted: rgba(236,236,236,0.5);
+      --muted2: rgba(236,236,236,0.3); --accent: #10a37f; --user-bubble: #2f2f2f;
+      --input-bg: #2f2f2f; --input-border: rgba(255,255,255,0.12);
+      --font: system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
     }
-
     :root[data-theme="light"] {
-      --bg: #f6f7fb;
-      --panel: rgba(255, 255, 255, 0.82);
-      --panel-2: rgba(255, 255, 255, 0.62);
-      --border: rgba(2, 6, 23, 0.12);
-      --text: #0f172a;
-      --muted: rgba(15, 23, 42, 0.64);
-      --muted-2: rgba(15, 23, 42, 0.42);
-      --shadow: 0 30px 90px rgba(2, 6, 23, 0.18);
+      --bg: #fff; --sidebar: #f9f9f9; --panel: #f4f4f4; --panel-hover: #ebebeb;
+      --border: rgba(0,0,0,0.08); --text: #0d0d0d; --muted: rgba(13,13,13,0.55);
+      --muted2: rgba(13,13,13,0.35); --user-bubble: #f4f4f4;
+      --input-bg: #fff; --input-border: rgba(0,0,0,0.15);
     }
-
-    * { box-sizing: border-box; }
-    html, body { height: 100%; }
-    body {
-      margin: 0;
-      font-family: var(--font);
-      background:
-        radial-gradient(1000px 700px at 70% 30%, rgba(192, 132, 252, 0.18), transparent 60%),
-        radial-gradient(900px 600px at 25% 25%, rgba(56, 189, 248, 0.14), transparent 60%),
-        linear-gradient(180deg, rgba(2, 6, 23, 0.55), rgba(2, 6, 23, 0.85)),
-        var(--bg);
-      color: var(--text);
-      overflow: hidden;
-    }
-
-    :root[data-theme="light"] body {
-      background:
-        radial-gradient(1000px 700px at 70% 30%, rgba(192, 132, 252, 0.16), transparent 60%),
-        radial-gradient(900px 600px at 25% 25%, rgba(56, 189, 248, 0.14), transparent 60%),
-        linear-gradient(180deg, rgba(255, 255, 255, 0.65), rgba(246, 247, 251, 1)),
-        var(--bg);
-    }
-
-    .wrap {
-      height: 100%;
-      display: flex;
-      flex-direction: column;
-      padding: 16px;
-      gap: 12px;
-      width: 100%;
-      max-width: 980px;
-      margin: 0 auto;
-    }
-
-    .top {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 14px 14px;
-      border-radius: var(--radius);
-      background: var(--panel);
-      border: 1px solid var(--border);
-      box-shadow: var(--shadow);
-      backdrop-filter: blur(22px) saturate(170%);
-      -webkit-backdrop-filter: blur(22px) saturate(170%);
-    }
-
-    .brand { display: flex; align-items: center; gap: 12px; min-width: 0; }
-    .avatar {
-      width: 40px; height: 40px; border-radius: 14px;
-      background: linear-gradient(135deg, rgba(192, 132, 252, 1), rgba(56, 189, 248, 1));
-      display: flex; align-items: center; justify-content: center;
-      font-weight: 900;
-      color: #0b1222;
-      box-shadow: 0 10px 25px rgba(192, 132, 252, 0.25);
-      flex: 0 0 auto;
-    }
-    .brand-info { min-width: 0; }
-    .title { font-weight: 900; letter-spacing: 0.3px; }
-    .subtitle { font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-
-    .btns { display: flex; gap: 8px; align-items: center; }
-    button {
-      border: 1px solid var(--border);
-      background: rgba(255, 255, 255, 0.06);
-      color: var(--text);
-      padding: 10px 12px;
-      border-radius: 12px;
-      cursor: pointer;
-      font-weight: 700;
-      transition: transform 0.08s ease, background 0.2s ease, opacity 0.2s ease;
-      user-select: none;
-    }
-    button:hover { background: rgba(255, 255, 255, 0.1); }
-    button:active { transform: translateY(1px) scale(0.99); }
-    button.primary {
-      border: none;
-      background: linear-gradient(90deg, rgba(192, 132, 252, 1), rgba(56, 189, 248, 1));
-      color: #0b1222;
-      box-shadow: 0 12px 30px rgba(56, 189, 248, 0.18);
-    }
-    button.ghost { background: transparent; }
-    button[disabled] { opacity: 0.6; cursor: not-allowed; }
-
-    .chips { display: flex; flex-wrap: wrap; gap: 8px; }
-    .chip {
-      padding: 9px 10px;
-      border-radius: 999px;
-      font-size: 12px;
-      border: 1px solid var(--border);
-      background: var(--panel-2);
-      color: var(--text);
-      cursor: pointer;
-      transition: background 0.2s ease, transform 0.08s ease;
-    }
-    .chip:hover { background: rgba(255, 255, 255, 0.1); }
-    .chip:active { transform: translateY(1px); }
-
-    .chat {
-      flex: 1;
-      overflow: auto;
-      padding: 14px;
-      border-radius: var(--radius);
-      background: var(--panel);
-      border: 1px solid var(--border);
-      box-shadow: var(--shadow);
-      backdrop-filter: blur(22px) saturate(170%);
-      -webkit-backdrop-filter: blur(22px) saturate(170%);
-    }
-    .chat::-webkit-scrollbar { width: 6px; }
-    .chat::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.18); border-radius: 999px; }
-
-    .msg { display: flex; gap: 10px; margin: 10px 0; }
-    .msg .bubble {
-      max-width: 92%;
-      padding: 12px 12px;
-      border-radius: 16px;
-      border: 1px solid var(--border);
-      background: rgba(255, 255, 255, 0.06);
-      line-height: 1.35;
-      white-space: pre-wrap;
-      word-break: break-word;
-    }
-    .msg.user { justify-content: flex-end; }
-    .msg.user .bubble {
-      background: linear-gradient(135deg, rgba(192, 132, 252, 0.18), rgba(56, 189, 248, 0.14));
-      border-color: rgba(56, 189, 248, 0.25);
-    }
-    .msg.assistant .bubble { background: rgba(255, 255, 255, 0.06); }
-    .msg .meta { font-size: 11px; color: var(--muted-2); margin-top: 6px; }
-
-    .composer {
-      display: flex;
-      gap: 10px;
-      padding: 12px;
-      border-radius: var(--radius);
-      background: var(--panel);
-      border: 1px solid var(--border);
-      box-shadow: var(--shadow);
-      backdrop-filter: blur(22px) saturate(170%);
-      -webkit-backdrop-filter: blur(22px) saturate(170%);
-      align-items: flex-end;
-    }
-    .input {
-      flex: 1;
-      border: 1px solid var(--border);
-      background: rgba(0, 0, 0, 0.18);
-      color: var(--text);
-      border-radius: 14px;
-      padding: 10px 12px;
-      min-height: 44px;
-      max-height: 120px;
-      resize: none;
-      outline: none;
-      font-family: inherit;
-      font-size: 16px;
-      line-height: 1.35;
-    }
-    :root[data-theme="light"] .input { background: rgba(2, 6, 23, 0.04); }
-    .hint { font-size: 12px; color: var(--muted); padding: 0 2px; }
-
-    .panel {
-      position: fixed;
-      inset: 16px;
-      border-radius: var(--radius);
-      background: rgba(2, 6, 23, 0.55);
-      backdrop-filter: blur(18px) saturate(140%);
-      -webkit-backdrop-filter: blur(18px) saturate(140%);
-      border: 1px solid rgba(255, 255, 255, 0.12);
-      display: none;
-      align-items: center;
-      justify-content: center;
-      padding: 16px;
-      z-index: 50;
-    }
-    :root[data-theme="light"] .panel { background: rgba(15, 23, 42, 0.3); border-color: rgba(2, 6, 23, 0.12); }
-    .panel.open { display: flex; }
-    .panel-card {
-      width: min(780px, 100%);
-      max-height: 100%;
-      overflow: auto;
-      border-radius: var(--radius);
-      background: var(--panel);
-      border: 1px solid var(--border);
-      box-shadow: var(--shadow);
-      padding: 16px;
-    }
-    .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
-    .field { display: flex; flex-direction: column; gap: 6px; flex: 1; min-width: 220px; }
-    label { font-size: 12px; color: var(--muted); }
-    select, .text {
-      border: 1px solid var(--border);
-      background: rgba(0, 0, 0, 0.18);
-      color: var(--text);
-      border-radius: 12px;
-      padding: 10px 12px;
-      outline: none;
-      font-family: inherit;
-    }
-    :root[data-theme="light"] select,
-    :root[data-theme="light"] .text { background: rgba(2, 6, 23, 0.04); }
-    .text.mono { font-family: var(--mono); }
-    .small { font-size: 12px; color: var(--muted); line-height: 1.3; }
-    .kbd { font-family: var(--mono); font-size: 11px; padding: 2px 6px; border: 1px solid var(--border); border-radius: 8px; background: rgba(255,255,255,0.06); }
-    .danger { background: rgba(255, 59, 48, 0.12); border-color: rgba(255, 59, 48, 0.25); }
-    .danger:hover { background: rgba(255, 59, 48, 0.18); }
+    html, body { height: 100%; overflow: hidden; }
+    body { font-family: var(--font); background: var(--bg); color: var(--text); display: flex; height: 100%; font-size: 15px; line-height: 1.6; -webkit-font-smoothing: antialiased; }
+    .sidebar { width: 260px; background: var(--sidebar); display: flex; flex-direction: column; border-right: 1px solid var(--border); flex-shrink: 0; }
+    .sidebar-header { padding: 14px 12px 10px; display: flex; align-items: center; justify-content: space-between; }
+    .logo { display: flex; align-items: center; gap: 10px; font-weight: 600; font-size: 15px; }
+    .logo-icon { width: 32px; height: 32px; border-radius: 8px; background: var(--accent); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; color: #fff; flex-shrink: 0; }
+    .sib { width: 32px; height: 32px; border: none; background: transparent; color: var(--muted); cursor: pointer; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 20px; transition: background .15s, color .15s; }
+    .sib:hover { background: var(--panel-hover); color: var(--text); }
+    .new-chat-btn { margin: 4px 12px 10px; padding: 10px 12px; border: 1px solid var(--border); background: transparent; color: var(--text); border-radius: 10px; cursor: pointer; font-family: var(--font); font-size: 14px; font-weight: 500; display: flex; align-items: center; gap: 8px; transition: background .15s; width: calc(100% - 24px); }
+    .new-chat-btn:hover { background: var(--panel-hover); }
+    .sidebar-section { padding: 6px 12px 2px; font-size: 11px; font-weight: 600; color: var(--muted2); text-transform: uppercase; letter-spacing: .06em; }
+    .chip-list { padding: 4px 8px; display: flex; flex-direction: column; gap: 2px; }
+    .chip-item { padding: 8px 10px; border-radius: 8px; font-size: 13px; color: var(--muted); cursor: pointer; transition: background .15s, color .15s; border: none; background: transparent; font-family: var(--font); text-align: left; width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .chip-item:hover { background: var(--panel-hover); color: var(--text); }
+    .sidebar-footer { margin-top: auto; border-top: 1px solid var(--border); padding: 10px 8px; display: flex; flex-direction: column; gap: 2px; }
+    .footer-btn { padding: 9px 10px; border-radius: 8px; font-size: 13px; color: var(--muted); cursor: pointer; display: flex; align-items: center; gap: 10px; border: none; background: transparent; font-family: var(--font); transition: background .15s, color .15s; text-align: left; width: 100%; }
+    .footer-btn:hover { background: var(--panel-hover); color: var(--text); }
+    .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-width: 0; }
+    .topbar { height: 52px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 20px; flex-shrink: 0; }
+    .model-sel { border: none; background: transparent; color: var(--text); font-family: var(--font); font-size: 14px; font-weight: 600; cursor: pointer; outline: none; padding: 6px 8px; border-radius: 8px; transition: background .15s; }
+    .model-sel:hover { background: var(--panel); }
+    .model-sel option { background: var(--panel); color: var(--text); }
+    .topbar-right { display: flex; align-items: center; gap: 6px; }
+    #status-text { font-size: 12px; color: var(--muted); }
+    .ib { width: 34px; height: 34px; border: none; background: transparent; color: var(--muted); cursor: pointer; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 17px; transition: background .15s, color .15s; }
+    .ib:hover { background: var(--panel); color: var(--text); }
+    .chat-area { flex: 1; overflow-y: auto; scroll-behavior: smooth; }
+    .chat-area::-webkit-scrollbar { width: 5px; }
+    .chat-area::-webkit-scrollbar-thumb { background: var(--border); border-radius: 99px; }
+    .empty-state { height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 24px; padding: 40px 20px; }
+    .empty-title { font-size: 28px; font-weight: 600; letter-spacing: -.02em; }
+    .empty-chips { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; max-width: 600px; }
+    .empty-chip { padding: 12px 16px; border: 1px solid var(--border); border-radius: 12px; font-size: 13px; color: var(--muted); cursor: pointer; background: transparent; font-family: var(--font); transition: background .15s, color .15s; text-align: left; line-height: 1.4; min-width: 160px; }
+    .empty-chip:hover { background: var(--panel); color: var(--text); }
+    .empty-chip strong { display: block; color: var(--text); font-weight: 500; margin-bottom: 2px; font-size: 14px; }
+    .messages { max-width: 780px; margin: 0 auto; padding: 20px 20px 10px; display: flex; flex-direction: column; }
+    .msg-row { padding: 16px 0; display: flex; flex-direction: column; }
+    .msg-row.user { align-items: flex-end; }
+    .msg-row.assistant { align-items: flex-start; }
+    .msg-header { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+    .msg-avatar { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; flex-shrink: 0; }
+    .msg-avatar.ai { background: var(--accent); color: #fff; }
+    .msg-avatar.me { background: var(--panel); color: var(--text); border: 1px solid var(--border); }
+    .msg-name { font-size: 13px; font-weight: 600; }
+    .msg-time { font-size: 11px; color: var(--muted2); }
+    .msg-bubble { max-width: min(680px, 90%); font-size: 15px; line-height: 1.7; white-space: pre-wrap; word-break: break-word; }
+    .msg-row.user .msg-bubble { background: var(--user-bubble); padding: 12px 16px; border-radius: 18px 18px 4px 18px; border: 1px solid var(--border); }
+    .msg-row.assistant .msg-bubble { padding: 4px 0; }
+    .typing-indicator { display: flex; align-items: center; gap: 5px; padding: 8px 0; }
+    .typing-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--muted); animation: tdot 1.2s infinite; }
+    .typing-dot:nth-child(2) { animation-delay: .2s; }
+    .typing-dot:nth-child(3) { animation-delay: .4s; }
+    @keyframes tdot { 0%,60%,100%{transform:translateY(0);opacity:.4} 30%{transform:translateY(-5px);opacity:1} }
+    .composer-wrap { padding: 14px 20px 20px; background: var(--bg); flex-shrink: 0; }
+    .composer-inner { max-width: 780px; margin: 0 auto; }
+    .composer-box { display: flex; align-items: flex-end; background: var(--input-bg); border: 1px solid var(--input-border); border-radius: 16px; padding: 10px 10px 10px 16px; transition: border-color .2s; }
+    .composer-box:focus-within { border-color: rgba(255,255,255,0.22); }
+    :root[data-theme="light"] .composer-box:focus-within { border-color: rgba(0,0,0,0.22); }
+    .composer-textarea { flex: 1; border: none; background: transparent; color: var(--text); font-family: var(--font); font-size: 15px; line-height: 1.6; resize: none; outline: none; min-height: 26px; max-height: 180px; overflow-y: auto; padding: 2px 0; }
+    .composer-textarea::placeholder { color: var(--muted); }
+    .composer-actions { display: flex; align-items: center; gap: 4px; flex-shrink: 0; padding-left: 6px; }
+    .cib { width: 32px; height: 32px; border: none; background: transparent; color: var(--muted); cursor: pointer; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 16px; transition: background .15s, color .15s; }
+    .cib:hover { background: var(--panel-hover); color: var(--text); }
+    .send-btn { width: 34px; height: 34px; border: none; background: var(--text); color: var(--bg); cursor: pointer; border-radius: 8px; display: flex; align-items: center; justify-content: center; transition: opacity .15s, transform .1s; flex-shrink: 0; }
+    .send-btn:hover { opacity: .85; }
+    .send-btn:active { transform: scale(.95); }
+    .send-btn:disabled { opacity: .3; cursor: not-allowed; transform: none; }
+    .composer-hint { text-align: center; font-size: 11.5px; color: var(--muted2); margin-top: 8px; }
+    kbd { font-size: 10px; padding: 1px 5px; border: 1px solid var(--border); border-radius: 5px; background: var(--panel); font-family: monospace; }
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.6); backdrop-filter: blur(4px); display: none; align-items: center; justify-content: center; z-index: 100; padding: 20px; }
+    .modal-overlay.open { display: flex; }
+    .modal-card { width: min(560px,100%); background: var(--sidebar); border: 1px solid var(--border); border-radius: 16px; box-shadow: 0 30px 80px rgba(0,0,0,.5); overflow: hidden; animation: slideUp .2s ease; }
+    @keyframes slideUp { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
+    .modal-header { padding: 20px 24px 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+    .modal-title { font-size: 16px; font-weight: 600; }
+    .modal-body { padding: 20px 24px; display: flex; flex-direction: column; gap: 18px; }
+    .field-label { font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 6px; }
+    .field-row { display: flex; gap: 8px; }
+    .field-input { width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: 10px; background: var(--panel); color: var(--text); font-family: var(--font); font-size: 14px; outline: none; transition: border-color .15s; }
+    .field-input:focus { border-color: rgba(255,255,255,.2); }
+    :root[data-theme="light"] .field-input:focus { border-color: rgba(0,0,0,.2); }
+    .field-input::placeholder { color: var(--muted2); }
+    .field-hint { font-size: 11.5px; color: var(--muted2); margin-top: 5px; }
+    .btn { padding: 9px 16px; border-radius: 10px; font-family: var(--font); font-size: 13px; font-weight: 500; cursor: pointer; border: 1px solid var(--border); background: var(--panel); color: var(--text); transition: background .15s; white-space: nowrap; }
+    .btn:hover { background: var(--panel-hover); }
+    .btn.primary { background: var(--text); color: var(--bg); border-color: transparent; }
+    .btn.primary:hover { opacity: .88; }
+    .btn.danger { border-color: rgba(239,68,68,.3); color: #ef4444; background: rgba(239,68,68,.08); }
+    .btn.danger:hover { background: rgba(239,68,68,.15); }
+    .btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
+    #key-status { font-size: 11.5px; color: var(--muted2); margin-top: 5px; }
+    @media (max-width:640px) { .sidebar{display:none} .topbar{padding:0 14px} .messages{padding:16px 14px 8px} .composer-wrap{padding:10px 14px 16px} }
   </style>
 </head>
 <body>
-  <div class="wrap">
-    <div class="top">
-      <div class="brand">
-        <div class="avatar">M</div>
-        <div class="brand-info">
-          <div class="title">Mickey</div>
-          <div class="subtitle" id="status">Initialisation…</div>
-        </div>
-      </div>
-      <div class="btns">
-        <button class="ghost" id="btn-speak" title="Activer / désactiver la voix">🔊</button>
-        <button class="ghost" id="btn-mic" title="Dicter (micro)">🎙️</button>
-        <button class="ghost" id="btn-settings" title="Réglages">⚙️</button>
-      </div>
+
+<aside class="sidebar">
+  <div class="sidebar-header">
+    <div class="logo">
+      <div class="logo-icon">M</div>
+      Mickey
     </div>
+    <button class="sib" id="btn-new-top" title="Nouveau chat">+</button>
+  </div>
+  <button class="new-chat-btn" id="btn-new-chat">
+    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+    Nouveau chat
+  </button>
+  <div class="sidebar-section">Actions rapides</div>
+  <div class="chip-list">
+    <button class="chip-item" data-send="theme clair">&#9728;&#65039; Theme clair</button>
+    <button class="chip-item" data-send="theme sombre">&#127769; Theme sombre</button>
+    <button class="chip-item" data-send="ouvre parametres">&#9881;&#65039; Parametres</button>
+    <button class="chip-item" data-send="ouvre explorateur">&#128193; Fichiers</button>
+    <button class="chip-item" data-send="aide">&#10067; Aide</button>
+  </div>
+  <div class="sidebar-footer">
+    <button class="footer-btn" id="btn-settings">
+      <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      Reglages
+    </button>
+    <button class="footer-btn" id="btn-clear-sidebar">
+      <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+      Effacer historique
+    </button>
+  </div>
+</aside>
 
-    <div class="chips">
-      <div class="chip" data-send="Mets le thème clair">Thème clair</div>
-      <div class="chip" data-send="Mets le thème sombre">Thème sombre</div>
-      <div class="chip" data-send="Ouvre les paramètres">Paramètres</div>
-      <div class="chip" data-send="Ouvre l'explorateur de fichiers">Fichiers</div>
-      <div class="chip" data-send="Aide">Aide</div>
+<main class="main">
+  <div class="topbar">
+    <div style="display:flex;align-items:center;gap:6px">
+      <select class="model-sel" id="model">
+        <option value="llama-3.3-70b-versatile">Mickey - llama-3.3-70b</option>
+        <option value="llama-3.1-8b-instant">Mickey - llama-3.1-8b (rapide)</option>
+        <option value="qwen/qwen3-32b">Mickey - qwen3-32b</option>
+        <option value="openai/gpt-oss-120b">Mickey - gpt-oss-120b</option>
+      </select>
+      <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24" style="color:var(--muted);pointer-events:none"><polyline points="6 9 12 15 18 9"/></svg>
     </div>
-
-    <div class="chat" id="chat"></div>
-
-    <div class="composer">
-      <div style="flex:1; display:flex; flex-direction:column; gap:6px;">
-        <textarea class="input" id="input" placeholder="Dis-moi: “mets le thème clair”, “ouvre paramètres”, ou pose une question…"></textarea>
-        <div class="hint">Raccourci OS: <span class="kbd">Ctrl</span> + <span class="kbd">Shift</span> + <span class="kbd">M</span></div>
-      </div>
-      <button class="primary" id="btn-send">Envoyer</button>
+    <div class="topbar-right">
+      <span id="status-text"></span>
+      <button class="ib" id="btn-speak" title="Voix">&#128264;</button>
+      <button class="ib" id="btn-mic" title="Micro">&#127897;&#65039;</button>
     </div>
   </div>
 
-  <div class="panel" id="panel">
-    <div class="panel-card">
-      <div class="row" style="justify-content: space-between; margin-bottom: 10px;">
-        <div>
-          <div style="font-weight: 900; font-size: 16px;">Réglages Mickey</div>
-          <div class="small">Groq + commandes système. Les actions dangereuses demandent confirmation.</div>
-        </div>
-        <button id="btn-close-panel">Fermer</button>
+  <div class="chat-area" id="chat-area">
+    <div class="empty-state" id="empty-state">
+      <div class="empty-title">Comment puis-je t'aider ?</div>
+      <div class="empty-chips">
+        <button class="empty-chip" data-send="theme clair">
+          <strong>&#9728;&#65039; Theme clair</strong>Basculer en mode clair
+        </button>
+        <button class="empty-chip" data-send="ouvre parametres">
+          <strong>&#9881;&#65039; Parametres</strong>Ouvrir les reglages
+        </button>
+        <button class="empty-chip" data-send="aide">
+          <strong>&#10067; Aide</strong>Voir toutes les commandes
+        </button>
+        <button class="empty-chip" data-send="liste les apps">
+          <strong>&#128241; Applications</strong>Apps installes sur AetherOS
+        </button>
       </div>
+    </div>
+    <div class="messages" id="messages"></div>
+  </div>
 
-      <div class="row" style="margin-top: 10px;">
-        <div class="field">
-          <label>Modèle Groq</label>
-          <select id="model">
-            <option value="llama-3.3-70b-versatile">llama-3.3-70b-versatile (par défaut)</option>
-            <option value="llama-3.1-8b-instant">llama-3.1-8b-instant (rapide)</option>
-            <option value="qwen/qwen3-32b">qwen/qwen3-32b</option>
-            <option value="openai/gpt-oss-120b">openai/gpt-oss-120b</option>
-          </select>
-          <div class="small" id="key-status"></div>
-          <div class="row" style="gap: 8px;">
-            <input type="password" class="text mono" id="groq-key" style="flex: 1 1 260px;"
-              placeholder="Clé Groq (gsk_…)" autocomplete="off" spellcheck="false" />
-            <button id="btn-save-key" type="button">Enregistrer</button>
-            <button class="danger" id="btn-clear-key" type="button" title="Supprimer la clé sauvegardée">Effacer</button>
-          </div>
-          <div class="small">Optionnel: colle ta clé ici (stockée localement dans ce navigateur).</div>
-        </div>
-        <div class="field">
-          <label>Mémoire (persistante)</label>
-          <input class="text" id="memory" placeholder="Ex: Réponds toujours en français, style concis…" />
-          <div class="small">Stocké localement (localStorage).</div>
+  <div class="composer-wrap">
+    <div class="composer-inner">
+      <div class="composer-box">
+        <textarea class="composer-textarea" id="input" rows="1" placeholder="Message Mickey..."></textarea>
+        <div class="composer-actions">
+          <button class="cib" id="btn-mic-compose" title="Dicter">
+            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+          </button>
+          <button class="send-btn" id="btn-send">
+            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+          </button>
         </div>
       </div>
+      <div class="composer-hint">Mickey peut se tromper. <kbd>Shift+Entree</kbd> pour sauter une ligne.</div>
+    </div>
+  </div>
+</main>
 
-      <div class="row" style="margin-top: 10px;">
-        <div class="field">
-          <label>Commandes supportées</label>
-          <div class="small">
-            - Thème: “mets le thème clair/sombre”<br/>
-            - Fond d’écran: “mets le fond d’écran gradient”<br/>
-            - Apps: “ouvre …”, “ferme …”<br/>
-            - OS: “ouvre la recherche”, “verrouille la session”<br/>
-            - Couleur: “mets l’accent en #C084FC”<br/>
-            - Zoom UI: “zoom 110%”<br/>
-            - Mémoire: “mémorise: …”, “oublie la mémoire”
-          </div>
+<div class="modal-overlay" id="modal">
+  <div class="modal-card">
+    <div class="modal-header">
+      <div class="modal-title">Reglages Mickey</div>
+      <button class="ib" id="btn-close-modal">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div>
+        <div class="field-label">Cle API Groq</div>
+        <div class="field-row">
+          <input type="password" class="field-input" id="groq-key" placeholder="gsk_..." autocomplete="off" style="flex:1" />
+          <button class="btn primary" id="btn-save-key">Enregistrer</button>
         </div>
-        <div class="field">
-          <label>Données</label>
-          <div class="row">
-            <button class="danger" id="btn-clear">Effacer l’historique</button>
-            <button id="btn-stop-tts">Stop voix</button>
-          </div>
-          <div class="small">Astuce: la clé Groq se lit depuis `.env` via `AETHER_GROQ_API_KEY` (attention si tu déploies en public).</div>
+        <div id="key-status">Chargement...</div>
+      </div>
+      <div>
+        <div class="field-label">Memoire persistante</div>
+        <textarea class="field-input" id="memory" rows="3" placeholder="Ex: Reponds toujours en francais..." style="resize:vertical"></textarea>
+        <div class="field-hint">Stocke localement dans le navigateur.</div>
+      </div>
+      <div>
+        <div class="field-label">Commandes disponibles</div>
+        <div class="field-hint" style="font-size:12.5px;line-height:1.8">
+          Theme clair/sombre &middot; Fond ecran &middot; Ouvrir/fermer une app &middot; Recherche &middot; Verrouillage &middot; Couleur accent &middot; Zoom UI &middot; Memoire
+        </div>
+      </div>
+      <div>
+        <div class="field-label">Zone danger</div>
+        <div class="btn-row">
+          <button class="btn danger" id="btn-clear-key">Supprimer la cle</button>
+          <button class="btn danger" id="btn-clear-history">Effacer historique</button>
+          <button class="btn" id="btn-stop-tts">Arreter voix</button>
         </div>
       </div>
     </div>
   </div>
-
-  <script>
-    const wm = (window.parent && window.parent.windowManager) ? window.parent.windowManager : null;
-    const elements = {
-      chat: document.getElementById('chat'),
-      input: document.getElementById('input'),
-      send: document.getElementById('btn-send'),
-      status: document.getElementById('status'),
-      btnSpeak: document.getElementById('btn-speak'),
-      btnMic: document.getElementById('btn-mic'),
-      btnSettings: document.getElementById('btn-settings'),
-      panel: document.getElementById('panel'),
-      btnClosePanel: document.getElementById('btn-close-panel'),
-      model: document.getElementById('model'),
-      memory: document.getElementById('memory'),
-      keyStatus: document.getElementById('key-status'),
-      groqKey: document.getElementById('groq-key'),
-      btnSaveKey: document.getElementById('btn-save-key'),
-      btnClearKey: document.getElementById('btn-clear-key'),
-      btnClear: document.getElementById('btn-clear'),
-      btnStopTts: document.getElementById('btn-stop-tts')
-    };
-
-    const STORAGE = {
-      model: 'mickey_model',
-      memory: 'mickey_memory',
-      history: 'mickey_history_v1',
-      speak: 'mickey_speak_enabled',
-      groqKey: 'aether_groq_api_key'
-    };
-
-    const DEFAULT_GROQ_MODEL = 'llama-3.3-70b-versatile';
-    const MODEL_MIGRATIONS = {
-      'llama3-70b-8192': DEFAULT_GROQ_MODEL,
-      'llama3-8b-8192': 'llama-3.1-8b-instant',
-      'mixtral-8x7b-32768': DEFAULT_GROQ_MODEL,
-      'gemma-7b-it': 'llama-3.1-8b-instant',
-      'gemma2-9b-it': 'llama-3.1-8b-instant',
-      'mistral-saba-24b': 'qwen/qwen3-32b'
-    };
-
-    function norm(s) {
-      return String(s || '')
-        .toLowerCase()
-        .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '')
-        .replace(/\s+/g, ' ')
-        .trim();
-    }
-
-    function safeNow() {
-      try { return new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }); }
-      catch { return ''; }
-    }
-
-    function scrollToBottom() {
-      elements.chat.scrollTop = elements.chat.scrollHeight;
-    }
-
-    function addMessage(role, content) {
-      const msg = document.createElement('div');
-      msg.className = 'msg ' + (role === 'user' ? 'user' : 'assistant');
-      const bubble = document.createElement('div');
-      bubble.className = 'bubble';
-      bubble.textContent = content;
-      const meta = document.createElement('div');
-      meta.className = 'meta';
-      meta.textContent = safeNow();
-      bubble.appendChild(meta);
-      msg.appendChild(bubble);
-      elements.chat.appendChild(msg);
-      scrollToBottom();
-    }
-
-    function setStatus(text) {
-      elements.status.textContent = text;
-    }
-
-    function getGroqKey() {
-      const fromWm = (wm && wm.groqApiKey) ? String(wm.groqApiKey).trim() : '';
-      if (fromWm) return fromWm;
-      try {
-        const stored = String(localStorage.getItem(STORAGE.groqKey) || '').trim();
-        if (stored && wm && !wm.groqApiKey) {
-          if (typeof wm.setGroqApiKey === 'function') wm.setGroqApiKey(stored);
-          else wm.groqApiKey = stored;
-        }
-        return stored;
-      } catch {
-        return '';
-      }
-    }
-
-    function migrateModel(modelId) {
-      const raw = String(modelId || '').trim();
-      if (!raw) return DEFAULT_GROQ_MODEL;
-      const migrated = MODEL_MIGRATIONS[raw] || raw;
-      if (migrated !== raw) {
-        try { localStorage.setItem(STORAGE.model, migrated); } catch {}
-      }
-      return migrated;
-    }
-
-    function ensureModelOption(value) {
-      const v = String(value || '').trim();
-      if (!v || !elements.model) return;
-      const exists = Array.from(elements.model.options || []).some(opt => opt && opt.value === v);
-      if (exists) return;
-      const opt = document.createElement('option');
-      opt.value = v;
-      opt.textContent = v;
-      elements.model.appendChild(opt);
-    }
-
-    function getGroqModel() {
-      const stored = (() => {
-        try { return String(localStorage.getItem(STORAGE.model) || '').trim(); } catch { return ''; }
-      })();
-      const picked = stored || (elements.model ? elements.model.value : '') || DEFAULT_GROQ_MODEL;
-      const migrated = migrateModel(picked);
-      ensureModelOption(migrated);
-      if (elements.model) elements.model.value = migrated;
-      return migrated;
-    }
-
-    function maskKey(key) {
-      const k = String(key || '').trim();
-      if (!k) return '';
-      if (k.length <= 10) return `${k.slice(0, 2)}…${k.slice(-2)}`;
-      return `${k.slice(0, 4)}…${k.slice(-4)}`;
-    }
-
-    function syncKeyStatus() {
-      const k = getGroqKey();
-      elements.keyStatus.textContent = k
-        ? `Clé Groq détectée ✅ (${maskKey(k)})`
-        : 'Clé Groq manquante ❌ (AETHER_GROQ_API_KEY dans .env/env, ou colle la clé ici)';
-    }
-
-    function setGroqKey(value) {
-      const k = String(value || '').trim();
-      try {
-        if (k) localStorage.setItem(STORAGE.groqKey, k);
-        else localStorage.removeItem(STORAGE.groqKey);
-      } catch {}
-      try {
-        if (wm) {
-          if (typeof wm.setGroqApiKey === 'function') wm.setGroqApiKey(k);
-          else wm.groqApiKey = k;
-        }
-      } catch {}
-      syncKeyStatus();
-      return k;
-    }
-
-    async function reloadEnvMaybe() {
-      try {
-        if (wm && typeof wm.loadSupabaseConfigFromEnv === 'function') {
-          await wm.loadSupabaseConfigFromEnv();
-        }
-      } catch {}
-      syncKeyStatus();
-    }
-
-    function getRegistry() {
-      return (wm && Array.isArray(wm.appsRegistry)) ? wm.appsRegistry : [];
-    }
-
-    function getKnownApps() {
-      const apps = getRegistry()
-        .filter(a => a && a.id)
-        .map(a => ({ id: String(a.id), title: String(a.title || a.id) }));
-      const uniq = new Map();
-      apps.forEach(app => {
-        if (!app.id) return;
-        if (!uniq.has(app.id)) uniq.set(app.id, app);
-      });
-      return Array.from(uniq.values());
-    }
-
-    function formatAppsList(maxItems = 18) {
-      const apps = getKnownApps()
-        .filter(app => app && app.id && app.id !== 'mickey')
-        .slice(0, Math.max(1, maxItems));
-      if (apps.length === 0) return "Je n’ai pas encore accès à la liste des apps.";
-      return [
-        "Apps disponibles (exemples):",
-        ...apps.map(app => `- ${app.title} (${app.id})`),
-        "",
-        "Astuce: dis “ouvre <nom>” ou “ouvre une app aléatoire”."
-      ].join("\\n");
-    }
-
-    function bestAppMatch(query) {
-      const q = norm(query);
-      if (!q) return null;
-
-      const aliases = new Map([
-        ['parametres', 'settings'],
-        ['parametre', 'settings'],
-        ['settings', 'settings'],
-        ['fichiers', 'explorer'],
-        ['explorateur', 'explorer'],
-        ['store', 'store'],
-        ['app store', 'store'],
-        ['navigateur', 'browser'],
-        ['browser', 'browser'],
-        ['wiki', 'wiki'],
-        ['aide', 'wiki'],
-        ['mickey', 'mickey']
-      ]);
-      if (aliases.has(q)) {
-        const id = aliases.get(q);
-        const fromRegistry = getRegistry().find(a => a && a.id === id);
-        return fromRegistry || { id, title: id };
-      }
-
-      const apps = getRegistry();
-      const direct = apps.find(a => a && (norm(a.id) === q || norm(a.title) === q));
-      if (direct) return direct;
-      const partial = apps.find(a => a && (norm(a.title).includes(q) || norm(a.id).includes(q)));
-      if (partial) return partial;
-      return null;
-    }
-
-    function runAction(action) {
-      const type = action && action.type ? action.type : '';
-      if (type === 'help') {
-        return [
-          "Je peux:",
-          "- Mettre le thème clair/sombre",
-          "- Changer le fond d’écran",
-          "- Ouvrir/fermer une app",
-          "- Ouvrir la recherche / launchpad",
-          "- Verrouiller la session / mode immersif",
-          "- Changer la couleur d’accent",
-          "- Régler le zoom UI",
-          "- Mémoriser une consigne (training léger)",
-          "",
-          "Exemples:",
-          "• mets le thème clair",
-          "• mets le fond d’écran gradient",
-          "• ouvre paramètres",
-          "• ferme store",
-          "• mets l’accent en #C084FC",
-          "• zoom 110%",
-          "• ouvre la recherche",
-          "• verrouille la session",
-          "• mémorise: réponds toujours en français"
-        ].join("\\n");
-      }
-      if (type === 'remember') {
-        const current = String(localStorage.getItem(STORAGE.memory) || '').trim();
-        const note = String(action.note || '').trim();
-        const next = [current, note].filter(Boolean).join('\\n').trim();
-        localStorage.setItem(STORAGE.memory, next);
-        elements.memory.value = next;
-        return "C’est noté. Tu peux ouvrir ⚙️ pour voir/éditer la mémoire.";
-      }
-      if (type === 'forget_memory') {
-        localStorage.setItem(STORAGE.memory, '');
-        elements.memory.value = '';
-        return "Mémoire effacée.";
-      }
-      if (type === 'list_apps') {
-        return formatAppsList(28);
-      }
-
-      if (!wm) throw new Error('windowManager introuvable');
-      if (type === 'set_theme') {
-        wm.setTheme(action.theme);
-        return `Thème ${action.theme === 'light' ? 'clair' : 'sombre'} activé.`;
-      }
-      if (type === 'set_wallpaper') {
-        wm.setWallpaper(action.wallpaper);
-        return `Fond d’écran mis à jour.`;
-      }
-      if (type === 'open_app') {
-        const appMeta = getRegistry().find(a => a && a.id === action.id) || null;
-        const title = action.title || (appMeta && appMeta.title) || (action.id ? action.id : 'App');
-        wm.createWindow(action.id, title, true);
-        return `J’ouvre ${title}.`;
-      }
-      if (type === 'open_random_app') {
-        const apps = getKnownApps().filter(app => app && app.id && app.id !== 'mickey');
-        if (apps.length === 0) return "Je n’ai pas trouvé d’app à ouvrir.";
-        const picked = apps[Math.floor(Math.random() * apps.length)];
-        wm.createWindow(picked.id, picked.title, true);
-        return `J’ouvre ${picked.title} (au hasard).`;
-      }
-      if (type === 'close_app') {
-        wm.closeWindow(action.id);
-        return `Je ferme ${action.id}.`;
-      }
-      if (type === 'toggle_search') {
-        wm.toggleSearch();
-        return `Recherche ouverte.`;
-      }
-      if (type === 'toggle_launchpad') {
-        wm.toggleLaunchpad();
-        return `Launchpad ouvert.`;
-      }
-      if (type === 'lock_session') {
-        wm.lockSession();
-        return `Session verrouillée.`;
-      }
-      if (type === 'toggle_immersive') {
-        wm.toggleImmersiveMode();
-        return `Mode immersif basculé.`;
-      }
-      if (type === 'set_accent') {
-        wm.setAccentColor(action.color);
-        return `Couleur d’accent mise à jour (${action.color}).`;
-      }
-      if (type === 'set_ui_scale') {
-        wm.setUIScale(action.scale);
-        return `Zoom UI réglé à ${action.scale}%.`;
-      }
-      return null;
-    }
-
-    function parseCommand(text) {
-      const t = norm(text);
-      if (!t) return null;
-
-      if (t === 'aide' || t === 'help' || t.includes('commande')) return { type: 'help' };
-      if (
-        (t.includes('liste') || t.includes('quelles') || t.includes('quoi')) &&
-        (t.includes('app') || t.includes('apps') || t.includes('application') || t.includes('applications'))
-      ) {
-        return { type: 'list_apps' };
-      }
-      if (t.startsWith('memorise') || t.startsWith('souviens toi') || t.startsWith('souviens-toi')) {
-        const note = String(text || '').replace(/^\s*(mémorise|memorise|souviens[- ]toi)\s*:?\s*/i, '').trim();
-        if (note) return { type: 'remember', note };
-      }
-      if (t.includes('efface la memoire') || t.includes('efface memoire') || t.includes('oublie tout') || t.includes('oublie la memoire') || t.includes('oublie memoire')) {
-        return { type: 'forget_memory' };
-      }
-
-      const wantsTheme =
-        t.includes('theme') ||
-        t.includes('mode') ||
-        t.includes('thme') ||
-        t.includes('apparence') ||
-        t.includes('interface') ||
-        t.includes('ui');
-      const looksLikeWallpaper = t.includes('wallpaper') || t.includes('background') || (t.includes('fond') && (t.includes('ecran') || t.includes('d ecran') || t.includes("d'ecran")));
-      const wantsThemeImplicit = !looksLikeWallpaper &&
-        (t.includes('mets') || t.includes('met') || t.includes('passe') || t.includes('active')) &&
-        (t.includes('clair') || t.includes('light') || t.includes('sombre') || t.includes('dark') || t.includes('noir'));
-      if ((wantsTheme || wantsThemeImplicit) && (t.includes('clair') || t.includes('light'))) return { type: 'set_theme', theme: 'light' };
-      if ((wantsTheme || wantsThemeImplicit) && (t.includes('sombre') || t.includes('dark') || t.includes('noir'))) return { type: 'set_theme', theme: 'dark' };
-
-      const wantsWallpaper = (t.includes('fond') && (t.includes('ecran') || t.includes('d ecran') || t.includes("d'ecran"))) || t.includes('wallpaper') || t.includes('background');
-      if (wantsWallpaper) {
-        const urlMatch = String(text || '').match(/(https?:\/\/[^\s]+|data:[^\s]+)/i);
-        if (urlMatch) return { type: 'set_wallpaper', wallpaper: urlMatch[1] };
-        if (t.includes('defaut') || t.includes('default')) return { type: 'set_wallpaper', wallpaper: 'default' };
-        if (t.includes('gradient')) return { type: 'set_wallpaper', wallpaper: 'gradient' };
-        if (t.includes('bleu') || t.includes('blue')) return { type: 'set_wallpaper', wallpaper: 'blue' };
-        if (t.includes('sunset') || t.includes('coucher')) return { type: 'set_wallpaper', wallpaper: 'sunset' };
-        if (t.includes('sombre') || t.includes('dark') || t.includes('noir')) return { type: 'set_wallpaper', wallpaper: 'dark' };
-      }
-
-      const accentMatch = t.match(/#([0-9a-f]{6})\b/i);
-      if ((t.includes('accent') || t.includes('couleur')) && accentMatch) {
-        return { type: 'set_accent', color: '#' + accentMatch[1] };
-      }
-
-      const zoomMatch = t.match(/\b(zoom|echelle|scale)\s*(\d{2,3})\s*%?\b/);
-      if (zoomMatch) {
-        const scale = Math.max(80, Math.min(150, Number(zoomMatch[2]) || 100));
-        return { type: 'set_ui_scale', scale };
-      }
-
-      if (t.includes('recherche') && (t.includes('ouvre') || t.includes('open'))) return { type: 'toggle_search' };
-      if (t.includes('launchpad') && (t.includes('ouvre') || t.includes('open') || t.includes('demarre'))) return { type: 'toggle_launchpad' };
-      if (t.includes('verrouille') || t.includes('lock')) return { type: 'lock_session' };
-      if (t.includes('immersif') || t.includes('fullscreen')) return { type: 'toggle_immersive' };
-
-      const openMatch = t.match(/\b(ouvre|lance|open|start)\b\s+(.+)$/);
-      if (openMatch) {
-        const raw = openMatch[2].replace(/\b(le|la|les|un|une|des|du|de|d)\b/g, '').replace(/^\s*'|'\s*$/g, '').trim();
-        if (raw.includes('aleatoire') || raw.includes('au hasard') || raw.includes('random')) {
-          return { type: 'open_random_app' };
-        }
-        const app = bestAppMatch(raw);
-        if (app && app.id) return { type: 'open_app', id: app.id, title: app.title || app.id };
-      }
-
-      const closeMatch = t.match(/\b(ferme|close|quit)\b\s+(.+)$/);
-      if (closeMatch) {
-        const raw = closeMatch[2].replace(/\b(le|la|les|un|une|des|du|de|d)\b/g, '').trim();
-        const app = bestAppMatch(raw);
-        if (app && app.id) return { type: 'close_app', id: app.id };
-      }
-
-      return null;
-    }
-
-    function loadHistory() {
-      try {
-        const raw = localStorage.getItem(STORAGE.history);
-        const parsed = raw ? JSON.parse(raw) : [];
-        return Array.isArray(parsed) ? parsed : [];
-      } catch {
-        return [];
-      }
-    }
-
-    function saveHistory(history) {
-      try { localStorage.setItem(STORAGE.history, JSON.stringify(history.slice(-40))); } catch {}
-    }
-
-    let history = loadHistory(); // {role, content}
-    let speakEnabled = false;
-    let speaking = null;
-
-    function stopTTS() {
-      try {
-        window.speechSynthesis && window.speechSynthesis.cancel();
-      } catch {}
-      speaking = null;
-    }
-
-    function speak(text) {
-      if (!speakEnabled) return;
-      if (!text) return;
-      if (!('speechSynthesis' in window)) return;
-      stopTTS();
-      const utter = new SpeechSynthesisUtterance(text);
-      utter.lang = 'fr-FR';
-      try {
-        const voices = window.speechSynthesis.getVoices ? window.speechSynthesis.getVoices() : [];
-        const fr = voices.find(v => /fr/i.test(v.lang)) || voices[0];
-        if (fr) utter.voice = fr;
-      } catch {}
-      speaking = utter;
-      window.speechSynthesis.speak(utter);
-    }
-
-    async function callGroq(userText, { signal } = {}) {
-      let key = getGroqKey();
-      if (!key) {
-        await reloadEnvMaybe();
-        key = getGroqKey();
-      }
-      if (!key) {
-        return "Je n’ai pas de clé Groq. Mets `AETHER_GROQ_API_KEY=` dans `.env`/`env` (ou colle la clé dans ⚙️ Réglages Mickey), puis recharge AetherOS.";
-      }
-
-      const memory = String(localStorage.getItem(STORAGE.memory) || '').trim();
-      let model = getGroqModel();
-      const theme = (() => {
-        try { return (wm && wm.theme) ? wm.theme : (window.parent.document.documentElement.getAttribute('data-theme') || 'dark'); }
-        catch { return 'dark'; }
-      })();
-
-      const appsForPrompt = getKnownApps()
-        .filter(app => app && app.id && app.id !== 'mickey')
-        .slice(0, 40)
-        .map(app => `${app.title} (${app.id})`);
-
-      const sys = [
-        "Tu t’appelles Mickey.",
-        "Tu es l’assistant intégré d’AetherOS (un OS dans le navigateur).",
-        "Réponds en français, ton concis et utile.",
-        "N’invente jamais une app ou une fonctionnalité qui n’existe pas. Si tu n’es pas sûr, pose une question.",
-        "Si une action système est demandée, propose des commandes concrètes.",
-        `Contexte: thème=${theme}.`
-      ].concat(appsForPrompt.length ? [`Apps connues: ${appsForPrompt.join(', ')}.`] : []).join("\\n");
-
-      const messages = [
-        { role: 'system', content: sys },
-        ...(memory ? [{ role: 'system', content: `Mémoire utilisateur: ${memory}` }] : []),
-        ...history.slice(-18),
-        { role: 'user', content: userText }
-      ];
-
-      for (let attempt = 0; attempt < 2; attempt++) {
-        const chosenModel = attempt === 0 ? model : DEFAULT_GROQ_MODEL;
-        if (attempt === 1) {
-          try { localStorage.setItem(STORAGE.model, chosenModel); } catch {}
-          ensureModelOption(chosenModel);
-          if (elements.model) elements.model.value = chosenModel;
-        }
-
-        const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-          method: 'POST',
-          headers: { 'Authorization': `Bearer ${key}`, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ model: chosenModel, messages }),
-          signal
-        });
-        const data = await res.json().catch(() => ({}));
-        if (!res.ok || (data && data.error)) {
-          const msg = (data && data.error && data.error.message) ? data.error.message : `HTTP ${res.status}`;
-          if (attempt === 0 && /decommissioned/i.test(msg) && chosenModel !== DEFAULT_GROQ_MODEL) {
-            model = DEFAULT_GROQ_MODEL;
-            continue;
-          }
-          throw new Error(msg);
-        }
-        const text = (data && data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content)
-          ? String(data.choices[0].message.content).trim()
-          : '';
-        return text || "Je n’ai pas réussi à générer une réponse.";
-      }
-
-      return "Je n’ai pas réussi à générer une réponse.";
-    }
-
-    let inflight = null;
-    async function send(text) {
-      const content = String(text || '').trim();
-      if (!content) return;
-      elements.input.value = '';
-      elements.input.focus();
-
-      addMessage('user', content);
-      history.push({ role: 'user', content });
-      saveHistory(history);
-
-      const cmd = parseCommand(content);
-      if (cmd) {
-        try {
-          const out = runAction(cmd);
-          if (out) {
-            addMessage('assistant', out);
-            history.push({ role: 'assistant', content: out });
-            saveHistory(history);
-            speak(out);
-            setStatus('Action exécutée.');
-            return;
-          }
-        } catch (err) {
-          const msg = `Erreur action: ${err.message || err}`;
-          addMessage('assistant', msg);
-          history.push({ role: 'assistant', content: msg });
-          saveHistory(history);
-          setStatus('Erreur.');
-          return;
-        }
-      }
-
-      const normalized = norm(content);
-      const looksLikeAppCommand = /\b(ouvre|lance|open|start|ferme|close|quit)\b/.test(normalized);
-      if (looksLikeAppCommand) {
-        const out = [
-          "Je ne reconnais pas cette app.",
-          "",
-          formatAppsList(18)
-        ].join("\\n");
-        addMessage('assistant', out);
-        history.push({ role: 'assistant', content: out });
-        saveHistory(history);
-        setStatus('Prêt.');
-        speak(out);
-        return;
-      }
-
-      try {
-        if (inflight) inflight.abort();
-        inflight = new AbortController();
-        setStatus('Mickey réfléchit…');
-        const reply = await callGroq(content, { signal: inflight.signal });
-        addMessage('assistant', reply);
-        history.push({ role: 'assistant', content: reply });
-        saveHistory(history);
-        setStatus('Prêt.');
-        speak(reply);
-      } catch (err) {
-        const msg = `Erreur Groq: ${err.message || err}`;
-        addMessage('assistant', msg);
-        history.push({ role: 'assistant', content: msg });
-        saveHistory(history);
-        setStatus('Erreur.');
-      } finally {
-        inflight = null;
-      }
-    }
-
-    // UI events
-    elements.send.addEventListener('click', () => send(elements.input.value));
-    elements.input.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' && !e.shiftKey) {
-        e.preventDefault();
-        send(elements.input.value);
-      }
-    });
-
-    document.querySelectorAll('.chip[data-send]').forEach(chip => {
-      chip.addEventListener('click', () => send(chip.getAttribute('data-send')));
-    });
-
-    function openPanel() {
-      elements.panel.classList.add('open');
-      reloadEnvMaybe();
-      elements.memory.value = localStorage.getItem(STORAGE.memory) || '';
-      getGroqModel();
-    }
-    function closePanel() { elements.panel.classList.remove('open'); }
-    elements.btnSettings.addEventListener('click', openPanel);
-    elements.btnClosePanel.addEventListener('click', closePanel);
-    elements.panel.addEventListener('click', (e) => { if (e.target === elements.panel) closePanel(); });
-
-    elements.model.addEventListener('change', () => {
-      const next = migrateModel(elements.model.value);
-      ensureModelOption(next);
-      elements.model.value = next;
-      localStorage.setItem(STORAGE.model, next);
-    });
-    elements.memory.addEventListener('input', () => {
-      localStorage.setItem(STORAGE.memory, elements.memory.value);
-    });
-
-    elements.btnClear.addEventListener('click', () => {
-      if (!confirm('Effacer tout l’historique Mickey ?')) return;
-      history = [];
-      saveHistory(history);
-      elements.chat.innerHTML = '';
-      addMessage('assistant', "Historique effacé.");
-    });
-
-    elements.btnStopTts.addEventListener('click', stopTTS);
-
-    elements.btnSaveKey.addEventListener('click', () => {
-      const saved = setGroqKey(elements.groqKey.value);
-      elements.groqKey.value = '';
-      setStatus(saved ? 'Clé Groq enregistrée.' : 'Clé Groq effacée.');
-    });
-
-    elements.btnClearKey.addEventListener('click', () => {
-      if (!confirm('Supprimer la clé Groq sauvegardée ?')) return;
-      setGroqKey('');
-      setStatus('Clé Groq effacée.');
-    });
-
-    elements.groqKey.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') {
-        e.preventDefault();
-        elements.btnSaveKey.click();
-      }
-    });
-
-    elements.btnSpeak.addEventListener('click', () => {
-      speakEnabled = !speakEnabled;
-      localStorage.setItem(STORAGE.speak, speakEnabled ? '1' : '0');
-      elements.btnSpeak.textContent = speakEnabled ? '🔊' : '🔈';
-      setStatus(speakEnabled ? 'Voix activée.' : 'Voix désactivée.');
-      if (!speakEnabled) stopTTS();
-    });
-
-    // Speech recognition (optional)
-    let rec = null;
-    let recActive = false;
-    function setupSpeechRecognition() {
-      const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-      if (!SR) return;
-      rec = new SR();
-      rec.lang = 'fr-FR';
-      rec.continuous = false;
-      rec.interimResults = true;
-      rec.onresult = (e) => {
-        let final = '';
-        let interim = '';
-        for (let i = e.resultIndex; i < e.results.length; i++) {
-          const t = e.results[i][0] ? e.results[i][0].transcript : '';
-          if (e.results[i].isFinal) final += t;
-          else interim += t;
-        }
-        elements.input.value = (final || interim).trim();
-      };
-      rec.onend = () => {
-        recActive = false;
-        elements.btnMic.textContent = '🎙️';
-      };
-      rec.onerror = () => {
-        recActive = false;
-        elements.btnMic.textContent = '🎙️';
-      };
-    }
-
-    elements.btnMic.addEventListener('click', async () => {
-      if (!rec) setupSpeechRecognition();
-      if (!rec) {
-        alert("Reconnaissance vocale non supportée dans ce navigateur.");
-        return;
-      }
-      try {
-        if (recActive) {
-          rec.stop();
-          return;
-        }
-        recActive = true;
-        elements.btnMic.textContent = '🛑';
-        rec.start();
-      } catch {
-        recActive = false;
-        elements.btnMic.textContent = '🎙️';
-      }
-    });
-
-    // Sync theme from parent OS
-    function syncTheme() {
-      let theme = 'dark';
-      try { theme = window.parent.document.documentElement.getAttribute('data-theme') || 'dark'; } catch {}
-      document.documentElement.setAttribute('data-theme', theme);
-    }
-    syncTheme();
-    try {
-      const obs = new MutationObserver(syncTheme);
-      obs.observe(window.parent.document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
-    } catch {}
-
-    // Init
-    speakEnabled = localStorage.getItem(STORAGE.speak) === '1';
-    elements.btnSpeak.textContent = speakEnabled ? '🔊' : '🔈';
-    getGroqModel();
-    elements.memory.value = localStorage.getItem(STORAGE.memory) || '';
-
-    reloadEnvMaybe().finally(() => {
-      setStatus(getGroqKey() ? 'Prêt (Groq). Essaie: “mets le thème clair”.' : 'Prêt (sans Groq). Ajoute une clé Groq (⚙️).');
-    });
-
-    // Render stored history
-    if (history.length === 0) {
-      addMessage('assistant', "Salut, je suis Mickey. Dis-moi “mets le thème clair” 😉");
-      history.push({ role: 'assistant', content: "Salut, je suis Mickey. Dis-moi “mets le thème clair” 😉" });
-      saveHistory(history);
+</div>
+
+<script>
+(function() {
+  "use strict";
+
+  var wm = (window.parent && window.parent.windowManager) ? window.parent.windowManager : null;
+
+  var SK = {
+    model: 'mickey_model', memory: 'mickey_memory',
+    history: 'mickey_history_v1', speak: 'mickey_speak_enabled',
+    groqKey: 'aether_groq_api_key'
+  };
+
+  var DEFAULT_MODEL = 'llama-3.3-70b-versatile';
+  var MODEL_MIGRATIONS = {
+    'llama3-70b-8192': DEFAULT_MODEL, 'llama3-8b-8192': 'llama-3.1-8b-instant',
+    'mixtral-8x7b-32768': DEFAULT_MODEL, 'gemma-7b-it': 'llama-3.1-8b-instant',
+    'gemma2-9b-it': 'llama-3.1-8b-instant', 'mistral-saba-24b': 'qwen/qwen3-32b'
+  };
+
+  function norm(s) {
+    return String(s || '').toLowerCase().normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, ' ').trim();
+  }
+
+  function safeNow() {
+    try { return new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }); }
+    catch(e) { return ''; }
+  }
+
+  function lsGet(k) { try { return localStorage.getItem(k) || ''; } catch(e) { return ''; } }
+  function lsSet(k, v) { try { localStorage.setItem(k, v); } catch(e) {} }
+  function lsDel(k) { try { localStorage.removeItem(k); } catch(e) {} }
+
+  var chatArea = document.getElementById('chat-area');
+  var messagesEl = document.getElementById('messages');
+  var emptyState = document.getElementById('empty-state');
+  var inputEl = document.getElementById('input');
+  var sendBtn = document.getElementById('btn-send');
+  var statusEl = document.getElementById('status-text');
+  var modelEl = document.getElementById('model');
+  var memoryEl = document.getElementById('memory');
+  var keyStatusEl = document.getElementById('key-status');
+  var groqKeyEl = document.getElementById('groq-key');
+  var modalEl = document.getElementById('modal');
+  var btnSpeak = document.getElementById('btn-speak');
+  var btnMic = document.getElementById('btn-mic');
+  var btnMicCompose = document.getElementById('btn-mic-compose');
+
+  function setStatus(text, loading) {
+    if (loading) {
+      statusEl.innerHTML = '<span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#10a37f;margin-right:6px;vertical-align:middle;animation:tdot 1.2s infinite"></span>' + text;
     } else {
-      history.forEach(m => addMessage(m.role, m.content));
+      statusEl.textContent = text || '';
     }
-  </script>
+  }
+
+  function scrollBottom() {
+    chatArea.scrollTo({ top: chatArea.scrollHeight, behavior: 'smooth' });
+  }
+
+  function addMessage(role, content, typing) {
+    emptyState.style.display = 'none';
+    var row = document.createElement('div');
+    row.className = 'msg-row ' + (role === 'user' ? 'user' : 'assistant');
+
+    var header = document.createElement('div');
+    header.className = 'msg-header';
+
+    var av = document.createElement('div');
+    av.className = 'msg-avatar ' + (role === 'user' ? 'me' : 'ai');
+    av.textContent = role === 'user' ? 'Toi' : 'M';
+
+    var meta = document.createElement('div');
+    meta.style.cssText = 'display:flex;gap:6px;align-items:baseline';
+
+    var name = document.createElement('span');
+    name.className = 'msg-name';
+    name.textContent = role === 'user' ? 'Vous' : 'Mickey';
+
+    var time = document.createElement('span');
+    time.className = 'msg-time';
+    time.textContent = safeNow();
+
+    meta.appendChild(name);
+    meta.appendChild(time);
+    header.appendChild(av);
+    header.appendChild(meta);
+
+    var bubble = document.createElement('div');
+    bubble.className = 'msg-bubble';
+
+    if (typing) {
+      var ind = document.createElement('div');
+      ind.className = 'typing-indicator';
+      for (var i = 0; i < 3; i++) {
+        var dot = document.createElement('div');
+        dot.className = 'typing-dot';
+        ind.appendChild(dot);
+      }
+      bubble.appendChild(ind);
+    } else {
+      bubble.textContent = content;
+    }
+
+    row.appendChild(header);
+    row.appendChild(bubble);
+    messagesEl.appendChild(row);
+    scrollBottom();
+    return row;
+  }
+
+  function removeRow(row) {
+    if (row && row.parentNode) row.parentNode.removeChild(row);
+  }
+
+  function getGroqKey() {
+    var fromWm = (wm && wm.groqApiKey) ? String(wm.groqApiKey).trim() : '';
+    return fromWm || lsGet(SK.groqKey).trim();
+  }
+
+  function maskKey(k) {
+    if (!k) return '';
+    return k.length <= 10 ? k.slice(0, 2) + '...' + k.slice(-2) : k.slice(0, 6) + '...' + k.slice(-4);
+  }
+
+  function syncKeyStatus() {
+    var k = getGroqKey();
+    keyStatusEl.textContent = k
+      ? 'Cle Groq OK (' + maskKey(k) + ')'
+      : 'Cle Groq manquante - colle ta cle ci-dessus.';
+  }
+
+  function setGroqKey(val) {
+    var k = String(val || '').trim();
+    if (k) lsSet(SK.groqKey, k); else lsDel(SK.groqKey);
+    try {
+      if (wm) {
+        if (typeof wm.setGroqApiKey === 'function') wm.setGroqApiKey(k);
+        else wm.groqApiKey = k;
+      }
+    } catch(e) {}
+    syncKeyStatus();
+    return k;
+  }
+
+  async function reloadEnv() {
+    try {
+      if (wm && typeof wm.loadSupabaseConfigFromEnv === 'function') await wm.loadSupabaseConfigFromEnv();
+    } catch(e) {}
+    syncKeyStatus();
+  }
+
+  function migrateModel(id) {
+    var raw = String(id || '').trim();
+    if (!raw) return DEFAULT_MODEL;
+    return MODEL_MIGRATIONS[raw] || raw;
+  }
+
+  function ensureModelOption(val) {
+    var v = String(val || '').trim();
+    if (!v || !modelEl) return;
+    if (!Array.from(modelEl.options).some(function(o) { return o.value === v; })) {
+      var opt = document.createElement('option');
+      opt.value = v;
+      opt.textContent = 'Mickey - ' + v;
+      modelEl.appendChild(opt);
+    }
+  }
+
+  function getGroqModel() {
+    var stored = migrateModel(lsGet(SK.model) || (modelEl ? modelEl.value : '') || DEFAULT_MODEL);
+    ensureModelOption(stored);
+    if (modelEl) modelEl.value = stored;
+    return stored;
+  }
+
+  function getRegistry() {
+    return (wm && Array.isArray(wm.appsRegistry)) ? wm.appsRegistry : [];
+  }
+
+  function getKnownApps() {
+    var apps = getRegistry().filter(function(a) { return a && a.id; })
+      .map(function(a) { return { id: String(a.id), title: String(a.title || a.id) }; });
+    var seen = {};
+    return apps.filter(function(a) { return seen[a.id] ? false : (seen[a.id] = true); });
+  }
+
+  function formatAppsList(max) {
+    max = max || 18;
+    var apps = getKnownApps().filter(function(a) { return a.id !== 'mickey'; }).slice(0, max);
+    if (!apps.length) return 'Pas encore acces a la liste des apps.';
+    var out = 'Apps disponibles:\n';
+    apps.forEach(function(a) { out += '- ' + a.title + ' (' + a.id + ')\n'; });
+    out += '\nDis "ouvre <nom>" pour lancer une app.';
+    return out;
+  }
+
+  function bestAppMatch(query) {
+    var q = norm(query);
+    if (!q) return null;
+    var aliases = {
+      parametres: 'settings', parametre: 'settings', settings: 'settings',
+      fichiers: 'explorer', explorateur: 'explorer', store: 'store',
+      navigateur: 'browser', browser: 'browser', wiki: 'wiki', aide: 'wiki'
+    };
+    if (aliases[q]) {
+      var id = aliases[q];
+      var found = getRegistry().find(function(a) { return a && a.id === id; });
+      return found || { id: id, title: id };
+    }
+    var apps = getRegistry();
+    return apps.find(function(a) { return a && (norm(a.id) === q || norm(a.title) === q); }) ||
+           apps.find(function(a) { return a && (norm(a.title).indexOf(q) >= 0 || norm(a.id).indexOf(q) >= 0); }) || null;
+  }
+
+  function runAction(action) {
+    var type = (action && action.type) ? action.type : '';
+
+    if (type === 'help') {
+      return 'Commandes disponibles:\n' +
+        '- Theme: "theme clair" ou "theme sombre"\n' +
+        '- Fond: "fond gradient", "fond blue"\n' +
+        '- Apps: "ouvre <nom>", "ferme <nom>"\n' +
+        '- Recherche: "ouvre la recherche"\n' +
+        '- Verrou: "verrouille"\n' +
+        '- Accent: "accent #C084FC"\n' +
+        '- Zoom: "zoom 110"\n' +
+        '- Memo: "memorise: <texte>"';
+    }
+
+    if (type === 'remember') {
+      var curr = lsGet(SK.memory).trim();
+      var note = String(action.note || '').trim();
+      var next = [curr, note].filter(Boolean).join('\n').trim();
+      lsSet(SK.memory, next);
+      if (memoryEl) memoryEl.value = next;
+      return 'Note! Tu peux voir/editer la memoire dans les Reglages.';
+    }
+
+    if (type === 'forget_memory') {
+      lsSet(SK.memory, '');
+      if (memoryEl) memoryEl.value = '';
+      return 'Memoire effacee.';
+    }
+
+    if (type === 'list_apps') return formatAppsList(28);
+
+    if (!wm) throw new Error('windowManager non disponible');
+
+    if (type === 'set_theme') {
+      wm.setTheme(action.theme);
+      return 'Theme ' + (action.theme === 'light' ? 'clair' : 'sombre') + ' active.';
+    }
+    if (type === 'set_wallpaper') {
+      wm.setWallpaper(action.wallpaper);
+      return 'Fond mis a jour.';
+    }
+    if (type === 'open_app') {
+      var meta = getRegistry().find(function(a) { return a && a.id === action.id; });
+      var title = action.title || (meta && meta.title) || action.id;
+      wm.createWindow(action.id, title, true);
+      return 'J\'ouvre ' + title + '.';
+    }
+    if (type === 'open_random_app') {
+      var pool = getKnownApps().filter(function(a) { return a.id !== 'mickey'; });
+      if (!pool.length) return 'Aucune app trouvee.';
+      var p = pool[Math.floor(Math.random() * pool.length)];
+      wm.createWindow(p.id, p.title, true);
+      return 'J\'ouvre ' + p.title + ' (aleatoire).';
+    }
+    if (type === 'close_app') { wm.closeWindow(action.id); return 'Ferme: ' + action.id; }
+    if (type === 'toggle_search') { wm.toggleSearch(); return 'Recherche ouverte.'; }
+    if (type === 'toggle_launchpad') { wm.toggleLaunchpad(); return 'Launchpad ouvert.'; }
+    if (type === 'lock_session') { wm.lockSession(); return 'Session verrouillee.'; }
+    if (type === 'toggle_immersive') { wm.toggleImmersiveMode(); return 'Mode immersif.'; }
+    if (type === 'set_accent') { wm.setAccentColor(action.color); return 'Accent: ' + action.color; }
+    if (type === 'set_ui_scale') { wm.setUIScale(action.scale); return 'Zoom: ' + action.scale + '%'; }
+    return null;
+  }
+
+  function parseCommand(text) {
+    var t = norm(text);
+    if (!t) return null;
+
+    if (t === 'aide' || t === 'help' || t.indexOf('commande') >= 0) return { type: 'help' };
+
+    if ((t.indexOf('liste') >= 0 || t.indexOf('quelles') >= 0) &&
+        (t.indexOf('app') >= 0 || t.indexOf('application') >= 0)) return { type: 'list_apps' };
+
+    if (t.indexOf('memorise') === 0 || t.indexOf('souviens') === 0) {
+      var note = String(text).replace(/^\s*(m[eé]morise|souviens[- ]toi)\s*:?\s*/i, '').trim();
+      if (note) return { type: 'remember', note: note };
+    }
+
+    if (t.indexOf('efface la memoire') >= 0 || t.indexOf('oublie tout') >= 0 || t.indexOf('oublie la memoire') >= 0) {
+      return { type: 'forget_memory' };
+    }
+
+    var isWallpaper = t.indexOf('wallpaper') >= 0 || t.indexOf('background') >= 0 ||
+      (t.indexOf('fond') >= 0 && (t.indexOf('ecran') >= 0 || t.indexOf('d ecran') >= 0));
+
+    var isTheme = t.indexOf('theme') >= 0 || t.indexOf('mode') >= 0 || t.indexOf('apparence') >= 0;
+    var isThemeImpl = !isWallpaper &&
+      (t.indexOf('mets') >= 0 || t.indexOf('passe') >= 0 || t.indexOf('active') >= 0) &&
+      (t.indexOf('clair') >= 0 || t.indexOf('light') >= 0 || t.indexOf('sombre') >= 0 || t.indexOf('dark') >= 0);
+
+    if ((isTheme || isThemeImpl) && (t.indexOf('clair') >= 0 || t.indexOf('light') >= 0)) return { type: 'set_theme', theme: 'light' };
+    if ((isTheme || isThemeImpl) && (t.indexOf('sombre') >= 0 || t.indexOf('dark') >= 0 || t.indexOf('noir') >= 0)) return { type: 'set_theme', theme: 'dark' };
+
+    if (isWallpaper) {
+      var urlM = String(text).match(/(https?:\/\/[^\s]+)/i);
+      if (urlM) return { type: 'set_wallpaper', wallpaper: urlM[1] };
+      if (t.indexOf('defaut') >= 0) return { type: 'set_wallpaper', wallpaper: 'default' };
+      if (t.indexOf('gradient') >= 0) return { type: 'set_wallpaper', wallpaper: 'gradient' };
+      if (t.indexOf('bleu') >= 0 || t.indexOf('blue') >= 0) return { type: 'set_wallpaper', wallpaper: 'blue' };
+      if (t.indexOf('sunset') >= 0) return { type: 'set_wallpaper', wallpaper: 'sunset' };
+      if (t.indexOf('sombre') >= 0 || t.indexOf('dark') >= 0) return { type: 'set_wallpaper', wallpaper: 'dark' };
+    }
+
+    var acM = t.match(/#([0-9a-f]{6})\b/i);
+    if ((t.indexOf('accent') >= 0 || t.indexOf('couleur') >= 0) && acM) return { type: 'set_accent', color: '#' + acM[1] };
+
+    var zmM = t.match(/\b(zoom|echelle|scale)\s*(\d{2,3})\s*%?\b/);
+    if (zmM) return { type: 'set_ui_scale', scale: Math.max(80, Math.min(150, Number(zmM[2]) || 100)) };
+
+    if (t.indexOf('recherche') >= 0 && (t.indexOf('ouvre') >= 0 || t.indexOf('open') >= 0)) return { type: 'toggle_search' };
+    if (t.indexOf('launchpad') >= 0 && t.indexOf('ouvre') >= 0) return { type: 'toggle_launchpad' };
+    if (t.indexOf('verrouille') >= 0 || t.indexOf('lock') >= 0) return { type: 'lock_session' };
+    if (t.indexOf('immersif') >= 0 || t.indexOf('fullscreen') >= 0) return { type: 'toggle_immersive' };
+
+    var opM = t.match(/\b(ouvre|lance|open|start)\b\s+(.+)$/);
+    if (opM) {
+      var raw = opM[2].replace(/\b(le|la|les|un|une|des|du|de|d)\b/g, '').trim();
+      if (raw.indexOf('aleatoire') >= 0 || raw.indexOf('random') >= 0) return { type: 'open_random_app' };
+      var app = bestAppMatch(raw);
+      if (app && app.id) return { type: 'open_app', id: app.id, title: app.title || app.id };
+    }
+
+    var clM = t.match(/\b(ferme|close|quit)\b\s+(.+)$/);
+    if (clM) {
+      var raw2 = clM[2].replace(/\b(le|la|les|un|une|des|du|de|d)\b/g, '').trim();
+      var app2 = bestAppMatch(raw2);
+      if (app2 && app2.id) return { type: 'close_app', id: app2.id };
+    }
+
+    return null;
+  }
+
+  function loadHistory() {
+    try {
+      var r = lsGet(SK.history);
+      var p = r ? JSON.parse(r) : [];
+      return Array.isArray(p) ? p : [];
+    } catch(e) { return []; }
+  }
+
+  function saveHistory(h) { lsSet(SK.history, JSON.stringify(h.slice(-40))); }
+
+  var history = loadHistory();
+  var speakEnabled = false;
+
+  function stopTTS() {
+    try { if (window.speechSynthesis) window.speechSynthesis.cancel(); } catch(e) {}
+  }
+
+  function speak(text) {
+    if (!speakEnabled || !text || !('speechSynthesis' in window)) return;
+    stopTTS();
+    var utter = new SpeechSynthesisUtterance(text);
+    utter.lang = 'fr-FR';
+    try {
+      var voices = window.speechSynthesis.getVoices ? window.speechSynthesis.getVoices() : [];
+      var fr = null;
+      for (var i = 0; i < voices.length; i++) { if (/fr/i.test(voices[i].lang)) { fr = voices[i]; break; } }
+      if (!fr && voices.length) fr = voices[0];
+      if (fr) utter.voice = fr;
+    } catch(e) {}
+    window.speechSynthesis.speak(utter);
+  }
+
+  async function callGroq(userText, signal) {
+    var key = getGroqKey();
+    if (!key) { await reloadEnv(); key = getGroqKey(); }
+    if (!key) return 'Pas de cle Groq. Ajoute-la dans les Reglages (engrenage) ou .env (AETHER_GROQ_API_KEY).';
+
+    var memory = lsGet(SK.memory).trim();
+    var model = getGroqModel();
+    var theme = 'dark';
+    try { theme = (wm && wm.theme) ? wm.theme : (window.parent.document.documentElement.getAttribute('data-theme') || 'dark'); } catch(e) {}
+
+    var appsStr = getKnownApps().filter(function(a) { return a.id !== 'mickey'; })
+      .slice(0, 40).map(function(a) { return a.title + ' (' + a.id + ')'; }).join(', ');
+
+    var sysContent = 'Tu t\'appelles Mickey.\n' +
+      'Tu es l\'assistant integre d\'AetherOS (un OS dans le navigateur).\n' +
+      'Reponds en francais, ton concis et utile.\n' +
+      'N\'invente jamais une app inexistante.\n' +
+      'Theme actuel: ' + theme + '.\n' +
+      (appsStr ? 'Apps connues: ' + appsStr + '.' : '');
+
+    var messages = [{ role: 'system', content: sysContent }];
+    if (memory) messages.push({ role: 'system', content: 'Memoire: ' + memory });
+    history.slice(-18).forEach(function(m) { messages.push(m); });
+    messages.push({ role: 'user', content: userText });
+
+    for (var attempt = 0; attempt < 2; attempt++) {
+      var chosenModel = attempt === 0 ? model : DEFAULT_MODEL;
+      if (attempt === 1) {
+        lsSet(SK.model, chosenModel);
+        ensureModelOption(chosenModel);
+        if (modelEl) modelEl.value = chosenModel;
+      }
+
+      var res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer ' + key, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ model: chosenModel, messages: messages }),
+        signal: signal
+      });
+
+      var data = {};
+      try { data = await res.json(); } catch(e) {}
+
+      if (!res.ok || (data && data.error)) {
+        var msg = (data && data.error && data.error.message) ? data.error.message : 'HTTP ' + res.status;
+        if (attempt === 0 && /decommissioned/i.test(msg) && chosenModel !== DEFAULT_MODEL) continue;
+        throw new Error(msg);
+      }
+
+      var txt = '';
+      try { txt = data.choices[0].message.content.trim(); } catch(e) {}
+      return txt || 'Reponse vide.';
+    }
+    return 'Impossible de generer une reponse.';
+  }
+
+  var inflight = null;
+
+  async function send(text) {
+    var content = String(text || '').trim();
+    if (!content) return;
+
+    inputEl.value = '';
+    inputEl.style.height = 'auto';
+    sendBtn.disabled = true;
+
+    addMessage('user', content);
+    history.push({ role: 'user', content: content });
+    saveHistory(history);
+
+    var cmd = parseCommand(content);
+    if (cmd) {
+      try {
+        var out = runAction(cmd);
+        if (out) {
+          addMessage('assistant', out);
+          history.push({ role: 'assistant', content: out });
+          saveHistory(history);
+          speak(out);
+          setStatus('');
+          sendBtn.disabled = false;
+          return;
+        }
+      } catch(err) {
+        var em = 'Erreur: ' + (err.message || err);
+        addMessage('assistant', em);
+        history.push({ role: 'assistant', content: em });
+        saveHistory(history);
+        setStatus('');
+        sendBtn.disabled = false;
+        return;
+      }
+    }
+
+    var nt = norm(content);
+    if (/\b(ouvre|lance|open|start|ferme|close|quit)\b/.test(nt)) {
+      var notfound = 'App non reconnue.\n\n' + formatAppsList(18);
+      addMessage('assistant', notfound);
+      history.push({ role: 'assistant', content: notfound });
+      saveHistory(history);
+      sendBtn.disabled = false;
+      return;
+    }
+
+    var typingRow = addMessage('assistant', '', true);
+    setStatus('Mickey reflechit...', true);
+
+    try {
+      if (inflight) inflight.abort();
+      inflight = new AbortController();
+      var reply = await callGroq(content, inflight.signal);
+      removeRow(typingRow);
+      addMessage('assistant', reply);
+      history.push({ role: 'assistant', content: reply });
+      saveHistory(history);
+      setStatus('');
+      speak(reply);
+    } catch(err2) {
+      removeRow(typingRow);
+      var errmsg = 'Erreur: ' + (err2.message || String(err2));
+      addMessage('assistant', errmsg);
+      history.push({ role: 'assistant', content: errmsg });
+      saveHistory(history);
+      setStatus('');
+    } finally {
+      inflight = null;
+      sendBtn.disabled = false;
+    }
+  }
+
+  // Events
+  sendBtn.addEventListener('click', function() { send(inputEl.value); });
+
+  inputEl.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(inputEl.value); }
+  });
+
+  inputEl.addEventListener('input', function() {
+    this.style.height = 'auto';
+    this.style.height = Math.min(this.scrollHeight, 180) + 'px';
+  });
+
+  // data-send chips
+  document.addEventListener('click', function(e) {
+    var t = e.target.closest('[data-send]');
+    if (t) { send(t.getAttribute('data-send')); }
+  });
+
+  function newChat() {
+    history = [];
+    saveHistory(history);
+    messagesEl.innerHTML = '';
+    emptyState.style.display = '';
+  }
+
+  document.getElementById('btn-new-chat').addEventListener('click', newChat);
+  document.getElementById('btn-new-top').addEventListener('click', newChat);
+
+  function clearHistory() {
+    if (!window.confirm('Effacer tout l\'historique ?')) return;
+    newChat();
+  }
+
+  document.getElementById('btn-clear-sidebar').addEventListener('click', clearHistory);
+  document.getElementById('btn-clear-history').addEventListener('click', clearHistory);
+
+  function openModal() {
+    modalEl.classList.add('open');
+    reloadEnv();
+    memoryEl.value = lsGet(SK.memory);
+    getGroqModel();
+  }
+
+  function closeModal() { modalEl.classList.remove('open'); }
+
+  document.getElementById('btn-settings').addEventListener('click', openModal);
+  document.getElementById('btn-close-modal').addEventListener('click', closeModal);
+  modalEl.addEventListener('click', function(e) { if (e.target === modalEl) closeModal(); });
+
+  modelEl.addEventListener('change', function() {
+    var next = migrateModel(modelEl.value);
+    ensureModelOption(next);
+    modelEl.value = next;
+    lsSet(SK.model, next);
+  });
+
+  memoryEl.addEventListener('input', function() { lsSet(SK.memory, memoryEl.value); });
+
+  document.getElementById('btn-save-key').addEventListener('click', function() {
+    setGroqKey(groqKeyEl.value);
+    groqKeyEl.value = '';
+    setStatus('Cle enregistree.');
+    setTimeout(function() { setStatus(''); }, 2000);
+  });
+
+  groqKeyEl.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') { e.preventDefault(); document.getElementById('btn-save-key').click(); }
+  });
+
+  document.getElementById('btn-clear-key').addEventListener('click', function() {
+    if (!window.confirm('Supprimer la cle Groq ?')) return;
+    setGroqKey('');
+  });
+
+  document.getElementById('btn-stop-tts').addEventListener('click', stopTTS);
+
+  btnSpeak.addEventListener('click', function() {
+    speakEnabled = !speakEnabled;
+    lsSet(SK.speak, speakEnabled ? '1' : '0');
+    btnSpeak.textContent = speakEnabled ? '\uD83D\uDD0A' : '\uD83D\uDD08';
+  });
+
+  var rec = null, recActive = false;
+
+  function setupSR() {
+    var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SR) return;
+    rec = new SR();
+    rec.lang = 'fr-FR'; rec.continuous = false; rec.interimResults = true;
+    rec.onresult = function(e) {
+      var final = '', interim = '';
+      for (var i = e.resultIndex; i < e.results.length; i++) {
+        var t = e.results[i][0] ? e.results[i][0].transcript : '';
+        if (e.results[i].isFinal) final += t; else interim += t;
+      }
+      inputEl.value = (final || interim).trim();
+      inputEl.dispatchEvent(new Event('input'));
+    };
+    rec.onend = function() {
+      recActive = false;
+      btnMic.textContent = '\uD83C\uDF99\uFE0F';
+      btnMicCompose.style.color = '';
+    };
+    rec.onerror = function() {
+      recActive = false;
+      btnMic.textContent = '\uD83C\uDF99\uFE0F';
+      btnMicCompose.style.color = '';
+    };
+  }
+
+  function toggleMic() {
+    if (!rec) setupSR();
+    if (!rec) { alert('Reconnaissance vocale non supportee.'); return; }
+    if (recActive) { rec.stop(); return; }
+    recActive = true;
+    btnMic.textContent = '\u23F9\uFE0F';
+    btnMicCompose.style.color = '#ef4444';
+    try { rec.start(); } catch(e) {
+      recActive = false;
+      btnMic.textContent = '\uD83C\uDF99\uFE0F';
+      btnMicCompose.style.color = '';
+    }
+  }
+
+  btnMic.addEventListener('click', toggleMic);
+  btnMicCompose.addEventListener('click', toggleMic);
+
+  function syncTheme() {
+    var theme = 'dark';
+    try { theme = window.parent.document.documentElement.getAttribute('data-theme') || 'dark'; } catch(e) {}
+    document.documentElement.setAttribute('data-theme', theme);
+  }
+
+  syncTheme();
+  try {
+    new MutationObserver(syncTheme).observe(
+      window.parent.document.documentElement,
+      { attributes: true, attributeFilter: ['data-theme'] }
+    );
+  } catch(e) {}
+
+  // Init
+  speakEnabled = lsGet(SK.speak) === '1';
+  btnSpeak.textContent = speakEnabled ? '\uD83D\uDD0A' : '\uD83D\uDD08';
+  getGroqModel();
+  memoryEl.value = lsGet(SK.memory);
+
+  reloadEnv().finally(function() {
+    setStatus(getGroqKey() ? '' : 'Cle Groq manquante');
+  });
+
+  if (history.length > 0) {
+    emptyState.style.display = 'none';
+    history.forEach(function(m) { addMessage(m.role, m.content); });
+  }
+
+})();
+</script>
 </body>
 </html>
