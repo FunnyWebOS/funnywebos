@@ -23,6 +23,16 @@ AetherOS (FunnyWEB OS) permet de créer des applications `.html` intégrées, av
 
 ---
 
+## 1.1) Secrets / Clés API (important)
+
+- GitHub Pages est **statique** : tout ce qui est dans `env.js`, `main.js`, ou vos `.html` est **public**.
+- Ne mettez jamais de clés IA (Groq/OpenAI/…) ni de clé Supabase `service_role` côté client.
+- Solution gratuite recommandée : un **proxy** (Cloudflare Worker) qui garde la clé côté serveur et expose un endpoint appelable par votre app.
+  - Guide : `proxy/README.md`
+  - Dans le front, vous ne mettez que l’URL du proxy (ex: `AETHER_AI_PROXY_URL`) dans `env.js`.
+
+---
+
 ## 2) Design System : Blue Glass (CSS)
 
 ### Couleurs et Tokens

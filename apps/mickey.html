@@ -625,9 +625,20 @@
   }
 
   async function callGroq(userText, signal) {
-    var key = getGroqKey();
-    if (!key) { await reloadEnv(); key = getGroqKey(); }
-    if (!key) return 'Pas de cle Groq. Ajoute-la dans les Reglages (engrenage) ou .env (AETHER_GROQ_API_KEY).';
+    var runtimeEnv = {};
+    try { runtimeEnv = window.AETHER_RUNTIME_ENV || (window.parent && window.parent.AETHER_RUNTIME_ENV) || {}; } catch(e) {}
+
+    var proxyBase = String(runtimeEnv.AETHER_AI_PROXY_URL || '').trim();
+    var endpoint = proxyBase
+      ? proxyBase.replace(/\/$/, '') + '/openai/v1/chat/completions'
+      : 'https://api.groq.com/openai/v1/chat/completions';
+
+    var key = '';
+    if (!proxyBase) {
+      key = getGroqKey();
+      if (!key) { await reloadEnv(); key = getGroqKey(); }
+      if (!key) return 'Pas de cle Groq. Ajoute-la dans les Reglages (engrenage) ou .env (AETHER_GROQ_API_KEY), ou configure un proxy (AETHER_AI_PROXY_URL).';
+    }
 
     var memory = lsGet(SK.memory).trim();
     var model = getGroqModel();
@@ -657,9 +668,12 @@
         if (modelEl) modelEl.value = chosenModel;
       }
 
-      var res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      var headers = { 'Content-Type': 'application/json' };
+      if (!proxyBase) headers['Authorization'] = 'Bearer ' + key;
+
+      var res = await fetch(endpoint, {
         method: 'POST',
-        headers: { 'Authorization': 'Bearer ' + key, 'Content-Type': 'application/json' },
+        headers: headers,
         body: JSON.stringify({ model: chosenModel, messages: messages }),
         signal: signal
       });

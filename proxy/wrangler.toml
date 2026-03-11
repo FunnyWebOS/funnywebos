@@ -1,0 +1,10 @@
+name = "aetheros-ai-proxy"
+main = "worker.js"
+compatibility_date = "2026-03-11"
+
+# Configure this in Cloudflare (or here) to restrict which sites can call your proxy.
+# Example:
+#   ALLOWED_ORIGINS = "https://mouns.github.io,https://example.com"
+[vars]
+ALLOWED_ORIGINS = ""
+

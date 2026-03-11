@@ -1300,15 +1300,21 @@ async function generateCodeFromAI(){
   const prompt=document.getElementById('sub-ai-prompt').value.trim();
   const name=document.getElementById('sub-name').value||'App';
   const isExt=document.getElementById('mode-ai-ext').classList.contains('active');
-  const key=window.parent.windowManager?window.parent.windowManager.groqApiKey:'';
-  if(!key)return alert('Clé API Groq manquante dans .env (AETHER_GROQ_API_KEY).');
+  let runtimeEnv={};
+  try{runtimeEnv=(window.parent&&window.parent.AETHER_RUNTIME_ENV)||window.AETHER_RUNTIME_ENV||{};}catch(e){}
+  const proxyBase=String(runtimeEnv.AETHER_AI_PROXY_URL||'').trim();
+  const endpoint=proxyBase?proxyBase.replace(/\/$/,'')+'/openai/v1/chat/completions':'https://api.groq.com/openai/v1/chat/completions';
+  const key=(!proxyBase&&window.parent.windowManager)?(window.parent.windowManager.groqApiKey||''):'';
+  if(!proxyBase&&!key)return alert('Clé API Groq manquante (AETHER_GROQ_API_KEY) ou configure un proxy (AETHER_AI_PROXY_URL).');
   if(!prompt)return alert('Décris ton app d\'abord.');
   const btn=document.querySelector('#ai-panel .ai-btn');
   btn.textContent='🤖 Génération…';btn.disabled=true;
   try{
-    const res=await fetch('https://api.groq.com/openai/v1/chat/completions',{
+    const headers={'Content-Type':'application/json'};
+    if(!proxyBase)headers['Authorization']=`Bearer ${key}`;
+    const res=await fetch(endpoint,{
       method:'POST',
-      headers:{'Authorization':`Bearer ${key}`,'Content-Type':'application/json'},
+      headers,
       body:JSON.stringify({
         messages:[{role:'user',content:`You are an expert web developer. Create a single-file HTML ${isExt?'widget':'application'} (HTML+CSS+JS in one file). Dark theme (#0f172a bg, white text). No external deps unless absolutely needed (CDN ok). Return ONLY raw HTML, no markdown. App: ${name}. ${prompt}.`}],
         model:'llama-3.3-70b-versatile'
