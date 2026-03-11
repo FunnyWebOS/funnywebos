@@ -678,11 +678,23 @@
         signal: signal
       });
 
+      var rawText = '';
+      try { rawText = await res.text(); } catch(e) {}
+
       var data = {};
-      try { data = await res.json(); } catch(e) {}
+      try { data = rawText ? JSON.parse(rawText) : {}; } catch(e) {}
 
       if (!res.ok || (data && data.error)) {
-        var msg = (data && data.error && data.error.message) ? data.error.message : 'HTTP ' + res.status;
+        var baseMsg = (data && data.error && data.error.message) ? data.error.message : ('HTTP ' + res.status);
+        var snippet = '';
+        if (rawText && !data.error) {
+          snippet = rawText.slice(0, 220).replace(/\s+/g, ' ').trim();
+        }
+        var msg = baseMsg +
+          '\nEndpoint: ' + endpoint +
+          '\nProxy: ' + (proxyBase ? 'ON' : 'OFF') +
+          '\nStatus: ' + res.status + ' ' + (res.statusText || '') +
+          (snippet ? ('\nBody: ' + snippet) : '');
         if (attempt === 0 && /decommissioned/i.test(msg) && chosenModel !== DEFAULT_MODEL) continue;
         throw new Error(msg);
       }
