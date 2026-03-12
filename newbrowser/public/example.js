@@ -698,13 +698,38 @@ els.newtab.addEventListener("click", (e) => {
   if (nav) navigate(nav.dataset.nav);
 });
 
-function boot() {
+// Allow parent frames (AetherOS) to request navigation.
+window.addEventListener("message", async (event) => {
+  try {
+    const data = event && event.data;
+    if (!data || typeof data !== "object") return;
+    if (data.type !== "AETHER_OPEN_URL") return;
+    const raw = String(data.url || "").trim();
+    if (!raw) return;
+    try {
+      event.source?.postMessage({ type: "AETHER_OPEN_URL_ACK", ok: true, url: raw }, "*");
+    } catch {}
+    await navigate(raw);
+  } catch {}
+});
+
+async function boot() {
   loadState();
   els.transport.value = state.settings.transport || "epoxy";
   renderAll();
   renderNewTab();
   showNewTab();
   setStatus("Prêt", "g");
+
+  try {
+    const params = new URLSearchParams(location.search || "");
+    let initial = String(params.get("url") || "").trim();
+    try {
+      const decoded = decodeURIComponent(initial);
+      if (/^https?:\/\//i.test(decoded) || /^about:/i.test(decoded)) initial = decoded;
+    } catch {}
+    if (initial) await navigate(initial);
+  } catch {}
 }
 
 boot();

@@ -2126,9 +2126,8 @@ class WindowManager {
 
         const registryAppInfo = this.appsRegistry.find(app => app && app.id === id);
         if (registryAppInfo && registryAppInfo.url) {
-            // V3.1: URL-based apps are wrapped in the main browser component
-            // The browser app will handle proxies and rendering.
-            const browserSrc = `apps/browser.html#url=${encodeURIComponent(registryAppInfo.url)}`;
+            // V3.1: URL-based apps are wrapped in the browser component (proxy-capable)
+            const browserSrc = `apps/newbrowser.html#url=${encodeURIComponent(registryAppInfo.url)}`;
             return `<iframe src="${browserSrc}" style="width:100%; height:100%; border:none; background:#1e1e1e;" id="iframe-${id}" onload="windowManager.initIframeUser('${id}')"></iframe>`;
         }
 
@@ -2169,7 +2168,8 @@ class WindowManager {
             if (registryApp.type === 'site') {
                 const registryUrl = normalizeExternalUrl(registryApp.url);
                 if (registryUrl) {
-                    return `<iframe src="${registryUrl}" style="width:100%; height:100%; border:none; background:#0f172a;" id="iframe-${id}" onload="windowManager.initIframeUser('${id}')"></iframe>`;
+                    const browserSrc = `apps/newbrowser.html#url=${encodeURIComponent(registryUrl)}`;
+                    return `<iframe src="${browserSrc}" style="width:100%; height:100%; border:none; background:#1e1e1e;" id="iframe-${id}" onload="windowManager.initIframeUser('${id}')"></iframe>`;
                 }
             }
 

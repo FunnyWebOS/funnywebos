@@ -22,6 +22,18 @@
         const env = (window.AETHER_RUNTIME_ENV || {});
         const origin = String(env.AETHER_UV_ORIGIN || "").trim().replace(/\/+$/, "");
         window.__NEWBROWSER_TARGET_ORIGIN__ = origin;
+
+        const rawHash = String(location.hash || "").replace(/^#/, "");
+        const hashParams = new URLSearchParams(rawHash);
+        const searchParams = new URLSearchParams(location.search || "");
+        let initialUrl = (hashParams.get("url") || searchParams.get("url") || "").trim();
+        // `main.js` passes `encodeURIComponent(url)` into the hash, so decode once here.
+        // If it's already decoded, decodeURIComponent will throw on stray '%' so guard it.
+        try {
+          const decoded = decodeURIComponent(initialUrl);
+          if (/^https?:\/\//i.test(decoded) || /^about:/i.test(decoded)) initialUrl = decoded;
+        } catch {}
+        window.__NEWBROWSER_INITIAL_URL__ = initialUrl;
       })();
     </script>
   </head>
@@ -36,8 +48,10 @@
 
     <script>
       const target = window.__NEWBROWSER_TARGET_ORIGIN__;
+      const initialUrl = String(window.__NEWBROWSER_INITIAL_URL__ || "").trim();
       const hint = document.getElementById("hint");
       const frameWrap = document.getElementById("frameWrap");
+      let sent = false;
 
       if (!target || !/^https?:\/\//i.test(target)) {
         hint.textContent = " — backend non configuré";
@@ -56,12 +70,31 @@
       } else {
         hint.textContent = ` — ${target}`;
         const iframe = document.createElement("iframe");
-        iframe.src = target + "/";
+        const next = new URL(target + "/");
+        if (initialUrl) next.searchParams.set("url", initialUrl);
+        iframe.src = next.toString();
         iframe.referrerPolicy = "no-referrer";
         iframe.allow = "encrypted-media; geolocation; microphone; camera; autoplay; fullscreen";
+        iframe.addEventListener("load", () => {
+          try {
+            if (!initialUrl) return;
+            sent = true;
+            hint.textContent = ` — ${target} (ouverture: ${initialUrl})`;
+            iframe.contentWindow.postMessage({ type: "AETHER_OPEN_URL", url: initialUrl }, "*");
+          } catch {}
+        });
         frameWrap.appendChild(iframe);
+
+        window.addEventListener("message", (event) => {
+          try {
+            const data = event && event.data;
+            if (!data || typeof data !== "object") return;
+            if (data.type !== "AETHER_OPEN_URL_ACK") return;
+            if (!sent) return;
+            hint.textContent = ` — ${target} (ok)`;
+          } catch {}
+        });
       }
     </script>
   </body>
 </html>
-

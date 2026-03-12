@@ -162,7 +162,16 @@
 
       document.title = (name ? name : 'Web App') + ' - FunnyWEB OS';
       nameEl.textContent = (icon ? (icon + ' ') : '') + (name ? name : 'Web App');
-      frame.src = url;
+      // If the OS has a proxy-capable browser configured, use it for web apps too.
+      // Otherwise fall back to direct iframe load.
+      var runtimeEnv = {};
+      try { runtimeEnv = (window.parent && window.parent.AETHER_RUNTIME_ENV) || window.AETHER_RUNTIME_ENV || {}; } catch (e) { runtimeEnv = {}; }
+      var uvOrigin = String(runtimeEnv.AETHER_UV_ORIGIN || '').trim();
+      if (uvOrigin) {
+        frame.src = 'newbrowser.html#url=' + encodeURIComponent(url);
+      } else {
+        frame.src = url;
+      }
 
       note.style.display = '';
       setTimeout(function () {
@@ -175,4 +184,3 @@
 </body>
 
 </html>
-
