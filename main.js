@@ -2127,7 +2127,7 @@ class WindowManager {
         const registryAppInfo = this.appsRegistry.find(app => app && app.id === id);
         if (registryAppInfo && registryAppInfo.url) {
             // V3.1: URL-based apps are wrapped in the browser component (proxy-capable)
-            const browserSrc = `apps/newbrowser.html#url=${encodeURIComponent(registryAppInfo.url)}`;
+            const browserSrc = `apps/newbrowser.html#embed=1&url=${encodeURIComponent(registryAppInfo.url)}`;
             return `<iframe src="${browserSrc}" style="width:100%; height:100%; border:none; background:#1e1e1e;" id="iframe-${id}" onload="windowManager.initIframeUser('${id}')"></iframe>`;
         }
 
@@ -2168,7 +2168,7 @@ class WindowManager {
             if (registryApp.type === 'site') {
                 const registryUrl = normalizeExternalUrl(registryApp.url);
                 if (registryUrl) {
-                    const browserSrc = `apps/newbrowser.html#url=${encodeURIComponent(registryUrl)}`;
+                    const browserSrc = `apps/newbrowser.html#embed=1&url=${encodeURIComponent(registryUrl)}`;
                     return `<iframe src="${browserSrc}" style="width:100%; height:100%; border:none; background:#1e1e1e;" id="iframe-${id}" onload="windowManager.initIframeUser('${id}')"></iframe>`;
                 }
             }
@@ -2215,7 +2215,7 @@ class WindowManager {
                             : {};
                         const uvOrigin = String(runtimeEnv.AETHER_UV_ORIGIN || '').trim();
                         if (uvOrigin) {
-                            const browserSrc = `apps/newbrowser.html#url=${encodeURIComponent(siteUrl)}`;
+                            const browserSrc = `apps/newbrowser.html#embed=1&url=${encodeURIComponent(siteUrl)}`;
                             return `<iframe src="${browserSrc}" style="width:100%; height:100%; border:none; background:#1e1e1e;" id="iframe-${id}" onload="windowManager.initIframeUser('${id}')"></iframe>`;
                         }
                         return `<iframe src="${siteUrl}" style="width:100%; height:100%; border:none; background:#0f172a;" id="iframe-${id}" onload="windowManager.initIframeUser('${id}')"></iframe>`;

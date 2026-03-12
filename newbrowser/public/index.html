@@ -15,6 +15,14 @@
     <script src="/uv/uv.config.js"></script>
     <script src="/baremux/index.js"></script>
     <script>
+      (function () {
+        try {
+          const params = new URLSearchParams(location.search || "");
+          if (params.get("embed") === "1") document.documentElement.classList.add("embed");
+        } catch {}
+      })();
+    </script>
+    <script>
       if ("serviceWorker" in navigator) {
         window.addEventListener("load", () => {
           navigator.serviceWorker.register("/uv/sw.js").catch(() => {});

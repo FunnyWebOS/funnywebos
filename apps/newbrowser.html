@@ -27,6 +27,7 @@
         const hashParams = new URLSearchParams(rawHash);
         const searchParams = new URLSearchParams(location.search || "");
         let initialUrl = (hashParams.get("url") || searchParams.get("url") || "").trim();
+        const embed = String(hashParams.get("embed") || searchParams.get("embed") || "").trim() === "1";
         // `main.js` passes `encodeURIComponent(url)` into the hash, so decode once here.
         // If it's already decoded, decodeURIComponent will throw on stray '%' so guard it.
         try {
@@ -34,6 +35,7 @@
           if (/^https?:\/\//i.test(decoded) || /^about:/i.test(decoded)) initialUrl = decoded;
         } catch {}
         window.__NEWBROWSER_INITIAL_URL__ = initialUrl;
+        window.__NEWBROWSER_EMBED__ = embed;
       })();
     </script>
   </head>
@@ -49,6 +51,7 @@
     <script>
       const target = window.__NEWBROWSER_TARGET_ORIGIN__;
       const initialUrl = String(window.__NEWBROWSER_INITIAL_URL__ || "").trim();
+      const embed = !!window.__NEWBROWSER_EMBED__;
       const hint = document.getElementById("hint");
       const frameWrap = document.getElementById("frameWrap");
       let sent = false;
@@ -68,10 +71,14 @@
           </div>
         `;
       } else {
+        if (embed) {
+          try { document.getElementById("bar").style.display = "none"; } catch {}
+        }
         hint.textContent = ` — ${target}`;
         const iframe = document.createElement("iframe");
         const next = new URL(target + "/");
         if (initialUrl) next.searchParams.set("url", initialUrl);
+        if (embed) next.searchParams.set("embed", "1");
         iframe.src = next.toString();
         iframe.referrerPolicy = "no-referrer";
         iframe.allow = "encrypted-media; geolocation; microphone; camera; autoplay; fullscreen";
@@ -79,7 +86,7 @@
           try {
             if (!initialUrl) return;
             sent = true;
-            hint.textContent = ` — ${target} (ouverture: ${initialUrl})`;
+            if (!embed) hint.textContent = ` — ${target} (ouverture: ${initialUrl})`;
             iframe.contentWindow.postMessage({ type: "AETHER_OPEN_URL", url: initialUrl }, "*");
           } catch {}
         });
@@ -91,7 +98,7 @@
             if (!data || typeof data !== "object") return;
             if (data.type !== "AETHER_OPEN_URL_ACK") return;
             if (!sent) return;
-            hint.textContent = ` — ${target} (ok)`;
+            if (!embed) hint.textContent = ` — ${target} (ok)`;
           } catch {}
         });
       }

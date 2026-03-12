@@ -168,17 +168,24 @@
       try { runtimeEnv = (window.parent && window.parent.AETHER_RUNTIME_ENV) || window.AETHER_RUNTIME_ENV || {}; } catch (e) { runtimeEnv = {}; }
       var uvOrigin = String(runtimeEnv.AETHER_UV_ORIGIN || '').trim();
       if (uvOrigin) {
-        frame.src = 'newbrowser.html#url=' + encodeURIComponent(url);
+        try { document.querySelector('.stremio-header').style.display = 'none'; } catch (e) {}
+        try { document.querySelector('.stremio-footer').style.display = 'none'; } catch (e) {}
+        try { note.style.display = 'none'; } catch (e) {}
+        frame.src = 'newbrowser.html#embed=1&url=' + encodeURIComponent(url);
       } else {
         frame.src = url;
       }
 
-      note.style.display = '';
-      setTimeout(function () {
-        note.style.transition = 'opacity 1s';
-        note.style.opacity = '0';
-        setTimeout(function () { try { note.remove(); } catch (e) { } }, 1000);
-      }, 3500);
+      if (!uvOrigin) {
+        note.style.display = '';
+        setTimeout(function () {
+          note.style.transition = 'opacity 1s';
+          note.style.opacity = '0';
+          setTimeout(function () { try { note.remove(); } catch (e) { } }, 1000);
+        }, 3500);
+      } else {
+        try { note.remove(); } catch (e) {}
+      }
     }
   </script>
 </body>

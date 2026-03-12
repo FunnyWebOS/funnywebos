@@ -353,3 +353,14 @@ body { font-family: var(--font); color: var(--text); font-size: 13px; display: f
 .st-tag { display: inline-flex; align-items: center; padding: 1px 6px; border-radius: 3px; font-size: 9px; font-weight: 600; }
 .st-tag-g { background: rgba(30,126,69,.2); color: var(--accent3); }
 
+/* EMBED MODE (web app): show only the site, no browser chrome */
+.embed body { background: #000; }
+.embed #tab-bar,
+.embed #toolbar,
+.embed #bm-bar,
+.embed #panel,
+.embed #status-bar {
+  display: none !important;
+}
+.embed #load-bar { display: none !important; }
+.embed #newtab { display: none !important; }
