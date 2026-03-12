@@ -2203,22 +2203,30 @@ class WindowManager {
             }
         }
 
-        try {
-            const approved = JSON.parse(localStorage.getItem('aether_approved_apps') || '[]');
-            const communityApp = approved.find(app => app.id === id);
-            if (communityApp) {
-                if (communityApp.type === 'site') {
-                    const siteUrl = normalizeExternalUrl(communityApp.url);
-                    if (siteUrl) {
+            try {
+                const approved = JSON.parse(localStorage.getItem('aether_approved_apps') || '[]');
+                const communityApp = approved.find(app => app.id === id);
+                if (communityApp) {
+                    if (communityApp.type === 'site') {
+                        const siteUrl = normalizeExternalUrl(communityApp.url);
+                        if (siteUrl) {
+                        const runtimeEnv = (typeof window !== 'undefined' && window.AETHER_RUNTIME_ENV)
+                            ? window.AETHER_RUNTIME_ENV
+                            : {};
+                        const uvOrigin = String(runtimeEnv.AETHER_UV_ORIGIN || '').trim();
+                        if (uvOrigin) {
+                            const browserSrc = `apps/newbrowser.html#url=${encodeURIComponent(siteUrl)}`;
+                            return `<iframe src="${browserSrc}" style="width:100%; height:100%; border:none; background:#1e1e1e;" id="iframe-${id}" onload="windowManager.initIframeUser('${id}')"></iframe>`;
+                        }
                         return `<iframe src="${siteUrl}" style="width:100%; height:100%; border:none; background:#0f172a;" id="iframe-${id}" onload="windowManager.initIframeUser('${id}')"></iframe>`;
+                        }
+                    } else if (communityApp.code) {
+                        return `<iframe srcdoc='${communityApp.code.replace(/'/g, "&#39;")}' style="width:100%; height:100%; border:none; background:white;" id="iframe-${id}" onload="windowManager.initIframeUser('${id}')"></iframe>`;
                     }
-                } else if (communityApp.code) {
-                    return `<iframe srcdoc='${communityApp.code.replace(/'/g, "&#39;")}' style="width:100%; height:100%; border:none; background:white;" id="iframe-${id}" onload="windowManager.initIframeUser('${id}')"></iframe>`;
                 }
+            } catch (err) {
+                console.warn('Unable to resolve community app payload', err);
             }
-        } catch (err) {
-            console.warn('Unable to resolve community app payload', err);
-        }
 
         const fileAliases = { webos: 'browser', sheets: 'excel', slides: 'powerpoint', docs: 'word' };
         const resolvedId = fileAliases[id] || id;
