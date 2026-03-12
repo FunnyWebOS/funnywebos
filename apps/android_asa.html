@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Android ASA - FunnyWEB OS</title>
+  <style>
+    html,
+    body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      background: #0f0f15;
+      color: #fff;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      overflow: hidden;
+    }
+
+    .shell {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .topbar {
+      height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 12px;
+      background: rgba(20, 20, 30, 0.92);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(10px);
+      user-select: none;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 800;
+      letter-spacing: .2px;
+      color: #7b2cbf;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 65vw;
+    }
+
+    .controls {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn {
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      background: rgba(255, 255, 255, 0.06);
+      color: #fff;
+      padding: 8px 10px;
+      border-radius: 10px;
+      font-weight: 700;
+      cursor: pointer;
+      font-size: 12px;
+    }
+
+    .btn.primary {
+      border: none;
+      background: linear-gradient(90deg, #7b2cbf, #3a86ff);
+    }
+
+    .btn:disabled {
+      opacity: .55;
+      cursor: not-allowed;
+    }
+
+    .main {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 360px 1fr;
+      gap: 10px;
+      padding: 10px;
+      box-sizing: border-box;
+      min-height: 0;
+    }
+
+    .panel {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 14px;
+      overflow: hidden;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .panel h3 {
+      margin: 0;
+      padding: 12px 12px 10px;
+      font-size: 13px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(0, 0, 0, 0.12);
+    }
+
+    .panel .content {
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      overflow: auto;
+    }
+
+    label {
+      font-size: 11px;
+      color: rgba(255, 255, 255, 0.75);
+      display: block;
+      margin-bottom: 6px;
+      font-weight: 700;
+    }
+
+    input[type="text"],
+    input[type="number"],
+    select {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 10px 10px;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      background: rgba(0, 0, 0, 0.25);
+      color: #fff;
+      outline: none;
+      font-size: 12px;
+    }
+
+    input[type="file"] {
+      width: 100%;
+      color: rgba(255, 255, 255, 0.85);
+      font-size: 12px;
+    }
+
+    .hint {
+      font-size: 11px;
+      color: rgba(255, 255, 255, 0.65);
+      line-height: 1.35;
+    }
+
+    .hint code {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 11px;
+      color: rgba(255, 255, 255, 0.88);
+    }
+
+    .vm {
+      position: relative;
+      min-height: 0;
+      background: #000;
+      border-radius: 14px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      overflow: hidden;
+    }
+
+    .screen {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: stretch;
+      justify-content: stretch;
+    }
+
+    .screen canvas {
+      width: 100%;
+      height: 100%;
+      image-rendering: pixelated;
+    }
+
+    .status {
+      font-size: 11px;
+      color: rgba(255, 255, 255, 0.75);
+    }
+
+    .footer {
+      height: 30px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 12px;
+      background: #000;
+      border-top: 1px solid rgba(255, 255, 255, 0.06);
+      color: rgba(255, 255, 255, 0.55);
+      font-size: 10px;
+    }
+
+    @media (max-width: 900px) {
+      .main {
+        grid-template-columns: 1fr;
+        grid-template-rows: 320px 1fr;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="shell">
+    <div class="topbar">
+      <div class="brand">🤖 Android ASA <span style="opacity:.5;font-weight:700;">(v86 / WASM)</span></div>
+      <div class="controls">
+        <button class="btn" id="btn-stop" disabled>Stop</button>
+        <button class="btn primary" id="btn-start">Start</button>
+      </div>
+    </div>
+
+    <div class="main">
+      <div class="panel">
+        <h3>Boot</h3>
+        <div class="content">
+          <div>
+            <label>ISO Android-x86 (URL)</label>
+            <input id="isoUrl" type="text" placeholder="https://.../android-x86.iso" />
+            <div class="hint">
+              Astuce: l'ISO est souvent très lourd. Si ça rame, utilise plutôt un fichier local (ci-dessous) ou une
+              image plus légère.
+            </div>
+          </div>
+
+          <div>
+            <label>ISO (fichier local)</label>
+            <input id="isoFile" type="file" accept=".iso,.img,.bin,.gz" />
+            <div class="hint">Le boot se fait sur <code>cdrom</code>. Le fichier n'est jamais uploadé: il reste sur ton PC.</div>
+          </div>
+
+          <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+            <div>
+              <label>RAM (MB)</label>
+              <input id="memMb" type="number" min="128" max="2048" value="512" />
+            </div>
+            <div>
+              <label>VGA (MB)</label>
+              <input id="vgaMb" type="number" min="4" max="64" value="16" />
+            </div>
+          </div>
+
+          <div>
+            <label>Mode WASM</label>
+            <select id="wasmMode">
+              <option value="auto" selected>Auto (recommandé)</option>
+              <option value="fallback">Fallback (sans isolation)</option>
+              <option value="fast">Fast (SharedArrayBuffer requis)</option>
+            </select>
+            <div class="hint">
+              Le mode <code>fast</code> nécessite <code>crossOriginIsolated</code> (COOP/COEP). GitHub Pages ne l'active pas
+              par défaut.
+            </div>
+          </div>
+
+          <div class="hint">
+            Si tu veux vraiment un "Android dans le navigateur", c'est la voie la plus simple.
+            Par contre: performances limitées + certains ISO Android ne bootent pas toujours.
+          </div>
+
+          <div class="status" id="status">Prêt.</div>
+        </div>
+      </div>
+
+      <div class="vm">
+        <div class="screen" id="screen"></div>
+      </div>
+    </div>
+
+    <div class="footer">
+      <div>FunyWEB OS • Android ASA</div>
+      <div id="footHint">Conseil: clique dans l'écran puis utilise le clavier.</div>
+    </div>
+  </div>
+
+  <script type="module">
+    // Prefer local vendored assets (works even if CDNs are blocked).
+    // Fallback to CDN if needed.
+    const LOCAL_BASE = "../vendor/v86/";
+    const CDN_BASE = "https://cdn.jsdelivr.net/npm/v86@0.5.319/build/";
+
+    const V86_LIB = `${LOCAL_BASE}libv86.mjs`;
+    const V86_WASM_FAST = `${LOCAL_BASE}v86.wasm`;
+    const V86_WASM_FALLBACK = `${LOCAL_BASE}v86-fallback.wasm`;
+    const BIOS_SEA = `${LOCAL_BASE}bios/seabios.bin`;
+    const BIOS_VGA = `${LOCAL_BASE}bios/vgabios.bin`;
+
+    const V86_LIB_CDN = `${CDN_BASE}libv86.mjs`;
+    const V86_WASM_FAST_CDN = `${CDN_BASE}v86.wasm`;
+    const V86_WASM_FALLBACK_CDN = `${CDN_BASE}v86-fallback.wasm`;
+    const BIOS_SEA_CDN = "https://cdn.jsdelivr.net/gh/copy/v86/bios/seabios.bin";
+    const BIOS_VGA_CDN = "https://cdn.jsdelivr.net/gh/copy/v86/bios/vgabios.bin";
+
+    const el = (id) => document.getElementById(id);
+    const statusEl = el("status");
+    const screenEl = el("screen");
+    const startBtn = el("btn-start");
+    const stopBtn = el("btn-stop");
+    const isoUrlEl = el("isoUrl");
+    const isoFileEl = el("isoFile");
+    const memMbEl = el("memMb");
+    const vgaMbEl = el("vgaMb");
+    const wasmModeEl = el("wasmMode");
+
+    let emulator = null;
+
+    const setStatus = (text) => {
+      statusEl.textContent = text;
+      try { window.parent?.windowManager?.notify?.("Android ASA", text, "system"); } catch (_) { }
+    };
+
+    const pickWasmPath = (useCdn = false) => {
+      const mode = wasmModeEl.value;
+      const iso = !!(window.crossOriginIsolated);
+      const fast = useCdn ? V86_WASM_FAST_CDN : V86_WASM_FAST;
+      const fallback = useCdn ? V86_WASM_FALLBACK_CDN : V86_WASM_FALLBACK;
+      if (mode === "fallback") return fallback;
+      if (mode === "fast") return fast;
+      return iso ? fast : fallback;
+    };
+
+    const resolveCdrom = async () => {
+      const file = isoFileEl.files && isoFileEl.files[0] ? isoFileEl.files[0] : null;
+      if (file) return { file };
+      const url = (isoUrlEl.value || "").trim();
+      if (url) return { url };
+      return null;
+    };
+
+    const cleanScreen = () => {
+      while (screenEl.firstChild) screenEl.removeChild(screenEl.firstChild);
+    };
+
+    const stopVm = async () => {
+      if (!emulator) return;
+      try { emulator.stop(); } catch (_) { }
+      emulator = null;
+      cleanScreen();
+      startBtn.disabled = false;
+      stopBtn.disabled = true;
+      setStatus("Arrêté.");
+    };
+
+    const startVm = async () => {
+      if (emulator) return;
+      const cdrom = await resolveCdrom();
+      if (!cdrom) {
+        setStatus("Ajoute une ISO (URL ou fichier local) puis Start.");
+        return;
+      }
+
+      startBtn.disabled = true;
+      stopBtn.disabled = false;
+      setStatus("Chargement v86…");
+
+      cleanScreen();
+      const screenContainer = document.createElement("div");
+      screenContainer.style.width = "100%";
+      screenContainer.style.height = "100%";
+      screenEl.appendChild(screenContainer);
+
+      let V86Starter = null;
+      let useCdn = false;
+      try {
+        const mod = await import(V86_LIB);
+        V86Starter = mod.default || mod.V86Starter || mod;
+      } catch (err) {
+        try {
+          const mod = await import(V86_LIB_CDN);
+          V86Starter = mod.default || mod.V86Starter || mod;
+          useCdn = true;
+        } catch (err2) {
+          startBtn.disabled = false;
+          stopBtn.disabled = true;
+          setStatus("Impossible de charger v86 (assets bloqués).");
+          console.error(err);
+          console.error(err2);
+          return;
+        }
+      }
+
+      const memMb = Math.max(128, Math.min(2048, Number(memMbEl.value || 512)));
+      const vgaMb = Math.max(4, Math.min(64, Number(vgaMbEl.value || 16)));
+      const wasmPath = pickWasmPath(useCdn);
+      const biosSea = useCdn ? BIOS_SEA_CDN : BIOS_SEA;
+      const biosVga = useCdn ? BIOS_VGA_CDN : BIOS_VGA;
+
+      try {
+        emulator = new V86Starter({
+          wasm_path: wasmPath,
+          memory_size: memMb * 1024 * 1024,
+          vga_memory_size: vgaMb * 1024 * 1024,
+          screen_container: screenContainer,
+          bios: { url: biosSea },
+          vga_bios: { url: biosVga },
+          cdrom
+        });
+      } catch (err) {
+        emulator = null;
+        startBtn.disabled = false;
+        stopBtn.disabled = true;
+        setStatus("Erreur de démarrage v86.");
+        console.error(err);
+        return;
+      }
+
+      setStatus("Démarrage… (clique dans l'écran pour capter le clavier)");
+    };
+
+    startBtn.addEventListener("click", startVm);
+    stopBtn.addEventListener("click", stopVm);
+
+    window.addEventListener("message", (event) => {
+      if (event.data && event.data.type === "funnyweb_user_sync") {
+        // no-op (reserved)
+      }
+    });
+  </script>
+</body>
+
+</html>

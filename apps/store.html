@@ -726,7 +726,7 @@ const APPS = [
   {id:"word",name:"FunnyText",dev:"FunnyCorp",cat:"productivity",icon:"📝",desc:"Traitement de texte puissant avec sauvegarde VFS.",ver:"11.0.0"},
   {id:"excel",name:"FunnySheets",dev:"FunnyCorp",cat:"productivity",icon:"📊",desc:"Tableur avec cellules éditables, calculs et sauvegarde VFS.",ver:"11.0.0"},
   {id:"powerpoint",name:"FunnySlides",dev:"FunnyCorp",cat:"productivity",icon:"📽️",desc:"Créateur de diaporamas avec slides, thèmes et export VFS.",ver:"11.0.0"},
-  {id:"browser",name:"Zaluea Browser",dev:"FunnyCorp / Zaluea",cat:"online",icon:"🌐",desc:"Navigateur avec onglets, favoris, historique et page d'accueil adaptée.",ver:"12.1.0"},
+  {id:"browser",name:"NewBrowser",dev:"Mouns",cat:"online",icon:"🌐",desc:"Nouveau navigateur (dossier newbrowser) intégré à AetherOS.",ver:"1.0.0"},
   {id:"bunny",name:"Bunny Girl Viewer",dev:"Vasseta1",cat:"online",icon:"🎬",desc:"Regardez toute la série et les films de Rascal Does Not Dream dans une interface élégante.",ver:"1.0.0",shots:["📽️","🐰","✨"]},
   {id:"stremio",name:"Stremio Web",dev:"Stremio Team",cat:"online",icon:"🎥",desc:"L'expérience cinéma ultime. Regardez vos contenus préférés via addons.",ver:"1.0.0",shots:["🎥","🍿","🎬"]},
   {id:"youtube",name:"YouTube Redux",dev:"Google / Invidious",cat:"online",icon:"📺",desc:"Regardez vos vidéos préférées sans publicités, optimisé pour le système.",ver:"11.0.2",shots:["▶️","🤳","🌟"]},
@@ -1302,7 +1302,8 @@ async function generateCodeFromAI(){
   const isExt=document.getElementById('mode-ai-ext').classList.contains('active');
   let runtimeEnv={};
   try{runtimeEnv=(window.parent&&window.parent.AETHER_RUNTIME_ENV)||window.AETHER_RUNTIME_ENV||{};}catch(e){}
-  const proxyBase=String(runtimeEnv.AETHER_AI_PROXY_URL||'').trim();
+  let proxyBase=String(runtimeEnv.AETHER_AI_PROXY_URL||'').trim();
+  if(proxyBase&&!/^https?:\/\//i.test(proxyBase)) proxyBase='https://'+proxyBase;
   const endpoint=proxyBase?proxyBase.replace(/\/$/,'')+'/openai/v1/chat/completions':'https://api.groq.com/openai/v1/chat/completions';
   const key=(!proxyBase&&window.parent.windowManager)?(window.parent.windowManager.groqApiKey||''):'';
   if(!proxyBase&&!key)return alert('Clé API Groq manquante (AETHER_GROQ_API_KEY) ou configure un proxy (AETHER_AI_PROXY_URL).');

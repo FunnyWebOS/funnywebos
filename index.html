@@ -45,17 +45,19 @@
                     <div class="setup-icon">👤</div>
                     <h1>COMPTE SUPABASE</h1>
                     <p>Reliez un compte existant ou creez un nouveau compte cloud.</p>
-                    <div class="setup-auth-box">
-                        <div class="setup-mode-switch">
-                            <button class="setup-mode-btn active" id="setup-mode-existing-btn"
-                                onclick="windowManager.setSetupMode('existing')">Relier existant</button>
-                            <button class="setup-mode-btn" id="setup-mode-create-btn"
-                                onclick="windowManager.setSetupMode('create')">Nouveau compte</button>
-                        </div>
-                        <input type="hidden" id="setup-mode" value="existing">
-                        <input type="text" id="setup-username" placeholder="Nom d'utilisateur Supabase"
-                            class="setup-input">
-                        <input type="password" id="setup-password" placeholder="Mot de passe compte cloud"
+                     <div class="setup-auth-box">
+                         <div class="setup-mode-switch">
+                             <button class="setup-mode-btn active" id="setup-mode-existing-btn"
+                                 onclick="windowManager.setSetupMode('existing')">Relier existant</button>
+                             <button class="setup-mode-btn" id="setup-mode-create-btn"
+                                 onclick="windowManager.setSetupMode('create')">Nouveau compte</button>
+                             <button class="setup-mode-btn" id="setup-mode-local-btn"
+                                 onclick="windowManager.setSetupMode('local')">Compte local</button>
+                         </div>
+                         <input type="hidden" id="setup-mode" value="existing">
+                         <input type="text" id="setup-username" placeholder="Nom d'utilisateur Supabase"
+                             class="setup-input">
+                         <input type="password" id="setup-password" placeholder="Mot de passe compte cloud"
                             class="setup-input" autocomplete="current-password">
                         <input type="password" id="setup-pin" placeholder="Code PIN local (4 chiffres)"
                             class="setup-input" maxlength="4">

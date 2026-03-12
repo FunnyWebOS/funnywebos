@@ -155,6 +155,11 @@ function mergeProxyEnv(env = {}) {
     proxyConfig.uvOrigin = String(env.AETHER_UV_ORIGIN || '').trim();
     proxyConfig.uvPrefix = sanitizeUvPrefix(env.AETHER_UV_PREFIX || '/service/');
     proxyConfig.uvCodec = sanitizeUvCodec(env.AETHER_UV_CODEC || 'xor');
+
+    // If UV origin is provided but provider isn't, default to UV.
+    if (!env.AETHER_BROWSER_PROXY_PROVIDER && proxyConfig.uvOrigin && proxyConfig.provider === 'rammerhead') {
+        proxyConfig.provider = 'ultraviolet';
+    }
 }
 
 function resolveUvOrigin() {

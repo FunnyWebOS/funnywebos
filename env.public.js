@@ -3,6 +3,13 @@
 window.AETHER_RUNTIME_ENV = window.AETHER_RUNTIME_ENV || {};
 
 // Set your deployed proxy base URL here (no trailing slash).
-// Example: "https://aetheros-ai-proxy.aetheros.workers.dev"
-window.AETHER_RUNTIME_ENV.AETHER_AI_PROXY_URL = window.AETHER_RUNTIME_ENV.AETHER_AI_PROXY_URL || "https://funnywebos-production-2681.up.railway.app";
-AETHER_AI_PROXY_URL = "https://funnywebos-production-2681.up.railway.app"
+// Example: "https://aetheros-ai-proxy.aetheros.workers.dev"https://funn
+window.AETHER_RUNTIME_ENV.AETHER_AI_PROXY_URL = window.AETHER_RUNTIME_ENV.AETHER_AI_PROXY_URL || "https://aetheros-ai-proxy.aetheros.workers.dev";
+
+// Optional: Ultraviolet proxy config for `newbrowser/` (le nouveau navigateur).
+// Set `AETHER_UV_ORIGIN` to your deployed UV site origin (no trailing slash), e.g. "https://uv.example.com".
+// If `AETHER_UV_ORIGIN` is set and `AETHER_BROWSER_PROXY_PROVIDER` is not, the browser auto-selects UV.
+// Leave empty unless you actually deployed an Ultraviolet server (GitHub Pages is static).
+window.AETHER_RUNTIME_ENV.AETHER_UV_ORIGIN = window.AETHER_RUNTIME_ENV.AETHER_UV_ORIGIN || "https://funnywebos.onrender.com";
+window.AETHER_RUNTIME_ENV.AETHER_UV_PREFIX = window.AETHER_RUNTIME_ENV.AETHER_UV_PREFIX || "";
+window.AETHER_RUNTIME_ENV.AETHER_UV_CODEC = window.AETHER_RUNTIME_ENV.AETHER_UV_CODEC || "Epoxy";

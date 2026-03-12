@@ -1575,18 +1575,31 @@ class WindowManager {
     }
 
     setSetupMode(mode = 'existing') {
-        const normalized = mode === 'create' ? 'create' : 'existing';
+        const normalized = (mode === 'create' || mode === 'local') ? mode : 'existing';
         this.setupMode = normalized;
         const modeInput = document.getElementById('setup-mode');
         const existingBtn = document.getElementById('setup-mode-existing-btn');
         const createBtn = document.getElementById('setup-mode-create-btn');
+        const localBtn = document.getElementById('setup-mode-local-btn');
         const submitBtn = document.getElementById('setup-submit-btn');
         const password = document.getElementById('setup-password');
+        const username = document.getElementById('setup-username');
         if (modeInput) modeInput.value = normalized;
         if (existingBtn) existingBtn.classList.toggle('active', normalized === 'existing');
         if (createBtn) createBtn.classList.toggle('active', normalized === 'create');
-        if (submitBtn) submitBtn.textContent = normalized === 'existing' ? 'RELIER & LANCER' : 'CREER & LANCER';
-        if (password) password.autocomplete = normalized === 'existing' ? 'current-password' : 'new-password';
+        if (localBtn) localBtn.classList.toggle('active', normalized === 'local');
+        if (submitBtn) {
+            if (normalized === 'existing') submitBtn.textContent = 'RELIER & LANCER';
+            else submitBtn.textContent = 'CREER & LANCER';
+        }
+        if (password) {
+            password.style.display = normalized === 'local' ? 'none' : '';
+            password.autocomplete = normalized === 'existing' ? 'current-password' : 'new-password';
+            if (normalized === 'local') password.value = '';
+        }
+        if (username) {
+            username.placeholder = normalized === 'local' ? "Nom d'utilisateur local" : "Nom d'utilisateur Supabase";
+        }
         this.showSetupError('');
     }
 
@@ -1595,11 +1608,13 @@ class WindowManager {
         this.stopLockscreenClock();
         document.getElementById('setup-overlay').style.display = 'flex';
         this.hydrateSetupFields();
-        const defaultMode = Object.keys(this.accounts || {}).length > 0 ? 'existing' : 'create';
+        const defaultMode = this.isSupabaseReady()
+            ? (Object.keys(this.accounts || {}).length > 0 ? 'existing' : 'create')
+            : 'local';
         this.setSetupMode(defaultMode);
         this.showSetupError('');
         if (!this.isSupabaseReady()) {
-            this.showSetupError("Configure le fichier .env du projet pour connecter Supabase.");
+            this.showSetupError("Supabase n'est pas configure. Tu peux creer un compte local (onglet « Compte local ») ou configurer .env pour le cloud.");
         }
         const userInput = document.getElementById('setup-username');
         const passInput = document.getElementById('setup-password');
@@ -3298,7 +3313,8 @@ removeWidget(id) {
         const passwordInput = document.getElementById('setup-password');
         const pinInput = document.getElementById('setup-pin');
 
-        const mode = (modeInput && modeInput.value === 'create') ? 'create' : 'existing';
+        const rawMode = (modeInput && modeInput.value) ? String(modeInput.value) : 'existing';
+        const mode = (rawMode === 'create' || rawMode === 'local') ? rawMode : 'existing';
         const userName = (nameInput ? nameInput.value : '').trim();
         const password = (passwordInput ? passwordInput.value : '').trim();
         const pinValue = (pinInput ? pinInput.value : '').trim();
@@ -3308,48 +3324,74 @@ removeWidget(id) {
         this.showSetupError('');
 
         if (!userName) return this.showSetupError("Nom d'utilisateur requis.");
-        if (!password) return this.showSetupError("Mot de passe requis.");
         if (!/^\d{4}$/.test(localPin)) return this.showSetupError("Le PIN local doit contenir exactement 4 chiffres.");
-        if (!this.isSupabaseReady(supabaseConfig)) {
-            return this.showSetupError("Supabase non configure. Renseigne .env (AETHER_SUPABASE_URL, AETHER_SUPABASE_ANON_KEY ou AETHER_SUPABASE_SERVICE_ROLE_KEY, AETHER_SUPABASE_TABLE).");
+        if (mode !== 'local') {
+            if (!password) return this.showSetupError("Mot de passe requis.");
+            if (!this.isSupabaseReady(supabaseConfig)) {
+                return this.showSetupError("Supabase non configure. Choisis « Compte local » ou renseigne .env (AETHER_SUPABASE_URL, AETHER_SUPABASE_ANON_KEY ou AETHER_SUPABASE_SERVICE_ROLE_KEY, AETHER_SUPABASE_TABLE).");
+            }
         }
 
         this.setSetupBusy(true);
         try {
-            if (mode === 'existing') {
-                const remoteUser = await this.supabaseFindByCredentials(userName, password, supabaseConfig);
-                if (!remoteUser) throw new Error("Nom ou mot de passe introuvable dans Supabase.");
-            } else {
-                const existingRemote = await this.supabaseFindByUsername(userName, supabaseConfig);
-                if (existingRemote) throw new Error("Ce nom d'utilisateur existe deja dans Supabase.");
-                await this.supabaseCreateUser(userName, password, supabaseConfig);
-            }
-
             const existingLocalKey = this.findAccountKey(userName);
             const existingLocal = existingLocalKey ? this.accounts[existingLocalKey] : null;
-            if (!existingLocal) {
-                this.currentAccount = userName;
-                this.userName = userName;
-                this.pin = localPin;
-                this.sessionID = this.generateSessionId(this.userName);
-                this.profilePic = "";
-                this.wallpaper = "var(--bg-image)";
-                this.timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-                this.timeFormat = "24h";
-                this.accessibility = this.getDefaultAccessibility();
-                this.uiPreferences = this.getDefaultUIPreferences();
-                this.vfs = this.getDefaultVFS();
-                this.installedApps = ["word", "excel", "powerpoint", "store", "explorer", "wiki"];
-                this.saveAccounts();
-                await this.hydrateAccountFromSupabase(userName);
-                await this.syncCurrentAccountToSupabase();
+
+            if (mode === 'local') {
+                if (!existingLocal) {
+                    this.currentAccount = userName;
+                    this.userName = userName;
+                    this.pin = localPin;
+                    this.sessionID = this.generateSessionId(this.userName);
+                    this.profilePic = "";
+                    this.wallpaper = "var(--bg-image)";
+                    this.timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+                    this.timeFormat = "24h";
+                    this.accessibility = this.getDefaultAccessibility();
+                    this.uiPreferences = this.getDefaultUIPreferences();
+                    this.vfs = this.getDefaultVFS();
+                    this.installedApps = ["word", "excel", "powerpoint", "store", "explorer", "wiki"];
+                    this.saveAccounts();
+                } else {
+                    this.prepareAccount(existingLocalKey);
+                    this.pin = localPin;
+                    this.accounts[existingLocalKey].pin = localPin;
+                    this.saveAccounts();
+                }
             } else {
-                this.prepareAccount(existingLocalKey);
-                this.pin = localPin;
-                this.accounts[existingLocalKey].pin = localPin;
-                this.saveAccounts();
-                await this.hydrateAccountFromSupabase(existingLocalKey);
-                await this.syncCurrentAccountToSupabase();
+                if (mode === 'existing') {
+                    const remoteUser = await this.supabaseFindByCredentials(userName, password, supabaseConfig);
+                    if (!remoteUser) throw new Error("Nom ou mot de passe introuvable dans Supabase.");
+                } else {
+                    const existingRemote = await this.supabaseFindByUsername(userName, supabaseConfig);
+                    if (existingRemote) throw new Error("Ce nom d'utilisateur existe deja dans Supabase.");
+                    await this.supabaseCreateUser(userName, password, supabaseConfig);
+                }
+
+                if (!existingLocal) {
+                    this.currentAccount = userName;
+                    this.userName = userName;
+                    this.pin = localPin;
+                    this.sessionID = this.generateSessionId(this.userName);
+                    this.profilePic = "";
+                    this.wallpaper = "var(--bg-image)";
+                    this.timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+                    this.timeFormat = "24h";
+                    this.accessibility = this.getDefaultAccessibility();
+                    this.uiPreferences = this.getDefaultUIPreferences();
+                    this.vfs = this.getDefaultVFS();
+                    this.installedApps = ["word", "excel", "powerpoint", "store", "explorer", "wiki"];
+                    this.saveAccounts();
+                    await this.hydrateAccountFromSupabase(userName);
+                    await this.syncCurrentAccountToSupabase();
+                } else {
+                    this.prepareAccount(existingLocalKey);
+                    this.pin = localPin;
+                    this.accounts[existingLocalKey].pin = localPin;
+                    this.saveAccounts();
+                    await this.hydrateAccountFromSupabase(existingLocalKey);
+                    await this.syncCurrentAccountToSupabase();
+                }
             }
 
             this.nextSetupStep('loading');

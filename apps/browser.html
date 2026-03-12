@@ -1,117 +1,1739 @@
 <!DOCTYPE html>
 <html lang="fr">
-
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Google Chrome - FunnyWEB OS</title>
-    <style>
-        body,
-        html {
-            margin: 0;
-            padding: 0;
-            height: 100vh;
-            width: 100vw;
-            overflow: hidden;
-            background: #0f0f15;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-        }
+<meta charset="UTF-8">
+<title>AetherNet</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════════
+   AETHERNET — Design System
+═══════════════════════════════════════════════ */
+:root {
+  --bg:       #0d1117;
+  --bg2:      #13181f;
+  --bg3:      #181e27;
+  --surface:  #1c2330;
+  --surface2: #222b3a;
+  --border:   #2a3447;
+  --border2:  #364058;
+  --accent:   #1e7e45;
+  --accent2:  #27a356;
+  --accent3:  #3dd68c;
+  --glow:     rgba(30,126,69,.22);
+  --glow2:    rgba(61,214,140,.10);
+  --text:     #e2e8f4;
+  --text2:    #8b97b8;
+  --text3:    #4a5475;
+  --danger:   #e05252;
+  --warn:     #e09332;
+  --info:     #4a9eff;
+  --font:     'IBM Plex Sans', system-ui, sans-serif;
+  --mono:     'IBM Plex Mono', monospace;
+  --r:        6px;
+  --r2:       10px;
+  --r3:       16px;
+  --tab-h:    36px;
+  --tool-h:   46px;
+  --bm-h:     28px;
+  --stat-h:   22px;
+  --panel-w:  340px;
+  --trans:    .15s cubic-bezier(.4,0,.2,1);
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; overflow: hidden; background: var(--bg); }
+body { font-family: var(--font); color: var(--text); font-size: 13px; display: flex; flex-direction: column; }
 
-        .stremio-wrapper {
-            width: 100%;
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-        }
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text3); }
 
-        .stremio-header {
-            height: 40px;
-            background: rgba(20, 20, 30, 0.9);
-            backdrop-filter: blur(10px);
-            display: flex;
-            align-items: center;
-            padding: 0 15px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            color: white;
-            justify-content: space-between;
-        }
+/* ═══════════════════════
+   TAB BAR
+═══════════════════════ */
+#tab-bar {
+  display: flex; align-items: flex-end; gap: 2px;
+  padding: 7px 8px 0; background: var(--bg);
+  min-height: calc(var(--tab-h) + 7px);
+  overflow-x: auto; overflow-y: hidden;
+  flex-shrink: 0; position: relative; z-index: 10;
+}
+#tab-bar::-webkit-scrollbar { height: 2px; }
+#tabs-list { display: flex; gap: 2px; align-items: flex-end; }
 
-        .stremio-logo {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            font-weight: bold;
-            font-size: 14px;
-            color: #7b2cbf;
-        }
+.tab {
+  display: flex; align-items: center; gap: 6px;
+  padding: 0 8px 0 10px; height: var(--tab-h);
+  background: var(--surface); border: 1px solid var(--border);
+  border-bottom: none; border-radius: 8px 8px 0 0;
+  cursor: pointer; min-width: 90px; max-width: 200px;
+  position: relative; transition: background var(--trans), border-color var(--trans);
+  user-select: none; flex-shrink: 0;
+}
+.tab::after {
+  content: ''; position: absolute; bottom: -1px; left: 0; right: 0;
+  height: 1px; background: var(--border);
+}
+.tab:hover { background: var(--surface2); }
+.tab.active {
+  background: var(--bg2); border-color: var(--border2); z-index: 2;
+}
+.tab.active::after { background: var(--bg2); }
+.tab.loading .tab-fav { animation: spin .7s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
 
-        .stremio-footer {
-            height: 30px;
-            background: #000;
-            color: rgba(255, 255, 255, 0.5);
-            font-size: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-top: 1px solid rgba(255, 255, 255, 0.05);
-        }
+.tab-fav {
+  width: 13px; height: 13px; display: flex; align-items: center;
+  justify-content: center; font-size: 10px; flex-shrink: 0;
+}
+.tab-title {
+  flex: 1; font-size: 11.5px; overflow: hidden;
+  text-overflow: ellipsis; white-space: nowrap; color: var(--text2);
+}
+.tab.active .tab-title { color: var(--text); }
+.tab-close {
+  width: 15px; height: 15px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 9px; color: var(--text3); flex-shrink: 0;
+  transition: background var(--trans), color var(--trans);
+}
+.tab-close:hover { background: rgba(224,82,82,.25); color: var(--danger); }
+.tab-pin { font-size: 8px; color: var(--accent3); flex-shrink: 0; }
 
-        iframe {
-            flex: 1;
-            border: none;
-            width: 100%;
-            height: 100%;
-            background: #000;
-        }
+#new-tab-btn {
+  width: 26px; height: 26px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; color: var(--text3); font-size: 16px; font-weight: 300;
+  transition: all var(--trans); flex-shrink: 0; align-self: center;
+  border: 1px solid transparent; margin-left: 2px;
+}
+#new-tab-btn:hover { background: var(--surface); border-color: var(--border); color: var(--accent3); }
 
-        .overlay-note {
-            position: absolute;
-            top: 50px;
-            right: 20px;
-            background: rgba(123, 44, 191, 0.9);
-            color: white;
-            padding: 10px 15px;
-            border-radius: 8px;
-            font-size: 12px;
-            max-width: 250px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
-            animation: slideIn 0.5s ease-out;
-            pointer-events: none;
-            z-index: 100;
-        }
+/* ═══════════════════════
+   TOOLBAR
+═══════════════════════ */
+#toolbar {
+  display: flex; align-items: center; gap: 4px;
+  padding: 5px 10px; background: var(--bg2);
+  border-bottom: 1px solid var(--border);
+  height: var(--tool-h); flex-shrink: 0;
+}
 
-        @keyframes slideIn {
-            from {
-                transform: translateX(120%);
-            }
+.tb {
+  width: 30px; height: 30px; border-radius: var(--r);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; color: var(--text2); font-size: 14px;
+  background: none; border: none; transition: all var(--trans); flex-shrink: 0;
+}
+.tb:hover { background: var(--surface); color: var(--text); }
+.tb.off { opacity: .28; pointer-events: none; }
+.tb.on { color: var(--accent3); }
+.tb-sep { width: 1px; height: 16px; background: var(--border); margin: 0 2px; flex-shrink: 0; }
 
-            to {
-                transform: translateX(0);
-            }
-        }
-    </style>
+/* Address bar */
+#addr-wrap {
+  flex: 1; position: relative; display: flex; align-items: center;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 20px; height: 32px; min-width: 0;
+  transition: border-color var(--trans), box-shadow var(--trans);
+}
+#addr-wrap:focus-within {
+  border-color: var(--accent); box-shadow: 0 0 0 3px var(--glow);
+}
+#addr-lock {
+  padding: 0 5px 0 10px; font-size: 11px; flex-shrink: 0;
+  color: var(--text3); display: flex; align-items: center;
+}
+#addr-lock.https { color: var(--accent3); }
+#addr-lock.http { color: var(--warn); }
+
+#address {
+  flex: 1; background: none; border: none;
+  color: var(--text); font-family: var(--mono); font-size: 11.5px;
+  outline: none; padding: 0 4px; min-width: 0;
+}
+#address::placeholder { color: var(--text3); font-family: var(--font); font-size: 12px; }
+
+#addr-btns { display: flex; align-items: center; gap: 1px; padding-right: 6px; flex-shrink: 0; }
+.ab {
+  width: 22px; height: 22px; border-radius: 11px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; color: var(--text3); font-size: 11px;
+  background: none; border: none; transition: all var(--trans);
+}
+.ab:hover { background: var(--surface2); color: var(--text); }
+.ab.bm-on { color: #f4c430; }
+
+/* Suggestions dropdown */
+#suggestions {
+  position: absolute; top: calc(100% + 6px); left: -1px; right: -1px;
+  background: var(--surface); border: 1px solid var(--border2);
+  border-radius: var(--r2); box-shadow: 0 10px 40px rgba(0,0,0,.5);
+  z-index: 999; overflow: hidden; display: none;
+  animation: drop .12s ease;
+}
+@keyframes drop { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+.sg {
+  display: flex; align-items: center; gap: 9px;
+  padding: 8px 12px; cursor: pointer; transition: background var(--trans);
+}
+.sg:hover, .sg.hi { background: rgba(30,126,69,.12); }
+.sg-ic {
+  width: 18px; height: 18px; border-radius: 4px;
+  background: var(--surface2); display: flex; align-items: center;
+  justify-content: center; font-size: 10px; color: var(--text3); flex-shrink: 0;
+}
+.sg-body { flex: 1; min-width: 0; }
+.sg-title { font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sg-url { font-size: 10px; color: var(--text3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-family: var(--mono); }
+.sg-tag {
+  font-size: 9px; padding: 1px 5px; border-radius: 3px; flex-shrink: 0;
+  background: rgba(30,126,69,.15); color: var(--accent3);
+}
+
+/* ═══════════════════════
+   BOOKMARKS BAR
+═══════════════════════ */
+#bm-bar {
+  display: flex; align-items: center; gap: 1px; padding: 0 8px;
+  background: var(--bg2); border-bottom: 1px solid var(--border);
+  height: var(--bm-h); overflow-x: auto; flex-shrink: 0;
+}
+#bm-bar::-webkit-scrollbar { height: 2px; }
+.bm {
+  display: flex; align-items: center; gap: 4px; padding: 3px 8px;
+  border-radius: 4px; cursor: pointer; font-size: 11.5px;
+  color: var(--text2); white-space: nowrap; transition: all var(--trans);
+  overflow: hidden; max-width: 160px;
+}
+.bm:hover { background: var(--surface); color: var(--text); }
+.bm-lbl { overflow: hidden; text-overflow: ellipsis; }
+
+/* ═══════════════════════
+   CONTENT AREA
+═══════════════════════ */
+#content { flex: 1; position: relative; display: flex; overflow: hidden; }
+#frame-wrap { flex: 1; position: relative; overflow: hidden; }
+
+#frame {
+  position: absolute; inset: 0; width: 100%; height: 100%;
+  border: none; background: white; display: none;
+}
+
+/* Loading bar */
+#load-bar {
+  position: absolute; top: 0; left: 0; height: 2px; z-index: 200;
+  background: linear-gradient(90deg, var(--accent), var(--accent3), var(--accent));
+  background-size: 200% 100%;
+  width: 0; border-radius: 0 1px 1px 0;
+  transition: width .3s ease; pointer-events: none;
+}
+#load-bar.go { animation: bar-shine 1.2s linear infinite; }
+@keyframes bar-shine { to { background-position: -200% 0; } }
+#load-bar.done { width: 100% !important; opacity: 0; transition: width .2s, opacity .4s .2s; }
+
+/* ═══════════════════════
+   NEW TAB PAGE
+═══════════════════════ */
+#newtab {
+  position: absolute; inset: 0; display: flex; flex-direction: column;
+  align-items: center; background: var(--bg); overflow-y: auto;
+}
+.nt-top { padding: 56px 24px 32px; text-align: center; flex-shrink: 0; }
+.nt-brand {
+  font-size: 38px; font-weight: 600; letter-spacing: -1.5px;
+  color: var(--text); margin-bottom: 4px;
+}
+.nt-brand span { color: var(--accent3); }
+.nt-time { font-size: 13px; color: var(--text3); font-weight: 300; }
+
+.nt-search-wrap {
+  width: 100%; max-width: 540px; padding: 0 24px 36px; flex-shrink: 0;
+}
+.nt-sb {
+  display: flex; align-items: center; gap: 10px;
+  background: var(--surface); border: 1px solid var(--border2);
+  border-radius: 24px; padding: 0 14px; height: 50px;
+  transition: border-color var(--trans), box-shadow var(--trans);
+}
+.nt-sb:focus-within { border-color: var(--accent); box-shadow: 0 0 0 3px var(--glow); }
+.nt-sb input {
+  flex: 1; background: none; border: none; color: var(--text);
+  font-size: 14px; outline: none; font-family: var(--font);
+}
+.nt-sb input::placeholder { color: var(--text3); }
+.nt-sb-icon { color: var(--text3); font-size: 15px; }
+.nt-sb-go {
+  width: 30px; height: 30px; border-radius: 15px;
+  background: var(--accent); border: none; color: white;
+  cursor: pointer; font-size: 14px; display: flex;
+  align-items: center; justify-content: center;
+  transition: background var(--trans);
+}
+.nt-sb-go:hover { background: var(--accent2); }
+
+.nt-grid {
+  width: 100%; max-width: 620px; padding: 0 24px 32px;
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(88px, 1fr)); gap: 10px;
+  flex-shrink: 0;
+}
+.nt-sc {
+  display: flex; flex-direction: column; align-items: center;
+  gap: 7px; padding: 14px 8px; border-radius: var(--r2);
+  cursor: pointer; transition: background var(--trans); text-decoration: none;
+}
+.nt-sc:hover { background: var(--surface); }
+.nt-sc-ic {
+  width: 44px; height: 44px; border-radius: var(--r2);
+  background: var(--surface2); border: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: center; font-size: 20px;
+}
+.nt-sc-lbl {
+  font-size: 11px; color: var(--text2); text-align: center;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 80px;
+}
+
+.nt-recent {
+  width: 100%; max-width: 620px; padding: 0 24px 40px; flex-shrink: 0;
+}
+.nt-sec-title {
+  font-size: 10px; font-weight: 600; color: var(--text3);
+  text-transform: uppercase; letter-spacing: .7px; margin-bottom: 8px;
+}
+.nt-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--r2); overflow: hidden;
+}
+.nt-row {
+  display: flex; align-items: center; gap: 10px; padding: 9px 14px;
+  cursor: pointer; border-bottom: 1px solid var(--border);
+  transition: background var(--trans);
+}
+.nt-row:last-child { border-bottom: none; }
+.nt-row:hover { background: var(--surface2); }
+.nt-row-ic {
+  width: 22px; height: 22px; border-radius: 5px;
+  background: var(--surface2); display: flex; align-items: center;
+  justify-content: center; font-size: 10px; color: var(--text3); flex-shrink: 0;
+}
+.nt-row-body { flex: 1; min-width: 0; }
+.nt-row-title { font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.nt-row-url { font-size: 10px; color: var(--text3); font-family: var(--mono); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.nt-row-time { font-size: 10px; color: var(--text3); flex-shrink: 0; }
+
+/* ═══════════════════════
+   BLOCKED PAGE
+═══════════════════════ */
+#blocked {
+  position: absolute; inset: 0; display: none;
+  flex-direction: column; align-items: center; justify-content: center;
+  background: var(--bg); text-align: center; padding: 40px;
+}
+.blk-ic { font-size: 52px; margin-bottom: 18px; opacity: .35; }
+.blk-title { font-size: 20px; font-weight: 600; margin-bottom: 8px; }
+.blk-sub {
+  font-size: 13px; color: var(--text3); max-width: 400px;
+  line-height: 1.65; margin-bottom: 18px;
+}
+.blk-url {
+  font-size: 11px; font-family: var(--mono); color: var(--text3);
+  background: var(--surface); padding: 5px 14px; border-radius: 4px;
+  margin-bottom: 18px; max-width: 90%; overflow: hidden;
+  text-overflow: ellipsis; white-space: nowrap;
+}
+.blk-acts { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+
+/* Reader view */
+#reader {
+  position: absolute; inset: 0; background: var(--bg);
+  overflow-y: auto; padding: 60px 20px; display: none;
+}
+.reader-body { max-width: 680px; margin: 0 auto; }
+.reader-head {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 28px; padding-bottom: 14px; border-bottom: 1px solid var(--border);
+}
+.reader-title { font-size: 20px; font-weight: 600; }
+.reader-body p { font-size: 15px; line-height: 1.8; color: var(--text2); margin-bottom: 14px; }
+
+/* ═══════════════════════
+   SIDE PANEL
+═══════════════════════ */
+#panel {
+  position: absolute; right: 0; top: 0; bottom: 0; width: var(--panel-w);
+  background: var(--bg2); border-left: 1px solid var(--border);
+  display: flex; flex-direction: column;
+  transform: translateX(100%);
+  transition: transform .28s cubic-bezier(.4,0,.2,1);
+  z-index: 50; flex-shrink: 0;
+}
+#panel.open { transform: none; }
+
+.panel-tabs {
+  display: flex; align-items: center; padding: 10px 10px 0; gap: 2px; flex-shrink: 0;
+}
+.ptab {
+  flex: 1; text-align: center; padding: 7px 4px;
+  font-size: 11.5px; font-weight: 500; color: var(--text3);
+  cursor: pointer; border-bottom: 2px solid transparent;
+  transition: all var(--trans);
+}
+.ptab:hover { color: var(--text); }
+.ptab.on { color: var(--accent3); border-bottom-color: var(--accent3); }
+.pcl {
+  width: 24px; height: 24px; border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; color: var(--text3); font-size: 15px;
+  margin-left: 4px; transition: all var(--trans); flex-shrink: 0;
+}
+.pcl:hover { background: var(--surface); color: var(--text); }
+#panel-body { flex: 1; overflow-y: auto; padding: 10px; }
+
+/* Panel items */
+.pc { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r2); margin-bottom: 10px; overflow: hidden; }
+.pc-h { padding: 10px 14px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+.pc-title { font-size: 12px; font-weight: 600; }
+.pc-acts { display: flex; gap: 4px; }
+.pi {
+  display: flex; align-items: flex-start; gap: 9px; padding: 8px 14px;
+  cursor: pointer; border-bottom: 1px solid var(--border); transition: background var(--trans);
+}
+.pi:last-child { border-bottom: none; }
+.pi:hover { background: var(--surface2); }
+.pi-ic {
+  width: 20px; height: 20px; border-radius: 4px;
+  background: var(--surface2); display: flex; align-items: center;
+  justify-content: center; font-size: 9px; color: var(--text3);
+  flex-shrink: 0; margin-top: 1px;
+}
+.pi-body { flex: 1; min-width: 0; }
+.pi-title { font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pi-sub { font-size: 10px; color: var(--text3); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: var(--mono); margin-top: 1px; }
+.pi-time { font-size: 10px; color: var(--text3); flex-shrink: 0; margin-top: 2px; }
+.empty-st { padding: 24px; text-align: center; color: var(--text3); font-size: 12px; }
+.empty-st-ic { font-size: 28px; margin-bottom: 6px; opacity: .25; }
+
+/* Settings form */
+.sg-form { margin-bottom: 12px; }
+.sg-form label { display: block; font-size: 10.5px; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 4px; }
+.sg-form input, .sg-form select {
+  width: 100%; background: var(--bg3); border: 1px solid var(--border);
+  color: var(--text); padding: 6px 9px; border-radius: var(--r);
+  font-family: var(--font); font-size: 12px; outline: none;
+  transition: border-color var(--trans);
+}
+.sg-form input:focus, .sg-form select:focus { border-color: var(--accent); }
+.toggle-row { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; }
+.tgl { position: relative; width: 32px; height: 17px; flex-shrink: 0; }
+.tgl input { opacity: 0; width: 0; height: 0; position: absolute; }
+.tgl-s {
+  position: absolute; inset: 0; background: var(--border2);
+  border-radius: 9px; cursor: pointer; transition: background .2s;
+}
+.tgl-s::after {
+  content: ''; position: absolute; width: 11px; height: 11px;
+  left: 3px; top: 3px; background: white; border-radius: 50%;
+  transition: transform .2s;
+}
+.tgl input:checked + .tgl-s { background: var(--accent); }
+.tgl input:checked + .tgl-s::after { transform: translateX(15px); }
+.toggle-lbl { font-size: 12px; color: var(--text2); }
+
+/* ═══════════════════════
+   BUTTONS
+═══════════════════════ */
+.btn {
+  padding: 5px 11px; border-radius: var(--r); border: 1px solid var(--border);
+  background: var(--surface2); color: var(--text); font-family: var(--font);
+  font-size: 11.5px; cursor: pointer; transition: all var(--trans);
+}
+.btn:hover { background: var(--border); }
+.btn-p { background: var(--accent); border-color: var(--accent); color: #fff; }
+.btn-p:hover { background: var(--accent2); border-color: var(--accent2); }
+.btn-d { background: rgba(224,82,82,.1); border-color: rgba(224,82,82,.3); color: var(--danger); }
+.btn-d:hover { background: rgba(224,82,82,.2); }
+.btn-xs { padding: 3px 8px; font-size: 10.5px; }
+
+/* ═══════════════════════
+   STATUS BAR
+═══════════════════════ */
+#status-bar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 10px; height: var(--stat-h);
+  background: var(--bg); border-top: 1px solid var(--border);
+  flex-shrink: 0; font-size: 10.5px; color: var(--text3);
+}
+#st-left { display: flex; align-items: center; gap: 7px; }
+#st-right { display: flex; align-items: center; gap: 10px; font-family: var(--mono); font-size: 10px; }
+.st-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--text3); flex-shrink: 0; }
+.st-dot.g { background: var(--accent3); }
+.st-dot.r { background: var(--danger); }
+.st-dot.y { background: var(--warn); }
+.st-dot.pulse { animation: pulse .9s ease infinite; }
+@keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:.25; } }
+.st-tag {
+  display: inline-flex; align-items: center; padding: 1px 6px;
+  border-radius: 3px; font-size: 9px; font-weight: 600;
+}
+.st-tag-g { background: rgba(30,126,69,.2); color: var(--accent3); }
+.st-tag-b { background: rgba(74,158,255,.15); color: var(--info); }
+
+/* ═══════════════════════
+   FIND BAR
+═══════════════════════ */
+#find-bar {
+  position: absolute; top: 0; right: 14px;
+  background: var(--surface); border: 1px solid var(--border2);
+  border-top: none; border-radius: 0 0 8px 8px;
+  padding: 7px 10px; display: none; align-items: center; gap: 6px;
+  z-index: 100; box-shadow: 0 4px 20px rgba(0,0,0,.3);
+}
+#find-bar.open { display: flex; }
+#find-inp {
+  background: var(--bg3); border: 1px solid var(--border);
+  color: var(--text); padding: 4px 8px; border-radius: 4px;
+  font-size: 12px; font-family: var(--font); outline: none; width: 170px;
+}
+#find-inp:focus { border-color: var(--accent); }
+#find-count { font-size: 11px; color: var(--text3); min-width: 48px; }
+
+/* ═══════════════════════
+   CONTEXT MENU
+═══════════════════════ */
+#ctx {
+  position: fixed; background: var(--surface); border: 1px solid var(--border2);
+  border-radius: var(--r2); box-shadow: 0 10px 36px rgba(0,0,0,.55);
+  z-index: 9999; padding: 4px 0; min-width: 198px; display: none;
+  animation: ctx-in .1s ease;
+}
+@keyframes ctx-in { from { opacity:0; transform: scale(.95); } to { opacity:1; transform: none; } }
+.ctx-i {
+  display: flex; align-items: center; gap: 9px; padding: 7px 13px;
+  cursor: pointer; font-size: 12px; color: var(--text2); transition: background var(--trans);
+}
+.ctx-i:hover { background: rgba(30,126,69,.1); color: var(--text); }
+.ctx-i.dm:hover { background: rgba(224,82,82,.1); color: var(--danger); }
+.ctx-i .ico { width: 13px; text-align: center; color: var(--text3); font-size: 11px; flex-shrink: 0; }
+.ctx-sc { margin-left: auto; font-size: 9.5px; color: var(--text3); }
+.ctx-sep { height: 1px; background: var(--border); margin: 3px 0; }
+
+/* ═══════════════════════
+   TOAST
+═══════════════════════ */
+#toast {
+  position: fixed; bottom: 28px; right: 18px;
+  background: var(--surface); border: 1px solid var(--border2);
+  border-radius: var(--r2); padding: 11px 15px; min-width: 260px;
+  box-shadow: 0 8px 28px rgba(0,0,0,.45); z-index: 9999;
+  display: none; animation: toast-in .2s ease;
+}
+@keyframes toast-in { from { opacity:0; transform: translateY(8px); } to { opacity:1; transform: none; } }
+.toast-title { font-size: 12px; font-weight: 600; margin-bottom: 3px; }
+.toast-sub { font-size: 11px; color: var(--text3); }
+.toast-x { position: absolute; top: 8px; right: 9px; cursor: pointer; color: var(--text3); font-size: 13px; }
+
+/* ═══════════════════════
+   ZOOM POPUP
+═══════════════════════ */
+#zoom-pop {
+  position: fixed; bottom: 36px; left: 50%; transform: translateX(-50%);
+  background: var(--surface); border: 1px solid var(--border2);
+  border-radius: var(--r); padding: 5px 14px; font-size: 12px;
+  font-weight: 600; z-index: 9999; display: none;
+  box-shadow: 0 4px 16px rgba(0,0,0,.3); pointer-events: none;
+  animation: toast-in .12s ease;
+}
+
+/* Spin for loading tabs */
+@keyframes spin-r { to { transform: rotate(360deg); } }
+.spin { display: inline-block; animation: spin-r .65s linear infinite; }
+</style>
+
+<!-- Ultraviolet: required for proper URL encoding + SW rewrite -->
+<script src="/uv/uv.bundle.js" defer></script>
+<script src="/uv/uv.config.js" defer></script>
+<script>
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => {
+      // Same-origin SW; ensure UV assets are served on the same origin as this page.
+      navigator.serviceWorker.register("/uv/sw.js").catch(() => {});
+    });
+  }
+</script>
 </head>
-
 <body>
 
+<!-- TAB BAR -->
+<div id="tab-bar">
+  <div id="tabs-list"></div>
+  <div id="new-tab-btn" onclick="createTab()" title="Nouvel onglet (Ctrl+T)">+</div>
+</div>
 
-        <iframe src="https://browser.rammerhead.org/" allow="autoplay; fullscreen; encrypted-media; picture-in-picture"
-            id="stremioFrame"></iframe>
+<!-- TOOLBAR -->
+<div id="toolbar">
+  <button class="tb off" id="btn-back"    onclick="goBack()"    title="Précédent (Alt+←)">&#8592;</button>
+  <button class="tb off" id="btn-fwd"     onclick="goForward()" title="Suivant (Alt+→)">&#8594;</button>
+  <button class="tb"     id="btn-reload"  onclick="reload()"    title="Recharger (F5)">&#8635;</button>
+  <button class="tb"     id="btn-home"    onclick="goHome()"    title="Accueil">⌂</button>
+  <div class="tb-sep"></div>
 
+  <div id="addr-wrap">
+    <div id="addr-lock">🔒</div>
+    <input id="address" type="text" placeholder="Rechercher ou entrer une URL…" autocomplete="off" spellcheck="false">
+    <div id="addr-btns">
+      <button class="ab" id="btn-bm"      onclick="toggleBm()"     title="Favori (Ctrl+D)">☆</button>
+      <button class="ab"                  onclick="readerMode()"   title="Lecture">📖</button>
+      <button class="ab"                  onclick="translatePage()" title="Traduire">🌐</button>
+    </div>
+    <div id="suggestions"></div>
+  </div>
 
+  <div class="tb-sep"></div>
+  <button class="tb" onclick="openExternal()"   title="Ouvrir dans navigateur">↗</button>
+  <button class="tb" onclick="zoomOut()"        title="Zoom −">−</button>
+  <button class="tb" id="btn-zoom" onclick="resetZoom()" style="font-size:11px;min-width:36px;color:var(--text3)" title="Zoom">100%</button>
+  <button class="tb" onclick="zoomIn()"         title="Zoom +">+</button>
+  <div class="tb-sep"></div>
+  <button class="tb" onclick="quickDownload()"  title="Télécharger">⬇</button>
+  <button class="tb" id="btn-pvt" onclick="togglePrivate()" title="Navigation privée">🕶</button>
+  <button class="tb" id="btn-panel" onclick="togglePanel()" title="Panneau latéral">☰</button>
+</div>
 
-    <script>
-        // Auto-hide note after 5 seconds
-        setTimeout(() => {
-            const note = document.getElementById('welcomeNote');
-            if (note) {
-                note.style.transition = 'opacity 1s';
-                note.style.opacity = '0';
-                setTimeout(() => note.remove(), 1000);
-            }
-        }, 5000);
-    </script>
+<!-- BOOKMARKS BAR -->
+<div id="bm-bar"></div>
 
+<!-- CONTENT -->
+<div id="content">
+  <div id="frame-wrap">
+    <div id="load-bar"></div>
+
+    <!-- Find bar -->
+    <div id="find-bar">
+      <input id="find-inp" placeholder="Rechercher dans la page…" oninput="findInPage()" onkeydown="findKey(event)">
+      <span id="find-count"></span>
+      <button class="btn btn-xs" onclick="findStep(1)">▼</button>
+      <button class="btn btn-xs" onclick="findStep(-1)">▲</button>
+      <button class="btn btn-xs" onclick="closeFindBar()">✕</button>
+    </div>
+
+    <!-- iframe -->
+    <iframe id="frame"
+      sandbox="allow-forms allow-modals allow-pointer-lock allow-popups allow-popups-to-escape-sandbox allow-presentation allow-same-origin allow-scripts allow-downloads"
+      allow="encrypted-media; geolocation; microphone; camera; autoplay; fullscreen"></iframe>
+
+    <!-- New Tab Page -->
+    <div id="newtab">
+      <div class="nt-top">
+        <div class="nt-brand">Aether<span>Net</span></div>
+        <div class="nt-time" id="nt-time"></div>
+      </div>
+      <div class="nt-search-wrap">
+        <div class="nt-sb">
+          <span class="nt-sb-icon">🔍</span>
+          <input id="nt-inp" placeholder="Rechercher sur le web…" onkeydown="ntKey(event)">
+          <button class="nt-sb-go" onclick="ntGo()">→</button>
+        </div>
+      </div>
+      <div class="nt-grid" id="nt-grid"></div>
+      <div class="nt-recent">
+        <div class="nt-sec-title">Visites récentes</div>
+        <div class="nt-card" id="nt-hist"></div>
+      </div>
+    </div>
+
+    <!-- Blocked page -->
+    <div id="blocked">
+      <div class="blk-ic">🚫</div>
+      <div class="blk-title">Connexion bloquée</div>
+      <div class="blk-sub" id="blk-reason">Ce site refuse l'affichage dans une iframe.</div>
+      <div class="blk-url" id="blk-url"></div>
+      <div class="blk-acts">
+        <button class="btn btn-p" onclick="openBlockedExt()">↗ Ouvrir dans le navigateur</button>
+        <button class="btn"       onclick="retryLoad()">↺ Réessayer</button>
+        <button class="btn"       onclick="goHome()">⌂ Accueil</button>
+      </div>
+    </div>
+
+    <!-- Reader -->
+    <div id="reader">
+      <div class="reader-body" id="reader-body"></div>
+    </div>
+  </div>
+
+  <!-- PANEL -->
+  <div id="panel">
+    <div class="panel-tabs">
+      <div class="ptab on"  data-p="history"   onclick="switchPanel('history')">Historique</div>
+      <div class="ptab"     data-p="bookmarks" onclick="switchPanel('bookmarks')">Favoris</div>
+      <div class="ptab"     data-p="downloads" onclick="switchPanel('downloads')">Téléch.</div>
+      <div class="ptab"     data-p="settings"  onclick="switchPanel('settings')">Réglages</div>
+      <div class="pcl" onclick="togglePanel()">×</div>
+    </div>
+    <div id="panel-body"></div>
+  </div>
+</div>
+
+<!-- STATUS BAR -->
+<div id="status-bar">
+  <div id="st-left">
+    <div class="st-dot g" id="st-dot"></div>
+    <span id="st-text">Prêt</span>
+    <span class="st-tag st-tag-g" id="st-proxy" style="display:none">Proxy</span>
+    <span class="st-tag st-tag-b" id="st-pvt"   style="display:none">Privé</span>
+  </div>
+  <div id="st-right">
+    <span id="st-zoom">100%</span>
+    <span id="st-url" style="max-width:380px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></span>
+  </div>
+</div>
+
+<!-- CONTEXT MENU -->
+<div id="ctx">
+  <div class="ctx-i" onclick="ctx('back')"><span class="ico">←</span> Précédent<span class="ctx-sc">Alt+←</span></div>
+  <div class="ctx-i" onclick="ctx('fwd')"><span class="ico">→</span> Suivant<span class="ctx-sc">Alt+→</span></div>
+  <div class="ctx-i" onclick="ctx('reload')"><span class="ico">↺</span> Recharger<span class="ctx-sc">F5</span></div>
+  <div class="ctx-sep"></div>
+  <div class="ctx-i" onclick="ctx('newtab')"><span class="ico">+</span> Nouvel onglet<span class="ctx-sc">Ctrl+T</span></div>
+  <div class="ctx-i" onclick="ctx('dup')"><span class="ico">⧉</span> Dupliquer</div>
+  <div class="ctx-i" onclick="ctx('pin')"><span class="ico">📌</span> Épingler</div>
+  <div class="ctx-sep"></div>
+  <div class="ctx-i" onclick="ctx('bm')"><span class="ico">☆</span> Ajouter favori<span class="ctx-sc">Ctrl+D</span></div>
+  <div class="ctx-i" onclick="ctx('find')"><span class="ico">🔍</span> Rechercher<span class="ctx-sc">Ctrl+F</span></div>
+  <div class="ctx-i" onclick="ctx('reader')"><span class="ico">📖</span> Mode lecture</div>
+  <div class="ctx-i" onclick="ctx('ext')"><span class="ico">↗</span> Ouvrir dans navigateur</div>
+  <div class="ctx-sep"></div>
+  <div class="ctx-i dm" onclick="ctx('close')"><span class="ico">✕</span> Fermer<span class="ctx-sc">Ctrl+W</span></div>
+</div>
+
+<!-- TOAST -->
+<div id="toast">
+  <div class="toast-x" onclick="hideToast()">×</div>
+  <div class="toast-title" id="toast-title"></div>
+  <div class="toast-sub"   id="toast-sub"></div>
+</div>
+
+<!-- ZOOM POP -->
+<div id="zoom-pop"></div>
+
+<script>
+/* ═══════════════════════════════════════════════════════════
+   AETHERNET — Full browser engine
+   Merges: HTML source (Rammerhead-only) + JS source (UV+RH)
+═══════════════════════════════════════════════════════════ */
+
+const STORE_KEY = 'aethernet_v4';
+let wm = null;
+try { wm = window.parent?.windowManager || null; } catch(e) {}
+
+/* ── ENGINES ── */
+const ENGINES = {
+  google:     { label: 'Google',     url: 'https://www.google.com/search?q=%s&igu=1' },
+  duckduckgo: { label: 'DuckDuckGo', url: 'https://duckduckgo.com/?q=%s' },
+  bing:       { label: 'Bing',       url: 'https://www.bing.com/search?q=%s' },
+  brave:      { label: 'Brave',      url: 'https://search.brave.com/search?q=%s' },
+  ecosia:     { label: 'Ecosia',     url: 'https://www.ecosia.org/search?q=%s' },
+};
+
+const SHORTCUTS = [
+  { label:'Google',    url:'https://google.com',        icon:'🔍' },
+  { label:'YouTube',   url:'https://youtube.com',       icon:'▶️' },
+  { label:'GitHub',    url:'https://github.com',        icon:'🐙' },
+  { label:'Wikipedia', url:'https://fr.wikipedia.org',  icon:'📚' },
+  { label:'Reddit',    url:'https://reddit.com',        icon:'🤖' },
+  { label:'Twitter',   url:'https://twitter.com',       icon:'🐦' },
+  { label:'ChatGPT',   url:'https://chat.openai.com',   icon:'✨' },
+  { label:'Groq',      url:'https://groq.com',          icon:'⚡' },
+];
+
+const DEFAULTS = {
+  tabs: [],
+  activeTabId: null,
+  bookmarks: [
+    { id:'b1', title:'Google',    url:'https://google.com',       folder:'Barre' },
+    { id:'b2', title:'YouTube',   url:'https://youtube.com',      folder:'Barre' },
+    { id:'b3', title:'GitHub',    url:'https://github.com',       folder:'Barre' },
+    { id:'b4', title:'Wikipedia', url:'https://fr.wikipedia.org', folder:'Barre' },
+  ],
+  history: [],
+  downloads: [],
+  settings: {
+    homePage:       'about:newtab',
+    searchEngine:   'google',
+    openOnStartup:  'last',
+    showBookmarks:  true,
+    askDownload:    false,
+    blockPopups:    false,
+    downloadFolder: '/Downloads',
+    compatMode:     'proxy',
+    language:       'fr',
+    zoom:           100,
+  },
+};
+
+/* ── PROXY CONFIG (UV only) ── */
+let proxyConfig = {
+  provider:            'direct',
+  uvOrigin:            '',
+  uvPrefix:            '/uv/service/',
+  uvCodec:             'xor',
+};
+let uvAvailable = null;
+
+/* ── RUNTIME STATE ── */
+let state         = null;
+let _tabCtr       = 0;
+let panelMode     = 'history';
+let navCtx        = null;
+let navTimer      = null;
+let isPrivate     = false;
+let isReader      = false;
+let zoom          = 100;
+let ctxTabId      = null;
+let sgIdx         = -1;
+let sgData        = [];
+let _defNt        = '';
+const COMPAT_MS   = 7000;
+let blockedUrl    = '';
+
+/* ═══════════════════════════════════
+   UTILS
+═══════════════════════════════════ */
+const uid  = (p='i') => `${p}_${Date.now()}_${++_tabCtr}`;
+const cp   = v      => JSON.parse(JSON.stringify(v));
+const esc  = s      => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const escA = s      => String(s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/'/g,'&#39;').replace(/</g,'&lt;');
+
+function fmtTime(ts) {
+  const d = new Date(ts), now = Date.now(), delta = (now - ts) / 1000;
+  if (delta < 60)     return 'Il y a ' + Math.floor(delta) + 's';
+  if (delta < 3600)   return 'Il y a ' + Math.floor(delta/60) + 'min';
+  if (delta < 86400)  return 'Il y a ' + Math.floor(delta/3600) + 'h';
+  return d.toLocaleDateString('fr-FR');
+}
+function domain(url) {
+  try { return new URL(url).hostname.replace(/^www\./,''); } catch(e) { return url; }
+}
+function isErrHref(h) {
+  const l = (h||'').toLowerCase();
+  return l === 'about:blank' || l.startsWith('chrome-error://') || l.startsWith('edge-error://') || l.startsWith('about:neterror');
+}
+
+/* ═══════════════════════════════════
+   PROXY LOGIC (from both sources)
+═══════════════════════════════════ */
+function parseEnv(txt='') {
+  const out={};
+  String(txt).split(/\r?\n/).forEach(line => {
+    line = line.trim(); if (!line || line.startsWith('#')) return;
+    const i = line.indexOf('='); if (i<=0) return;
+    let v = line.slice(i+1).trim();
+    if ((v.startsWith('"')&&v.endsWith('"'))||(v.startsWith("'")&&v.endsWith("'"))) v=v.slice(1,-1);
+    out[line.slice(0,i).trim()] = v;
+  });
+  return out;
+}
+
+function sanUvPrefix(raw) {
+  let v = String(raw||'/uv/service/').trim()||'/uv/service/';
+  if (!v.startsWith('/')) v='/'+v;
+  return v.endsWith('/') ? v : v+'/';
+}
+function sanUvCodec(raw) {
+  const v = String(raw||'xor').trim().toLowerCase();
+  return ['xor','plain','base64','none'].includes(v) ? v : 'xor';
+}
+
+function mergeProxyEnv(env={}) {
+  const uvo = env.AETHER_UV_ORIGIN;
+  if (uvo) {
+    proxyConfig.uvOrigin = String(uvo).trim().replace(/\/+$/,'');
+  }
+  const uvp = env.AETHER_UV_PREFIX;
+  if (uvp) proxyConfig.uvPrefix = sanUvPrefix(uvp);
+  const uvc = env.AETHER_UV_CODEC;
+  if (uvc) proxyConfig.uvCodec = sanUvCodec(uvc);
+  // Enable UV only when an origin is explicitly provided.
+  // (GitHub Pages is static: without a deployed UV server, /uv/service/* will 404.)
+  if (uvo) proxyConfig.provider = 'ultraviolet';
+}
+
+async function loadProxyCfg() {
+  // 1) Runtime env injected by host
+  const re = window.AETHER_RUNTIME_ENV || {};
+  const rp = window.AETHER_BROWSER_PROXY_CONFIG || {};
+  mergeProxyEnv({
+    ...re,
+    AETHER_UV_ORIGIN: rp.uvOrigin  || re.AETHER_UV_ORIGIN,
+    AETHER_UV_PREFIX: rp.uvPrefix  || re.AETHER_UV_PREFIX,
+    AETHER_UV_CODEC:  rp.uvCodec   || re.AETHER_UV_CODEC,
+  });
+  // 2) .env file
+  for (const path of ['../.env','/.env','.env','./.env','../env','/env']) {
+    try {
+      const r = await fetch(path, { cache:'no-store' });
+      if (!r.ok) continue;
+      const txt = await r.text();
+      const env = parseEnv(txt);
+      if (Object.keys(env).some(k=>k.startsWith('AETHER_'))) { mergeProxyEnv(env); break; }
+    } catch(e) {}
+  }
+}
+
+async function detectUv() {
+  if ((proxyConfig.provider||'').toLowerCase() !== 'ultraviolet') { uvAvailable = true; return; }
+  const origin = proxyConfig.uvOrigin || window.location.origin;
+  if (origin !== window.location.origin) { uvAvailable = true; return; }
+  for (const p of ['/uv/uv.bundle.js','/uv.bundle.js','/uv/uv.config.js','/uv.config.js']) {
+    try { const r = await fetch(origin+p,{cache:'no-store'}); if(r.ok){ uvAvailable=true; return; } } catch(e){}
+  }
+  uvAvailable = false;
+  proxyConfig.provider = 'direct';
+}
+
+function uvEncode(url, codec='xor') {
+  if (codec==='none') return url;
+  if (codec==='plain') return encodeURIComponent(url);
+  if (codec==='base64') return btoa(encodeURIComponent(url));
+  let out='';
+  for (let i=0;i<url.length;i++) out += i%2 ? String.fromCharCode(url.charCodeAt(i)^2) : url[i];
+  return encodeURIComponent(out);
+}
+
+function buildUvUrl(url) {
+  if (!/^https?:\/\//i.test(url)) return url;
+  const origin = (proxyConfig.uvOrigin||window.location.origin).replace(/\/+$/,'');
+  const prefix = sanUvPrefix(proxyConfig.uvPrefix);
+  // Prefer the real UV encoder when available (matches deployed UV config).
+  try {
+    const cfg = window.__uv$config;
+    if (cfg && typeof cfg.encodeUrl === 'function') {
+      const pfx = String(cfg.prefix || prefix);
+      const base = origin + (pfx.startsWith('/') ? pfx : '/' + pfx);
+      return base + cfg.encodeUrl(url);
+    }
+  } catch(e) {}
+  const enc = uvEncode(url, sanUvCodec(proxyConfig.uvCodec));
+  return origin + prefix + enc;
+}
+
+function buildProxyUrl(url) {
+  if (!/^https?:\/\//i.test(url)) return url;
+  if ((proxyConfig.provider||'').toLowerCase() !== 'ultraviolet') return url;
+  return buildUvUrl(url);
+}
+
+function buildCandidates(url) {
+  const proxy = buildProxyUrl(url);
+  return proxy ? [proxy] : [url];
+}
+
+function isProxyFailure(frame, ctx, frameUrl) {
+  if (!ctx||!Array.isArray(ctx.candidates)) return false;
+  const cand = ctx.candidates[ctx.index];
+  if (!cand||cand===ctx.url) return false;
+  try {
+    const doc = frame.contentDocument;
+    const txt = String(doc?.body?.innerText||'').trim().toLowerCase();
+    const ttl = String(doc?.title||'').trim().toLowerCase();
+    const fl  = String(frameUrl||'').toLowerCase();
+    if (!txt&&!ttl) return false;
+    if (txt.includes('cannot get /uv/service/') || txt.includes('cannot get /service/') || txt.includes('route not found')) return true;
+    if (txt.includes('route not found')) return true;
+    if ((ttl.includes('404')||txt.includes('404 not found'))&&(fl.includes('/uv/service/') || fl.includes('/service/'))) return true;
+  } catch(e){}
+  return false;
+}
+
+/* ═══════════════════════════════════
+   PERSISTENCE
+═══════════════════════════════════ */
+function loadState() {
+  let saved = null;
+  if (!isPrivate) { try { saved = JSON.parse(localStorage.getItem(STORE_KEY)||'null'); } catch(e){} }
+  state = {
+    ...cp(DEFAULTS), ...(saved||{}),
+    settings: { ...cp(DEFAULTS.settings), ...((saved&&saved.settings)||{}) },
+  };
+  // Normalise tabs
+  if (!Array.isArray(state.tabs)||!state.tabs.length||state.settings.openOnStartup==='newtab') {
+    state.tabs = [];
+    newTabModel(state.settings.openOnStartup==='home' ? state.settings.homePage : 'about:newtab');
+  } else {
+    state.tabs = state.tabs.map(t=>({
+      id:           t.id || uid('tab'),
+      title:        t.title || 'Nouvel onglet',
+      url:          t.url  || 'about:newtab',
+      history:      Array.isArray(t.history)&&t.history.length ? t.history : [t.url||'about:newtab'],
+      historyIndex: typeof t.historyIndex==='number' ? t.historyIndex : 0,
+      loading:      false,
+      pinned:       t.pinned||false,
+    }));
+    if (!state.tabs.some(t=>t.id===state.activeTabId)) state.activeTabId = state.tabs[0].id;
+  }
+  zoom = state.settings.zoom || 100;
+}
+
+function saveState() {
+  if (isPrivate) return;
+  try {
+    localStorage.setItem(STORE_KEY, JSON.stringify({
+      tabs:        state.tabs,
+      activeTabId: state.activeTabId,
+      bookmarks:   state.bookmarks.slice(0,200),
+      history:     state.history.slice(0,600),
+      downloads:   state.downloads.slice(0,200),
+      settings:    state.settings,
+    }));
+  } catch(e){}
+}
+
+/* ═══════════════════════════════════
+   TAB MODEL
+═══════════════════════════════════ */
+function normalizeUrl(raw) {
+  const v = (raw||'').trim();
+  if (!v||v==='about:newtab'||v==='about:blank') return 'about:newtab';
+  if (/^about:/i.test(v)) return v.toLowerCase();
+  if (/^[a-z]+:\/\//i.test(v)) return v;
+  if (v.includes('.')&&!v.includes(' ')) return 'https://'+v;
+  if (v.startsWith('localhost')) return 'http://'+v;
+  const eng = ENGINES[state.settings.searchEngine]||ENGINES.google;
+  return eng.url.replace('%s', encodeURIComponent(v));
+}
+
+function titleFromUrl(url) {
+  if (!url||url==='about:newtab') return 'Nouvel onglet';
+  try { return new URL(url).hostname.replace(/^www\./,''); } catch(e) { return 'Page'; }
+}
+
+function newTabModel(url='about:newtab') {
+  const norm = normalizeUrl(url);
+  const t = {
+    id:           uid('tab'),
+    title:        titleFromUrl(norm),
+    url:          norm,
+    history:      [norm],
+    historyIndex: 0,
+    loading:      false,
+    pinned:       false,
+  };
+  state.tabs.push(t);
+  state.activeTabId = t.id;
+  return t;
+}
+
+function getTab(id) { return state.tabs.find(t=>t.id===(id||state.activeTabId)); }
+function activeTab() { return getTab(); }
+
+function pushHistory(url, title) {
+  if (!url||url==='about:newtab'||isPrivate) return;
+  const last = state.history[0];
+  if (last&&last.url===url&&Date.now()-last.time<12000) return;
+  state.history.unshift({ id:uid('h'), url, title:title||domain(url), time:Date.now() });
+  if (state.history.length>600) state.history.pop();
+}
+
+/* ═══════════════════════════════════
+   NAVIGATION
+═══════════════════════════════════ */
+function navigate(raw, tabId) {
+  const tab = tabId ? getTab(tabId) : activeTab();
+  if (!tab) return;
+  const url = normalizeUrl(raw);
+  tab.url = url;
+  tab.title = titleFromUrl(url);
+  tab.loading = url!=='about:newtab';
+  tab.history  = tab.history.slice(0, tab.historyIndex+1);
+  tab.history.push(url);
+  tab.historyIndex = tab.history.length-1;
+  pushHistory(url, tab.title);
+  saveState();
+  renderAll();
+  if (tab.id===state.activeTabId) {
+    document.getElementById('address').value = url==='about:newtab' ? '' : url;
+    hideSug();
+    loadFrame(url);
+  }
+}
+
+function goBack() {
+  const t = activeTab(); if (!t||t.historyIndex<=0) return;
+  t.historyIndex--; t.url = t.history[t.historyIndex];
+  saveState(); renderAll(); loadFrame(t.url);
+}
+function goForward() {
+  const t = activeTab(); if (!t||t.historyIndex>=t.history.length-1) return;
+  t.historyIndex++; t.url = t.history[t.historyIndex];
+  saveState(); renderAll(); loadFrame(t.url);
+}
+function goHome()  { navigate(state.settings.homePage); }
+function reload()  { const t=activeTab(); if(t) loadFrame(t.url); }
+
+/* ═══════════════════════════════════
+   TABS
+═══════════════════════════════════ */
+function createTab(url='about:newtab') {
+  newTabModel(url); saveState(); renderAll(); loadFrame(activeTab().url);
+}
+function closeTab(id, e) {
+  if (e) e.stopPropagation();
+  const t = getTab(id); if(!t) return;
+  const idx = state.tabs.indexOf(t);
+  state.tabs.splice(idx,1);
+  if (!state.tabs.length) newTabModel('about:newtab');
+  if (state.activeTabId===id) state.activeTabId = state.tabs[Math.max(0,idx-1)].id;
+  saveState(); renderAll(); loadFrame(activeTab().url);
+}
+function selectTab(id) {
+  if (!getTab(id)) return;
+  state.activeTabId = id;
+  saveState(); renderAll(); loadFrame(activeTab().url);
+}
+function duplicateTab(id) { const t=getTab(id||state.activeTabId); if(t) createTab(t.url); }
+function pinTab(id) { const t=getTab(id||state.activeTabId); if(t){ t.pinned=!t.pinned; saveState(); renderTabs(); } }
+
+/* ═══════════════════════════════════
+   FRAME LOADING — FULL PROXY LOGIC
+═══════════════════════════════════ */
+let _defNtHTML = '';
+function captureDef() { const n=document.getElementById('newtab'); if(n&&!_defNtHTML) _defNtHTML=n.innerHTML; }
+
+function showBlocked(url, reason, autoOpened=false) {
+  document.getElementById('frame').style.display   = 'none';
+  document.getElementById('newtab').style.display  = 'none';
+  document.getElementById('reader').style.display  = 'none';
+  const b = document.getElementById('blocked');
+  b.style.display = 'flex';
+  document.getElementById('blk-reason').textContent = reason || "Ce site bloque l'affichage iframe.";
+  document.getElementById('blk-url').textContent     = url;
+  blockedUrl = url;
+  setStatus("Connexion bloquée", 'r');
+  if (autoOpened) showToast('↗ Ouvert','Dans ton navigateur principal');
+}
+
+function startNav(ctx) {
+  if (!ctx||!ctx.candidates||!ctx.candidates.length) return;
+  const frame = document.getElementById('frame');
+  const cand  = ctx.candidates[ctx.index];
+  const proxy = cand !== ctx.url;
+  const total = ctx.candidates.length;
+
+  frame.src = cand;
+  document.getElementById('st-proxy').style.display = proxy ? '' : 'none';
+  setStatus(proxy ? `Chargement proxy (${ctx.index+1}/${total})…` : 'Chargement…', 'y', true);
+  setLoadBar(15);
+
+  clearTimeout(navTimer);
+  const token = ctx.token;
+  navTimer = setTimeout(() => {
+    if (!navCtx||navCtx.token!==token) return;
+    const next = navCtx.index + 1;
+    if (next < navCtx.candidates.length) {
+      navCtx.index = next; setStatus('Tentative alternative…'); startNav(navCtx); return;
+    }
+    const failUrl = navCtx.url;
+    const mode    = state.settings.compatMode || 'proxy';
+    const auto    = mode==='force' ? openExt(failUrl) : false;
+    navCtx = null; clearTimeout(navTimer);
+    const t = activeTab(); if(t){ t.loading=false; saveState(); renderTabs(); }
+    showBlocked(failUrl, "Délai dépassé — le site refuse probablement les iframes.", auto);
+    setLoadBar(100);
+  }, COMPAT_MS);
+}
+
+function loadFrame(url) {
+  const frame  = document.getElementById('frame');
+  const newtab = document.getElementById('newtab');
+  const blocked= document.getElementById('blocked');
+  const reader = document.getElementById('reader');
+  clearTimeout(navTimer); navCtx = null;
+  captureDef();
+  if (isReader) { isReader=false; reader.style.display='none'; }
+  setLoadBar(0);
+  document.getElementById('st-proxy').style.display = 'none';
+
+  if (!url||url==='about:newtab') {
+    frame.style.display  = 'none';
+    blocked.style.display= 'none';
+    reader.style.display = 'none';
+    newtab.style.display = 'flex';
+    setStatus('Prêt','g'); setLoadBar(100);
+    renderNewTab(); return;
+  }
+  newtab.style.display  = 'none';
+  blocked.style.display = 'none';
+  frame.style.display   = 'block';
+
+  const candidates = buildCandidates(url);
+  navCtx = { token:uid('nav'), url, candidates, index:0 };
+  setAddrSec(url);
+  startNav(navCtx);
+}
+
+const frame = document.getElementById('frame');
+frame.addEventListener('load', () => {
+  const ctx = navCtx;
+  clearTimeout(navTimer); navCtx = null;
+  const tab = activeTab(); if (!tab) return;
+
+  let furl=''; let readable=false;
+  try { furl = frame.contentWindow.location.href; readable=true; } catch(e){}
+
+  if (ctx && readable && isErrHref(furl)) {
+    const next = ctx.index+1;
+    if (next < ctx.candidates.length) {
+      navCtx = ctx; navCtx.index = next;
+      setStatus('Tentative alternative…'); startNav(navCtx); return;
+    }
+    const mode = state.settings.compatMode||'proxy';
+    const auto = mode==='force' ? openExt(ctx.url) : false;
+    tab.loading=false; saveState(); renderTabs();
+    showBlocked(ctx.url,"Le site refuse la connexion iframe.",auto);
+    setLoadBar(100); return;
+  }
+  if (ctx && isProxyFailure(frame, ctx, furl)) {
+    const next = ctx.index+1;
+    if (next < ctx.candidates.length) {
+      navCtx = ctx; navCtx.index=next;
+      setStatus('Proxy indisponible, alternative…'); startNav(navCtx); return;
+    }
+  }
+
+  // Success
+  tab.loading = false;
+  if (ctx && ctx.url) tab.url = ctx.url;
+  else if (furl && !isErrHref(furl)) tab.url = furl;
+  try { tab.title = frame.contentDocument.title || titleFromUrl(tab.url); } catch(e){ tab.title = titleFromUrl(tab.url); }
+  saveState(); renderAll();
+  setStatus('Terminé','g'); setLoadBar(100);
+  document.getElementById('address').value = tab.url==='about:newtab' ? '' : tab.url;
+  setAddrSec(tab.url); updateBmBtn();
+});
+
+/* ═══════════════════════════════════
+   BOOKMARKS
+═══════════════════════════════════ */
+function toggleBm() {
+  const t = activeTab(); if(!t||t.url==='about:newtab') return;
+  const idx = state.bookmarks.findIndex(b=>b.url===t.url);
+  if (idx>=0) { state.bookmarks.splice(idx,1); showToast('Favori retiré',t.title); }
+  else { state.bookmarks.unshift({id:uid('bm'),title:t.title||domain(t.url),url:t.url,folder:'Barre',time:Date.now()}); showToast('Favori ajouté ★',t.title); }
+  saveState(); renderBmBar(); renderPanel(); updateBmBtn();
+}
+function removeBm(id) { state.bookmarks=state.bookmarks.filter(b=>b.id!==id); saveState(); renderBmBar(); renderPanel(); }
+function updateBmBtn() {
+  const t=activeTab(); const on=t&&state.bookmarks.some(b=>b.url===t.url);
+  const btn=document.getElementById('btn-bm');
+  btn.textContent = on ? '★' : '☆'; btn.classList.toggle('bm-on', on);
+}
+
+/* ═══════════════════════════════════
+   PRIVATE MODE
+═══════════════════════════════════ */
+function togglePrivate() {
+  isPrivate = !isPrivate;
+  document.getElementById('btn-pvt').classList.toggle('on', isPrivate);
+  document.getElementById('st-pvt').style.display = isPrivate ? '' : 'none';
+  document.body.style.setProperty('--accent',  isPrivate ? '#7c4dff' : '#1e7e45');
+  document.body.style.setProperty('--accent3', isPrivate ? '#b388ff' : '#3dd68c');
+  setStatus(isPrivate ? '🕶 Navigation privée' : 'Mode normal');
+}
+
+/* ═══════════════════════════════════
+   ZOOM
+═══════════════════════════════════ */
+function applyZoom(v) {
+  zoom = Math.max(25,Math.min(500,v)); state.settings.zoom=zoom;
+  const f=document.getElementById('frame');
+  f.style.transform=`scale(${zoom/100})`; f.style.transformOrigin='top left';
+  f.style.width=`${100*100/zoom}%`; f.style.height=`${100*100/zoom}%`;
+  document.getElementById('btn-zoom').textContent = zoom+'%';
+  document.getElementById('st-zoom').textContent  = zoom+'%';
+  const pop=document.getElementById('zoom-pop');
+  pop.textContent=zoom+'%'; pop.style.display='block';
+  clearTimeout(pop._t); pop._t=setTimeout(()=>pop.style.display='none',1100);
+  saveState();
+}
+function zoomIn()   { applyZoom(zoom+10); }
+function zoomOut()  { applyZoom(zoom-10); }
+function resetZoom(){ applyZoom(100); }
+
+/* ═══════════════════════════════════
+   FIND IN PAGE
+═══════════════════════════════════ */
+function openFindBar() { const b=document.getElementById('find-bar'); b.classList.add('open'); document.getElementById('find-inp').focus(); }
+function closeFindBar(){ document.getElementById('find-bar').classList.remove('open'); document.getElementById('find-inp').value=''; }
+function findInPage() {
+  const q=document.getElementById('find-inp').value;
+  if (!q) { document.getElementById('find-count').textContent=''; return; }
+  try {
+    const doc=frame.contentDocument; if(!doc) return;
+    const m=(doc.body.innerHTML.match(new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'gi'))||[]).length;
+    document.getElementById('find-count').textContent = m ? `1/${m}` : '0 résultat';
+  } catch(e) { document.getElementById('find-count').textContent=''; }
+}
+function findKey(e) { if(e.key==='Enter') e.shiftKey?findStep(-1):findStep(1); if(e.key==='Escape') closeFindBar(); }
+function findStep(d) { /* window.find() API minimal fallback */ try { frame.contentWindow.find(document.getElementById('find-inp').value,false,d<0); } catch(e){} }
+
+/* ═══════════════════════════════════
+   READER MODE
+═══════════════════════════════════ */
+function readerMode() {
+  const reader=document.getElementById('reader');
+  isReader=!isReader;
+  if (isReader) {
+    let title='Article', body='Contenu non accessible.';
+    try { title=frame.contentDocument.title||title; body=frame.contentDocument.body.innerText||body; } catch(e){}
+    document.getElementById('reader-body').innerHTML=`
+      <div class="reader-head">
+        <div class="reader-title">${esc(title)}</div>
+        <button class="btn btn-xs" onclick="readerMode()">✕ Fermer</button>
+      </div>
+      <p>${esc(body).replace(/\n\n+/g,'</p><p>').replace(/\n/g,'<br>')}</p>`;
+    reader.style.display='flex'; frame.style.display='none';
+  } else { reader.style.display='none'; frame.style.display='block'; }
+}
+
+/* ═══════════════════════════════════
+   EXTERNAL / DOWNLOAD / TRANSLATE
+═══════════════════════════════════ */
+function openExt(url) {
+  if (!url||url==='about:newtab') return false;
+  try { return !!window.open(url,'_blank','noopener,noreferrer'); } catch(e){ return false; }
+}
+function openExternal() { const t=activeTab(); if(t) { const ok=openExt(t.url); setStatus(ok?'Ouvert dans le navigateur':'Popup bloquée'); } }
+function openBlockedExt() { if(blockedUrl) openExt(blockedUrl); }
+function retryLoad() { const t=activeTab(); if(t) loadFrame(t.url); }
+
+function quickDownload() {
+  const t=activeTab(); if(!t||t.url==='about:newtab') return;
+  const now=Date.now();
+  let host='page'; try{ host=new URL(t.url).hostname.replace(/[^\w.-]/g,'_'); }catch(e){}
+  let name=`${host}_${now}.url`;
+  if (state.settings.askDownload) { const a=prompt('Nom du fichier:',name); if(!a) return; name=a; }
+  const path=`${state.settings.downloadFolder}/${name}`;
+  const item={ id:uid('d'), url:t.url, title:t.title||domain(t.url), time:now, status:'✓ Terminé', path };
+  try { if(wm?.vfs_write) wm.vfs_write(path,t.url,'file'); } catch(e){ item.status='✗ Échec'; }
+  state.downloads.unshift(item); if(state.downloads.length>200) state.downloads.pop();
+  saveState(); renderPanel();
+  showToast('⬇ Téléchargement', name+' — '+item.status);
+}
+
+function translatePage() {
+  const t=activeTab(); if(!t||t.url==='about:newtab') return;
+  createTab(`https://translate.google.com/translate?sl=auto&tl=${state.settings.language||'fr'}&u=${encodeURIComponent(t.url)}`);
+}
+
+/* ═══════════════════════════════════
+   STATUS / LOADING BAR
+═══════════════════════════════════ */
+function setStatus(txt, dot='', pulse=false) {
+  document.getElementById('st-text').textContent = txt;
+  const d=document.getElementById('st-dot');
+  d.className = 'st-dot'+(dot?' '+dot:'')+(pulse?' pulse':'');
+}
+function setAddrSec(url) {
+  const l=document.getElementById('addr-lock');
+  if(!url||url==='about:newtab'){ l.textContent=''; l.className=''; return; }
+  if(url.startsWith('https://')){ l.textContent='🔒'; l.className='https'; }
+  else { l.textContent='⚠️'; l.className='http'; }
+}
+let _lbTimer=null;
+function setLoadBar(pct) {
+  const bar=document.getElementById('load-bar');
+  if(_lbTimer){ clearTimeout(_lbTimer); _lbTimer=null; }
+  bar.classList.remove('done','go');
+  if(pct>=100){ bar.style.width='100%'; bar.classList.add('done'); _lbTimer=setTimeout(()=>{ bar.style.width='0'; },700); }
+  else { bar.style.width=pct+'%'; if(pct>0&&pct<100) bar.classList.add('go'); }
+}
+
+/* ═══════════════════════════════════
+   TOAST
+═══════════════════════════════════ */
+function showToast(title,sub) {
+  document.getElementById('toast-title').textContent=title;
+  document.getElementById('toast-sub').textContent=sub||'';
+  const t=document.getElementById('toast'); t.style.display='block';
+  clearTimeout(t._t); t._t=setTimeout(()=>t.style.display='none',3500);
+}
+function hideToast(){ document.getElementById('toast').style.display='none'; }
+
+/* ═══════════════════════════════════
+   SUGGESTIONS
+═══════════════════════════════════ */
+function showSug(q) {
+  const q2=(q||'').trim(); if(!q2){ hideSug(); return; }
+  const items=[];
+  items.push({ icon:'🌐', title: q2.includes('.')||q2.startsWith('http') ? 'Aller sur '+q2 : 'Rechercher "'+q2+'"', url:normalizeUrl(q2) });
+  state.bookmarks.filter(b=>(b.title+b.url).toLowerCase().includes(q2.toLowerCase())).slice(0,3).forEach(b=>items.push({icon:'☆',title:b.title,url:b.url,badge:'Favori'}));
+  state.history.filter(h=>(h.title+h.url).toLowerCase().includes(q2.toLowerCase())).slice(0,4).forEach(h=>items.push({icon:'🕐',title:h.title||domain(h.url),url:h.url,badge:'Historique'}));
+  sgData=items.slice(0,8); sgIdx=-1;
+  const box=document.getElementById('suggestions');
+  box.innerHTML=sgData.map((it,i)=>`
+    <div class="sg" data-i="${i}" onmousedown="navigate(${JSON.stringify(it.url)})">
+      <div class="sg-ic">${it.icon}</div>
+      <div class="sg-body">
+        <div class="sg-title">${esc(it.title)}</div>
+        <div class="sg-url">${esc(it.url)}</div>
+      </div>
+      ${it.badge?`<span class="sg-tag">${it.badge}</span>`:''}
+    </div>`).join('');
+  box.style.display='block';
+}
+function hideSug() {
+  const b=document.getElementById('suggestions');
+  b.style.display='none'; b.innerHTML=''; sgData=[]; sgIdx=-1;
+}
+function sgNav(e) {
+  const box=document.getElementById('suggestions');
+  if(box.style.display==='none') return;
+  const items=box.querySelectorAll('.sg');
+  if(e.key==='ArrowDown'){e.preventDefault();sgIdx=Math.min(sgIdx+1,items.length-1);}
+  else if(e.key==='ArrowUp'){e.preventDefault();sgIdx=Math.max(sgIdx-1,0);}
+  else if(e.key==='Enter'&&sgIdx>=0){e.preventDefault();navigate(sgData[sgIdx].url);return;}
+  else return;
+  items.forEach((el,i)=>el.classList.toggle('hi',i===sgIdx));
+  if(sgIdx>=0&&sgData[sgIdx]) document.getElementById('address').value=sgData[sgIdx].url;
+}
+
+/* ═══════════════════════════════════
+   CONTEXT MENU
+═══════════════════════════════════ */
+document.addEventListener('contextmenu', e=>{
+  if(e.target.closest('#tab-bar')){ e.preventDefault(); ctxTabId=e.target.closest('.tab')?.dataset?.id||null; showCtx(e.clientX,e.clientY); }
+});
+function showCtx(x,y){ const m=document.getElementById('ctx'); m.style.display='block'; m.style.left=Math.min(x,window.innerWidth-210)+'px'; m.style.top=Math.min(y,window.innerHeight-350)+'px'; }
+function hideCtx(){ document.getElementById('ctx').style.display='none'; }
+document.addEventListener('click', e=>{ if(!e.target.closest('#ctx')) hideCtx(); });
+function ctx(a) {
+  hideCtx();
+  const id = ctxTabId||state.activeTabId;
+  const m  = { back:goBack, fwd:goForward, reload, newtab:createTab, dup:()=>duplicateTab(id), pin:()=>pinTab(id), bm:toggleBm, find:openFindBar, reader:readerMode, ext:openExternal, close:()=>closeTab(id) };
+  if(m[a]) m[a]();
+}
+
+/* ═══════════════════════════════════
+   PANEL
+═══════════════════════════════════ */
+function togglePanel() {
+  const p=document.getElementById('panel');
+  p.classList.toggle('open');
+  document.getElementById('btn-panel').classList.toggle('on', p.classList.contains('open'));
+  if(p.classList.contains('open')) renderPanel();
+}
+function switchPanel(m) {
+  panelMode=m;
+  document.querySelectorAll('.ptab').forEach(t=>t.classList.toggle('on',t.dataset.p===m));
+  renderPanel();
+}
+function renderPanel() {
+  const body=document.getElementById('panel-body');
+  if     (panelMode==='history')   body.innerHTML=buildHistPanel();
+  else if(panelMode==='bookmarks') body.innerHTML=buildBmPanel();
+  else if(panelMode==='downloads') body.innerHTML=buildDlPanel();
+  else if(panelMode==='settings')  body.innerHTML=buildSettPanel();
+}
+
+/* History Panel */
+function buildHistPanel() {
+  const today=[], yesterday=[], older=[];
+  const now=Date.now();
+  state.history.forEach(h=>{ const d=now-h.time; if(d<86400000) today.push(h); else if(d<172800000) yesterday.push(h); else older.push(h); });
+  const grp=(label,items)=>items.length?`<div class="pc">
+    <div class="pc-h"><span class="pc-title">${label}</span><button class="btn btn-xs btn-d" onclick="clearHistory()">Effacer</button></div>
+    <div>${items.slice(0,25).map(h=>`
+      <div class="pi" onclick="navigate('${escA(h.url)}')">
+        <div class="pi-ic">🕐</div>
+        <div class="pi-body"><div class="pi-title">${esc(h.title||domain(h.url))}</div><div class="pi-sub">${esc(h.url)}</div></div>
+        <div class="pi-time">${fmtTime(h.time)}</div>
+      </div>`).join('')}</div>
+  </div>`:'' ;
+  const empty=`<div class="empty-st"><div class="empty-st-ic">🕐</div>Aucun historique</div>`;
+  const content=grp("Aujourd'hui",today)+grp('Hier',yesterday)+grp('Plus ancien',older);
+  return `<div style="display:flex;gap:6px;margin-bottom:10px">
+    <input placeholder="Rechercher…" style="flex:1;background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:6px 9px;border-radius:5px;font-size:12px;outline:none;">
+    <button class="btn btn-xs btn-d" onclick="clearHistory()">Tout vider</button>
+  </div>${content||empty}`;
+}
+
+/* Bookmarks Panel */
+function buildBmPanel() {
+  const folders=[...new Set(state.bookmarks.map(b=>b.folder||'Autres'))];
+  return `<div style="display:flex;gap:6px;margin-bottom:10px">
+    <input placeholder="Rechercher…" style="flex:1;background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:6px 9px;border-radius:5px;font-size:12px;outline:none;">
+    <button class="btn btn-xs btn-p" onclick="addBmManual()">+</button>
+  </div>`+folders.map(f=>{
+    const items=state.bookmarks.filter(b=>(b.folder||'Autres')===f);
+    return `<div class="pc">
+      <div class="pc-h"><span class="pc-title">📁 ${esc(f)}</span><span style="font-size:10px;color:var(--text3)">${items.length}</span></div>
+      <div>${items.map(b=>`
+        <div class="pi">
+          <div class="pi-ic">☆</div>
+          <div class="pi-body" style="cursor:pointer" onclick="navigate('${escA(b.url)}')">
+            <div class="pi-title">${esc(b.title)}</div>
+            <div class="pi-sub">${esc(b.url)}</div>
+          </div>
+          <button class="btn btn-xs btn-d" onclick="removeBm('${escA(b.id)}')">✕</button>
+        </div>`).join('')}
+      </div>
+    </div>`;
+  }).join('');
+}
+function addBmManual() {
+  const url=prompt('URL:','https://'); if(!url) return;
+  const title=prompt('Titre:',domain(url)); if(!title) return;
+  state.bookmarks.unshift({id:uid('bm'),title,url,folder:'Autres',time:Date.now()});
+  saveState(); renderBmBar(); renderPanel();
+}
+
+/* Downloads Panel */
+function buildDlPanel() {
+  const empty=`<div class="empty-st"><div class="empty-st-ic">⬇</div>Aucun téléchargement</div>`;
+  return `<div style="display:flex;gap:6px;margin-bottom:10px">
+    <button class="btn btn-xs" onclick="quickDownload()">⬇ Page actuelle</button>
+    <button class="btn btn-xs btn-d" onclick="clearDownloads()">Tout vider</button>
+  </div>${state.downloads.length?state.downloads.map(d=>`
+    <div class="pc">
+      <div style="padding:10px 14px">
+        <div style="font-size:12px;font-weight:600;margin-bottom:3px">${esc(d.title)}</div>
+        <div style="font-size:10px;color:var(--text3);font-family:var(--mono);margin-bottom:5px">${esc(d.url)}</div>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px">
+          <span style="font-size:10px;color:var(--accent3)">${esc(d.status)}</span>
+          <span style="font-size:10px;color:var(--text3)">${fmtTime(d.time)}</span>
+        </div>
+        ${d.path?`<div style="font-size:10px;color:var(--text3)">📁 ${esc(d.path)}</div>`:''}
+        <div style="display:flex;gap:5px;margin-top:8px">
+          <button class="btn btn-xs" onclick="navigate('${escA(d.url)}')">Ouvrir</button>
+          <button class="btn btn-xs btn-d" onclick="removeDl('${d.id}')">Supprimer</button>
+        </div>
+      </div>
+    </div>`).join(''):empty}`;
+}
+function clearDownloads(){ state.downloads=[]; saveState(); renderPanel(); }
+function removeDl(id){ state.downloads=state.downloads.filter(d=>d.id!==id); saveState(); renderPanel(); }
+
+/* Settings Panel */
+function buildSettPanel() {
+  const s=state.settings;
+  return `
+  <div class="pc">
+    <div class="pc-h"><span class="pc-title">🌐 Navigation</span></div>
+    <div style="padding:12px 14px">
+      <div class="sg-form"><label>Page d'accueil</label><input id="st-home" value="${escA(s.homePage)}"></div>
+      <div class="sg-form"><label>Moteur de recherche</label><select id="st-eng">
+        ${Object.entries(ENGINES).map(([k,v])=>`<option value="${k}" ${s.searchEngine===k?'selected':''}>${v.label}</option>`).join('')}
+      </select></div>
+      <div class="sg-form"><label>Au démarrage</label><select id="st-start">
+        <option value="last" ${s.openOnStartup==='last'?'selected':''}>Restaurer session</option>
+        <option value="home" ${s.openOnStartup==='home'?'selected':''}>Page d'accueil</option>
+        <option value="newtab" ${s.openOnStartup==='newtab'?'selected':''}>Nouvel onglet</option>
+      </select></div>
+      <div class="sg-form"><label>Mode proxy</label><select id="st-compat">
+        <option value="proxy"  ${s.compatMode==='proxy' ?'selected':''}>Proxy en priorité</option>
+        <option value="force"  ${s.compatMode==='force' ?'selected':''}>Force externe si besoin</option>
+        <option value="direct" ${s.compatMode==='direct'?'selected':''}>Direct (peut échouer)</option>
+      </select></div>
+      <div class="sg-form"><label>Langue traduction</label><select id="st-lang">
+        <option value="fr" ${s.language==='fr'?'selected':''}>Français</option>
+        <option value="en" ${s.language==='en'?'selected':''}>English</option>
+        <option value="de" ${s.language==='de'?'selected':''}>Deutsch</option>
+        <option value="es" ${s.language==='es'?'selected':''}>Español</option>
+      </select></div>
+    </div>
+  </div>
+  <div class="pc">
+    <div class="pc-h"><span class="pc-title">🎨 Apparence</span></div>
+    <div style="padding:12px 14px">
+      <div class="toggle-row"><label class="tgl"><input type="checkbox" id="st-bm" ${s.showBookmarks?'checked':''}><span class="tgl-s"></span></label><span class="toggle-lbl">Barre de favoris</span></div>
+      <div class="sg-form"><label>Zoom par défaut (%)</label><input type="number" id="st-zoom" value="${s.zoom||100}" min="25" max="500"></div>
+    </div>
+  </div>
+  <div class="pc">
+    <div class="pc-h"><span class="pc-title">⬇ Téléchargements</span></div>
+    <div style="padding:12px 14px">
+      <div class="sg-form"><label>Dossier</label><input id="st-folder" value="${escA(s.downloadFolder)}"></div>
+      <div class="toggle-row"><label class="tgl"><input type="checkbox" id="st-ask" ${s.askDownload?'checked':''}><span class="tgl-s"></span></label><span class="toggle-lbl">Demander avant</span></div>
+    </div>
+  </div>
+  <div class="pc">
+    <div class="pc-h"><span class="pc-title">🔧 Proxy Ultraviolet (UV)</span></div>
+    <div style="padding:12px 14px">
+      <div class="sg-form"><label>UV Origine</label><input id="st-uv-origin" value="${escA(proxyConfig.uvOrigin)}" placeholder="(vide = même domaine)"></div>
+      <div class="sg-form"><label>UV Préfixe</label><input id="st-uv-pfx" value="${escA(proxyConfig.uvPrefix)}"></div>
+      <div class="sg-form"><label>UV Codec (xor/plain/base64/none)</label><input id="st-uv-codec" value="${escA(proxyConfig.uvCodec)}"></div>
+      <div style="margin-top:8px;font-size:11px;color:var(--text3)">Le navigateur encode via <span style="font-family:var(--mono)">__uv$config.encodeUrl</span> si dispo.</div>
+    </div>
+  </div>
+  <div style="display:flex;gap:7px;margin-bottom:14px">
+    <button class="btn btn-p" onclick="saveSettings()">💾 Enregistrer</button>
+    <button class="btn btn-d" onclick="resetSettings()">Réinit.</button>
+    <button class="btn btn-d" onclick="clearAllData()">Tout effacer</button>
+  </div>`;
+}
+
+function saveSettings() {
+  const s=state.settings;
+  s.homePage      = document.getElementById('st-home').value||'about:newtab';
+  s.searchEngine  = document.getElementById('st-eng').value;
+  s.openOnStartup = document.getElementById('st-start').value;
+  s.compatMode    = document.getElementById('st-compat').value;
+  s.language      = document.getElementById('st-lang').value;
+  s.showBookmarks = document.getElementById('st-bm').checked;
+  s.zoom          = parseInt(document.getElementById('st-zoom').value)||100;
+  s.downloadFolder= document.getElementById('st-folder').value||'/Downloads';
+  s.askDownload   = document.getElementById('st-ask').checked;
+  proxyConfig.uvOrigin          = document.getElementById('st-uv-origin').value.trim().replace(/\/+$/,'');
+  proxyConfig.uvPrefix          = sanUvPrefix(document.getElementById('st-uv-pfx').value);
+  proxyConfig.uvCodec           = sanUvCodec(document.getElementById('st-uv-codec').value);
+  proxyConfig.provider          = proxyConfig.uvOrigin ? 'ultraviolet' : 'direct';
+  saveState(); renderBmBar(); renderPanel(); applyZoom(s.zoom);
+  showToast('✓ Paramètres sauvegardés','');
+}
+function resetSettings() { if(!confirm('Réinitialiser ?')) return; state.settings=cp(DEFAULTS.settings); saveState(); renderPanel(); }
+function clearAllData() {
+  if(!confirm('Effacer tout ?')) return;
+  state.history=[]; state.downloads=[]; state.bookmarks=cp(DEFAULTS.bookmarks);
+  saveState(); renderBmBar(); renderPanel(); showToast('🗑 Données effacées','');
+}
+function clearHistory() { state.history=[]; saveState(); renderPanel(); }
+
+/* ═══════════════════════════════════
+   NEW TAB PAGE
+═══════════════════════════════════ */
+function renderNewTab() {
+  const d=new Date();
+  const days=['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'];
+  const months=['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
+  document.getElementById('nt-time').textContent=`${days[d.getDay()]} ${d.getDate()} ${months[d.getMonth()]} · ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+
+  const grid=document.getElementById('nt-grid');
+  const sc=[...SHORTCUTS, ...state.bookmarks.slice(0,4).map(b=>({label:b.title,url:b.url,icon:'☆'}))];
+  grid.innerHTML=sc.slice(0,8).map(s=>`
+    <div class="nt-sc" onclick="navigate('${escA(s.url)}')">
+      <div class="nt-sc-ic">${s.icon}</div>
+      <div class="nt-sc-lbl">${esc(s.label)}</div>
+    </div>`).join('')+`<div class="nt-sc" onclick="addBmManual()"><div class="nt-sc-ic">+</div><div class="nt-sc-lbl">Ajouter</div></div>`;
+
+  const hl=document.getElementById('nt-hist');
+  hl.innerHTML=state.history.length?state.history.slice(0,6).map(h=>`
+    <div class="nt-row" onclick="navigate('${escA(h.url)}')">
+      <div class="nt-row-ic">🕐</div>
+      <div class="nt-row-body">
+        <div class="nt-row-title">${esc(h.title||domain(h.url))}</div>
+        <div class="nt-row-url">${esc(h.url)}</div>
+      </div>
+      <div class="nt-row-time">${fmtTime(h.time)}</div>
+    </div>`).join('')
+  :`<div style="padding:20px;text-align:center;font-size:12px;color:var(--text3)">Aucune visite récente</div>`;
+}
+function ntKey(e) { if(e.key==='Enter') ntGo(); }
+function ntGo() { const q=document.getElementById('nt-inp').value.trim(); if(q) navigate(q); }
+
+/* ═══════════════════════════════════
+   RENDER
+═══════════════════════════════════ */
+function renderTabs() {
+  document.getElementById('tabs-list').innerHTML=state.tabs.map(t=>`
+    <div class="tab ${t.id===state.activeTabId?'active':''} ${t.loading?'loading':''}"
+         data-id="${t.id}" onclick="selectTab('${t.id}')">
+      ${t.pinned?'<span class="tab-pin">📌</span>':''}
+      <div class="tab-fav">${t.loading?'<span class="spin">⏳</span>':'🌐'}</div>
+      <div class="tab-title">${esc(t.title||'Nouvel onglet')}</div>
+      ${!t.pinned?`<div class="tab-close" onclick="closeTab('${t.id}',event)">✕</div>`:''}
+    </div>`).join('');
+}
+function renderBmBar() {
+  const bar=document.getElementById('bm-bar');
+  if (!state.settings.showBookmarks) { bar.style.display='none'; return; }
+  bar.style.display='flex';
+  bar.innerHTML=state.bookmarks.filter(b=>b.folder==='Barre').slice(0,14).map(b=>`
+    <div class="bm" onclick="navigate('${escA(b.url)}')">
+      <span>☆</span><span class="bm-lbl">${esc(b.title)}</span>
+    </div>`).join('')+
+    (state.bookmarks.filter(b=>b.folder!=='Barre').length?`<div class="bm" onclick="switchPanel('bookmarks');if(!document.getElementById('panel').classList.contains('open'))togglePanel()">Autres ▾</div>`:'');
+}
+function renderAll() {
+  renderTabs(); renderBmBar();
+  if(document.getElementById('panel').classList.contains('open')) renderPanel();
+  const t=activeTab(); if(!t) return;
+  document.getElementById('address').value = t.url==='about:newtab' ? '' : t.url;
+  document.getElementById('btn-back').classList.toggle('off', t.historyIndex<=0);
+  document.getElementById('btn-fwd').classList.toggle('off',  t.historyIndex>=t.history.length-1);
+  document.getElementById('st-url').textContent = t.url==='about:newtab' ? '' : t.url;
+  setAddrSec(t.url); updateBmBtn();
+}
+
+/* ═══════════════════════════════════
+   KEYBOARD SHORTCUTS
+═══════════════════════════════════ */
+document.addEventListener('keydown', e=>{
+  const addr=document.getElementById('address');
+  if(e.target===addr){ sgNav(e); return; }
+  if(e.ctrlKey||e.metaKey) {
+    switch(e.key.toLowerCase()){
+      case 't':e.preventDefault();createTab();break;
+      case 'w':e.preventDefault();closeTab(state.activeTabId);break;
+      case 'l':e.preventDefault();addr.focus();addr.select();break;
+      case 'f':e.preventDefault();openFindBar();break;
+      case 'd':e.preventDefault();toggleBm();break;
+      case 'r':e.preventDefault();reload();break;
+      case 'h':e.preventDefault();switchPanel('history');if(!document.getElementById('panel').classList.contains('open'))togglePanel();break;
+      case 'j':e.preventDefault();switchPanel('downloads');if(!document.getElementById('panel').classList.contains('open'))togglePanel();break;
+      case '+':case '=':e.preventDefault();zoomIn();break;
+      case '-':e.preventDefault();zoomOut();break;
+      case '0':e.preventDefault();resetZoom();break;
+      default:
+        if(e.key>='1'&&e.key<='9'){
+          e.preventDefault(); const t=state.tabs[parseInt(e.key)-1]; if(t) selectTab(t.id);
+        }
+    }
+  } else if(e.key==='F5'){ e.preventDefault(); reload(); }
+  else if(e.key==='Escape'){ closeFindBar(); hideSug(); }
+  else if(e.altKey){
+    if(e.key==='ArrowLeft'){e.preventDefault();goBack();}
+    else if(e.key==='ArrowRight'){e.preventDefault();goForward();}
+  }
+});
+
+/* Address bar events */
+document.getElementById('address').addEventListener('keydown', e=>{
+  if(e.key==='Enter'){ navigate(document.getElementById('address').value); document.getElementById('address').blur(); hideSug(); }
+});
+document.getElementById('address').addEventListener('input', e=>showSug(e.target.value));
+document.getElementById('address').addEventListener('focus', e=>{ e.target.select(); showSug(e.target.value); });
+document.getElementById('address').addEventListener('blur', ()=>setTimeout(hideSug,200));
+document.addEventListener('click', e=>{ if(!e.target.closest('#addr-wrap')) hideSug(); });
+
+/* Message API */
+window.addEventListener('message', e=>{
+  if(e.data?.type==='open_url') createTab(e.data.url);
+  if(e.data?.type==='navigate') navigate(e.data.url);
+});
+
+/* Hash URL on load */
+if(window.location.hash?.startsWith('#url=')) {
+  const u=decodeURIComponent(window.location.hash.slice(5));
+  window.addEventListener('load',()=>{ if(activeTab()?.url==='about:newtab') navigate(u); else createTab(u); });
+}
+
+/* NTP clock */
+setInterval(()=>{
+  if(document.getElementById('newtab').style.display!=='none') renderNewTab();
+},30000);
+
+/* ═══════════════════════════════════
+   BOOT
+═══════════════════════════════════ */
+async function boot() {
+  await loadProxyCfg();
+  await detectUv();
+  loadState();
+  renderAll();
+  const t=activeTab();
+  if(t) loadFrame(t.url);
+}
+boot();
+</script>
 </body>
-
 </html>

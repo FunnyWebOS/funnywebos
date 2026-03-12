@@ -5,9 +5,9 @@ window.AETHER_RUNTIME_ENV = {
   // Example: "https://aetheros-ai-proxy.<your-subdomain>.workers.dev"
   AETHER_AI_PROXY_URL: "",
 
-  // Supabase: anon key is public; NEVER put service_role keys in the browser.
+  // Supabase (optionnel): anon key is public; NEVER put service_role keys in the browser.
+  // Sans Supabase, tu peux quand meme creer des comptes locaux (stockes dans localStorage).
   AETHER_SUPABASE_URL: "",
   AETHER_SUPABASE_ANON_KEY: "",
   AETHER_SUPABASE_TABLE: ""
 };
-

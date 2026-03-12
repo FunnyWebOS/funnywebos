@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>NewBrowser</title>
+    <style>
+      html, body { height: 100%; margin: 0; background: #0b1220; color: #e5e7eb; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; }
+      .wrap { height: 100%; display: flex; flex-direction: column; }
+      .bar { padding: 10px 12px; border-bottom: 1px solid rgba(255,255,255,.08); background: rgba(255,255,255,.04); font-size: 12px; }
+      .bar b { font-weight: 700; }
+      .hint { color: rgba(229,231,235,.8); }
+      .frame { flex: 1; position: relative; }
+      iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; background: #0b1220; }
+      .err { padding: 16px; }
+      code { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+      a { color: #93c5fd; }
+    </style>
+    <script src="../env.public.js"></script>
+    <script>
+      (function () {
+        const env = (window.AETHER_RUNTIME_ENV || {});
+        const origin = String(env.AETHER_UV_ORIGIN || "").trim().replace(/\/+$/, "");
+        window.__NEWBROWSER_TARGET_ORIGIN__ = origin;
+      })();
+    </script>
+  </head>
+  <body>
+    <div class="wrap">
+      <div class="bar" id="bar">
+        <b>NewBrowser</b>
+        <span class="hint" id="hint"></span>
+      </div>
+      <div class="frame" id="frameWrap"></div>
+    </div>
+
+    <script>
+      const target = window.__NEWBROWSER_TARGET_ORIGIN__;
+      const hint = document.getElementById("hint");
+      const frameWrap = document.getElementById("frameWrap");
+
+      if (!target || !/^https?:\/\//i.test(target)) {
+        hint.textContent = " — backend non configuré";
+        frameWrap.innerHTML = `
+          <div class="err">
+            <div style="font-size:14px;font-weight:700;margin-bottom:8px">NewBrowser a besoin d’un serveur Node</div>
+            <div style="font-size:12px;line-height:1.5" class="hint">
+              Ton navigateur (dossier <code>newbrowser</code>) se lance via <code>node server.js</code> pour fournir <code>/bare/</code> et <code>/wisp/</code>.
+              GitHub Pages (ou tout site statique) ne peut pas lancer ce serveur.
+              <br><br>
+              Solution : déploie <code>newbrowser/server.js</code> (Railway / VPS / etc.), puis mets son URL dans
+              <code>window.AETHER_RUNTIME_ENV.AETHER_UV_ORIGIN</code> (dans <code>env.public.js</code> ou <code>env.js</code>).
+            </div>
+          </div>
+        `;
+      } else {
+        hint.textContent = ` — ${target}`;
+        const iframe = document.createElement("iframe");
+        iframe.src = target + "/";
+        iframe.referrerPolicy = "no-referrer";
+        iframe.allow = "encrypted-media; geolocation; microphone; camera; autoplay; fullscreen";
+        frameWrap.appendChild(iframe);
+      }
+    </script>
+  </body>
+</html>
+

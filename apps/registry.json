@@ -1,232 +1,233 @@
-[
+﻿[
     {
         "id": "wiki",
         "title": "AetherWiki",
         "creator": "FunnyCorp",
-        "description": "Le centre de connaissances officiel d'AetherOS. Apprenez à créer vos propres apps et découvrez tous les secrets du système.",
+        "description": "Le centre de connaissances officiel d'AetherOS. Apprenez Ã  crÃ©er vos propres apps et dÃ©couvrez tous les secrets du systÃ¨me.",
         "category": "productivity",
-        "icon": "📚",
+        "icon": "ðŸ“š",
         "screenshots": [
-            "📖",
-            "🧩",
-            "💡"
+            "ðŸ“–",
+            "ðŸ§©",
+            "ðŸ’¡"
         ]
     },
     {
         "id": "explorer",
         "title": "Fichiers",
         "creator": "System",
-        "description": "Gérez vos documents, images et téléchargements en toute simplicité avec l'explorateur de fichiers natif.",
+        "description": "GÃ©rez vos documents, images et tÃ©lÃ©chargements en toute simplicitÃ© avec l'explorateur de fichiers natif.",
         "category": "productivity",
-        "icon": "📂",
+        "icon": "ðŸ“‚",
         "screenshots": [
-            "📁",
-            "📄",
-            "🖼️"
+            "ðŸ“",
+            "ðŸ“„",
+            "ðŸ–¼ï¸"
         ]
     },
     {
         "id": "browser",
-        "title": "Zaluea Browser",
-        "creator": "FunnyCorp / Zaluea",
-        "description": "Navigateur inspiré de Zaluea avec onglets, favoris, historique, téléchargements et page d'accueil revue.",
+        "title": "NewBrowser",
+        "creator": "Mouns",
+        "description": "Votre nouveau navigateur (dossier newbrowser) intÃ©grÃ© dans AetherOS.",
         "category": "online",
-        "icon": "🌐",
+        "icon": "ðŸŒ",
         "screenshots": [
-            "🌍",
-            "🧭",
-            "⬇️"
-        ]
+            "ðŸŒ",
+            "ðŸ§­",
+            "â¬‡ï¸"
+        ],
+        "appFile": "newbrowser.html"
     },
     {
         "id": "word",
         "title": "FunnyText",
         "creator": "FunnyCorp",
-        "description": "Éditeur de texte complet pour vos notes, documents et fichiers Markdown. Simple, rapide et élégant.",
+        "description": "Ã‰diteur de texte complet pour vos notes, documents et fichiers Markdown. Simple, rapide et Ã©lÃ©gant.",
         "category": "productivity",
-        "icon": "📝",
+        "icon": "ðŸ“",
         "screenshots": [
-            "✍️",
-            "📄",
-            "🖋️"
+            "âœï¸",
+            "ðŸ“„",
+            "ðŸ–‹ï¸"
         ]
     },
     {
         "id": "excel",
         "title": "FunnySheets",
         "creator": "FunnyCorp",
-        "description": "Tableur complet avec cellules éditables, plusieurs feuilles et sauvegarde dans le VFS.",
+        "description": "Tableur complet avec cellules Ã©ditables, plusieurs feuilles et sauvegarde dans le VFS.",
         "category": "productivity",
-        "icon": "📊",
+        "icon": "ðŸ“Š",
         "screenshots": [
-            "📈",
-            "🧮",
-            "📉"
+            "ðŸ“ˆ",
+            "ðŸ§®",
+            "ðŸ“‰"
         ]
     },
     {
         "id": "powerpoint",
         "title": "FunnySlides",
         "creator": "FunnyCorp",
-        "description": "Créateur de présentations avec gestion de slides, aperçu instantané et export VFS.",
+        "description": "CrÃ©ateur de prÃ©sentations avec gestion de slides, aperÃ§u instantanÃ© et export VFS.",
         "category": "productivity",
-        "icon": "📽️",
+        "icon": "ðŸ“½ï¸",
         "screenshots": [
-            "🖼️",
-            "🎤",
-            "➡️"
+            "ðŸ–¼ï¸",
+            "ðŸŽ¤",
+            "âž¡ï¸"
         ]
     },
     {
         "id": "talky",
         "title": "Talky Messenger",
         "creator": "FunnyCorp",
-        "description": "Communiquez en temps réel avec vos amis grâce à la technologie P2P sécurisée d'AetherOS.",
+        "description": "Communiquez en temps rÃ©el avec vos amis grÃ¢ce Ã  la technologie P2P sÃ©curisÃ©e d'AetherOS.",
         "category": "online",
-        "icon": "💬",
+        "icon": "ðŸ’¬",
         "screenshots": [
-            "🗣️",
-            "📱",
-            "🤝"
+            "ðŸ—£ï¸",
+            "ðŸ“±",
+            "ðŸ¤"
         ]
     },
     {
         "id": "snake",
         "title": "Snake OS",
         "creator": "FunnyCorp",
-        "description": "Le classique revisité avec une touche futuriste et fluide. Contrôle aux flèches, vitesse progressive.",
+        "description": "Le classique revisitÃ© avec une touche futuriste et fluide. ContrÃ´le aux flÃ¨ches, vitesse progressive.",
         "category": "online",
-        "icon": "🕹️",
+        "icon": "ðŸ•¹ï¸",
         "screenshots": [
-            "🎮",
-            "🐍",
-            "🍃"
+            "ðŸŽ®",
+            "ðŸ",
+            "ðŸƒ"
         ]
     },
     {
         "id": "tetris",
         "title": "Tetris Neon",
         "creator": "FunnyCorp",
-        "description": "Empilez les blocs dans une ambiance néon cyberpunk. Musique immersive et effets visuels rétro.",
+        "description": "Empilez les blocs dans une ambiance nÃ©on cyberpunk. Musique immersive et effets visuels rÃ©tro.",
         "category": "online",
-        "icon": "🧱",
+        "icon": "ðŸ§±",
         "screenshots": [
-            "🧱",
-            "🧩",
-            "⚡"
+            "ðŸ§±",
+            "ðŸ§©",
+            "âš¡"
         ]
     },
     {
         "id": "flappy",
         "title": "Flappy Futur",
         "creator": "FunnyCorp",
-        "description": "Volez à travers les piliers d'une cité futuriste. Un défi de réflexes pur et simple.",
+        "description": "Volez Ã  travers les piliers d'une citÃ© futuriste. Un dÃ©fi de rÃ©flexes pur et simple.",
         "category": "online",
-        "icon": "🐦",
+        "icon": "ðŸ¦",
         "screenshots": [
-            "🐦",
-            "☁️",
-            "🏙️"
+            "ðŸ¦",
+            "â˜ï¸",
+            "ðŸ™ï¸"
         ]
     },
     {
         "id": "focusbox",
         "title": "FocusBox",
         "creator": "Vasseta1",
-        "description": "Un timer Pomodoro élégant conçu pour booster votre productivité sans distractions.",
+        "description": "Un timer Pomodoro Ã©lÃ©gant conÃ§u pour booster votre productivitÃ© sans distractions.",
         "category": "productivity",
-        "icon": "⏳",
+        "icon": "â³",
         "screenshots": [
-            "⌛",
-            "📝",
-            "🧘"
+            "âŒ›",
+            "ðŸ“",
+            "ðŸ§˜"
         ]
     },
     {
         "id": "bunny",
         "title": "Bunny Girl Viewer",
         "creator": "Vasseta1",
-        "description": "Regardez toute la série et les films de Rascal Does Not Dream dans une interface élégante.",
+        "description": "Regardez toute la sÃ©rie et les films de Rascal Does Not Dream dans une interface Ã©lÃ©gante.",
         "category": "online",
-        "icon": "🎬",
+        "icon": "ðŸŽ¬",
         "screenshots": [
-            "📽️",
-            "🐰",
-            "✨"
+            "ðŸ“½ï¸",
+            "ðŸ°",
+            "âœ¨"
         ]
     },
     {
         "id": "stremio",
         "title": "Stremio Web",
         "creator": "Stremio Team",
-        "description": "L'expérience cinema ultime. Regardez vos contenus préférés via addons. Interface fluide et moderne.",
+        "description": "L'expÃ©rience cinema ultime. Regardez vos contenus prÃ©fÃ©rÃ©s via addons. Interface fluide et moderne.",
         "category": "online",
-        "icon": "🎥",
+        "icon": "ðŸŽ¥",
         "screenshots": [
-            "🎥",
-            "🍿",
-            "🍿"
+            "ðŸŽ¥",
+            "ðŸ¿",
+            "ðŸ¿"
         ]
     },
     {
         "id": "youtube",
         "title": "YouTube Redux",
         "creator": "Google / Invidious",
-        "description": "L'expérience YouTube complète, sans publicités et optimisée pour FunnyWEB OS. Accédez à vos vidéos favorites grâce aux miroirs Invidious.",
+        "description": "L'expÃ©rience YouTube complÃ¨te, sans publicitÃ©s et optimisÃ©e pour FunnyWEB OS. AccÃ©dez Ã  vos vidÃ©os favorites grÃ¢ce aux miroirs Invidious.",
         "category": "online",
-        "icon": "📺",
+        "icon": "ðŸ“º",
         "screenshots": [
-            "▶️",
-            "🤳",
-            "🌟"
+            "â–¶ï¸",
+            "ðŸ¤³",
+            "ðŸŒŸ"
         ]
     },
     {
         "id": "daw",
         "title": "FunnyDAW Pro",
         "creator": "FunnyCorp",
-        "description": "Créez vos propres morceaux de musique de A à Z. Une station audio numérique (DAW) complète avec séquenceur, synthétiseurs, boîte à rythmes et effets professionnels intégrés.",
+        "description": "CrÃ©ez vos propres morceaux de musique de A Ã  Z. Une station audio numÃ©rique (DAW) complÃ¨te avec sÃ©quenceur, synthÃ©tiseurs, boÃ®te Ã  rythmes et effets professionnels intÃ©grÃ©s.",
         "category": "productivity",
-        "icon": "🎹",
+        "icon": "ðŸŽ¹",
         "screenshots": [
-            "🎹",
-            "🔊",
-            "🎛️"
+            "ðŸŽ¹",
+            "ðŸ”Š",
+            "ðŸŽ›ï¸"
         ]
     },
     {
         "id": "video",
         "title": "FunnyVideo Pro",
         "creator": "FunnyCorp",
-        "description": "Logiciel de montage vidéo professionnel. Importez vos médias, coupez, appliquez des transitions et exportez votre projet fini avec une timeline multipiste avancée.",
+        "description": "Logiciel de montage vidÃ©o professionnel. Importez vos mÃ©dias, coupez, appliquez des transitions et exportez votre projet fini avec une timeline multipiste avancÃ©e.",
         "category": "productivity",
-        "icon": "🎞️",
+        "icon": "ðŸŽžï¸",
         "screenshots": [
-            "🎬",
-            "✂️",
-            "🎞️"
+            "ðŸŽ¬",
+            "âœ‚ï¸",
+            "ðŸŽžï¸"
         ]
     },
     {
         "id": "vm",
         "title": "FunnyVM (Windows x86)",
         "creator": "FunnyCorp",
-        "description": "Système de virtualisation x86 (v86 Engine). Lancez des systèmes d'exploitation rétro (Win98, DOS, KolibriOS) directement dans votre navigateur. Supporte le glisser-déposer de fichiers EXE (.exe).",
+        "description": "SystÃ¨me de virtualisation x86 (v86 Engine). Lancez des systÃ¨mes d'exploitation rÃ©tro (Win98, DOS, KolibriOS) directement dans votre navigateur. Supporte le glisser-dÃ©poser de fichiers EXE (.exe).",
         "category": "productivity",
-        "icon": "🖥️",
+        "icon": "ðŸ–¥ï¸",
         "screenshots": [
-            "🪟",
-            "💻",
-            "💾"
+            "ðŸªŸ",
+            "ðŸ’»",
+            "ðŸ’¾"
         ]
     },
    {
         "id": "ide",
         "title": "FunnyStudio Code",
         "creator": "FunnyCorp",
-        "description": "L'environnement de développement (IDE) ultime. Éditeur de code complet avec coloration syntaxique, système de fichiers virtuel, prévisualisation en direct via iframe, et console d'erreurs intégrée.",
+        "description": "L'environnement de dÃ©veloppement (IDE) ultime. Ã‰diteur de code complet avec coloration syntaxique, systÃ¨me de fichiers virtuel, prÃ©visualisation en direct via iframe, et console d'erreurs intÃ©grÃ©e.",
         "category": "productivity",
-        "icon": "💻",
+        "icon": "ðŸ’»",
         "screenshots": [
             "",
             "",
@@ -237,74 +238,81 @@
         "id": "android",
         "title": "Android Subsystem",
         "creator": "AetherOS Team",
-        "description": "Couche de compatibilité APK. Installez et exécutez des applications mobiles directement sur votre bureau.",
+        "description": "Couche de compatibilitÃ© APK. Installez et exÃ©cutez des applications mobiles directement sur votre bureau.",
+        "category": "system",
+        "icon": "ðŸ¤–",
+        "screenshots": [
+            "ðŸ“±",
+            "âš™ï¸",
+            "ðŸš€"
+        ]
+    },    {
+        "id": "android_asa",
+        "title": "Android ASA (WASM)",
+        "creator": "System",
+        "description": "Android dans le navigateur via v86 (WebAssembly). ISO requis (URL ou fichier local).",
         "category": "system",
         "icon": "🤖",
-        "screenshots": [
-            "📱",
-            "⚙️",
-            "🚀"
-        ]
-    },
-    {
+        "appFile": "android_asa.html"
+    },    {
         "id": "windows_subsystem",
         "title": "Windows Subsystem",
         "creator": "BoxedWine Team",
-        "description": "Couche de compatibilité pour exécuter des applications Windows (.exe) via BoxedWine.",
+        "description": "Couche de compatibilitÃ© pour exÃ©cuter des applications Windows (.exe) via BoxedWine.",
         "category": "system",
-        "icon": "🪟",
+        "icon": "ðŸªŸ",
         "appFile": "exe_runner.html"
     },
     {
         "id": "maps",
         "title": "AetherMaps",
         "creator": "FunnyCorp",
-        "description": "Explorez le monde avec une cartographie 3D fluide et des itinéraires précis.",
+        "description": "Explorez le monde avec une cartographie 3D fluide et des itinÃ©raires prÃ©cis.",
         "category": "productivity",
-        "icon": "🗺️"
+        "icon": "ðŸ—ºï¸"
     },
     {
         "id": "camera",
         "title": "SnapCam",
         "creator": "FunnyCorp",
-        "description": "Prenez des photos et appliquez des filtres en temps réel via votre webcam.",
+        "description": "Prenez des photos et appliquez des filtres en temps rÃ©el via votre webcam.",
         "category": "productivity",
-        "icon": "📸"
+        "icon": "ðŸ“¸"
     },
     {
         "id": "spotify",
         "title": "Spotify",
         "creator": "Spotify AB",
-        "description": "Écoutez votre musique préférée. Des millions de titres et de podcasts.",
+        "description": "Ã‰coutez votre musique prÃ©fÃ©rÃ©e. Des millions de titres et de podcasts.",
         "category": "online",
-        "icon": "🎧",
+        "icon": "ðŸŽ§",
         "url": "https://open.spotify.com"
     },
     {
         "id": "discord",
         "title": "Discord",
         "creator": "Discord Inc.",
-        "description": "Discutez, passez du temps avec vos amis et rejoignez des communautés.",
+        "description": "Discutez, passez du temps avec vos amis et rejoignez des communautÃ©s.",
         "category": "online",
-        "icon": "🎮",
+        "icon": "ðŸŽ®",
         "url": "https://discord.com/app"
     },
     {
         "id": "vscode",
         "title": "VS Code Web",
         "creator": "Microsoft",
-        "description": "L'éditeur de code le plus populaire, directement dans votre navigateur.",
+        "description": "L'Ã©diteur de code le plus populaire, directement dans votre navigateur.",
         "category": "productivity",
-        "icon": "💻",
+        "icon": "ðŸ’»",
         "url": "https://vscode.dev"
     },
     {
         "id": "netflix",
         "title": "Netflix",
         "creator": "Netflix",
-        "description": "Regardez des films, des séries et des documentaires en illimité.",
+        "description": "Regardez des films, des sÃ©ries et des documentaires en illimitÃ©.",
         "category": "online",
-        "icon": "🍿",
+        "icon": "ðŸ¿",
         "url": "https://www.netflix.com"
     },
     {
@@ -313,7 +321,7 @@
         "creator": "Figma",
         "description": "L'outil de design collaboratif par excellence.",
         "category": "productivity",
-        "icon": "🎨",
+        "icon": "ðŸŽ¨",
         "url": "https://www.figma.com"
     },
     {
@@ -322,52 +330,52 @@
         "creator": "OpenAI",
         "description": "L'IA conversationnelle qui change le monde.",
         "category": "productivity",
-        "icon": "🧠",
+        "icon": "ðŸ§ ",
         "url": "https://chat.openai.com"
     },
     {
         "id": "tiktok",
         "title": "TikTok",
         "creator": "ByteDance",
-        "description": "Vidéos courtes et tendances virales.",
+        "description": "VidÃ©os courtes et tendances virales.",
         "category": "online",
-        "icon": "🎵",
+        "icon": "ðŸŽµ",
         "url": "https://www.tiktok.com"
     },
     {
         "id": "github",
         "title": "GitHub",
         "creator": "Microsoft",
-        "description": "La plateforme de développement collaboratif.",
+        "description": "La plateforme de dÃ©veloppement collaboratif.",
         "category": "productivity",
-        "icon": "🐙",
+        "icon": "ðŸ™",
         "url": "https://github.com"
     },
     {
         "id": "photoshop",
         "title": "Photopea",
         "creator": "Ivan Kutskir",
-        "description": "Éditeur d'image avancé compatible PSD, XD, Sketch.",
+        "description": "Ã‰diteur d'image avancÃ© compatible PSD, XD, Sketch.",
         "category": "productivity",
-        "icon": "🖌️",
+        "icon": "ðŸ–Œï¸",
         "url": "https://www.photopea.com"
     },
     {
         "id": "onlyoffice",
         "title": "OnlyOffice",
         "creator": "OnlyOffice",
-        "description": "Suite bureautique en ligne complète pour les documents, feuilles de calcul et présentations. Compatible avec les formats Microsoft Office.",
+        "description": "Suite bureautique en ligne complÃ¨te pour les documents, feuilles de calcul et prÃ©sentations. Compatible avec les formats Microsoft Office.",
         "category": "productivity",
-        "icon": "💼",
+        "icon": "ðŸ’¼",
         "url": "https://www.onlyoffice.com/"
     },
     {
         "id": "twitter",
         "title": "X (Twitter)",
         "creator": "X Corp",
-        "description": "Suivez l'actualité en temps réel.",
+        "description": "Suivez l'actualitÃ© en temps rÃ©el.",
         "category": "online",
-        "icon": "✖️",
+        "icon": "âœ–ï¸",
         "url": "https://twitter.com"
     },
     {
@@ -376,7 +384,7 @@
         "creator": "Disney",
         "description": "Le meilleur de Disney, Pixar, Marvel, Star Wars et National Geographic.",
         "category": "online",
-        "icon": "🏰",
+        "icon": "ðŸ°",
         "url": "https://www.disneyplus.com"
     },
     {
@@ -385,7 +393,7 @@
         "creator": "Lowtech Studios",
         "description": "Jeu multijoueur: deviens le plus grand serpent.",
         "category": "games",
-        "icon": "🐍",
+        "icon": "ðŸ",
         "url": "https://slither.io/"
     },
     {
@@ -394,7 +402,7 @@
         "creator": "Miniclip",
         "description": "Jeu multijoueur: absorbe des cellules et grandis.",
         "category": "games",
-        "icon": "🧫",
+        "icon": "ðŸ§«",
         "url": "https://agar.io/"
     },
     {
@@ -403,43 +411,43 @@
         "creator": "Miniclip",
         "description": "Jeu multijoueur: tanks, upgrades, chaos.",
         "category": "games",
-        "icon": "🧨",
+        "icon": "ðŸ§¨",
         "url": "https://diep.io/"
     },
     {
         "id": "skribbl",
         "title": "Skribbl.io",
         "creator": "Skribbl",
-        "description": "Jeu multijoueur: dessin & devinettes en temps réel.",
+        "description": "Jeu multijoueur: dessin & devinettes en temps rÃ©el.",
         "category": "games",
-        "icon": "✏️",
+        "icon": "âœï¸",
         "url": "https://skribbl.io/"
     },
     {
         "id": "gartic_phone",
         "title": "Gartic Phone",
         "creator": "Gartic",
-        "description": "Jeu multijoueur: téléphone arabe en dessins.",
+        "description": "Jeu multijoueur: tÃ©lÃ©phone arabe en dessins.",
         "category": "games",
-        "icon": "☎️",
+        "icon": "â˜Žï¸",
         "url": "https://garticphone.com/"
     },
     {
         "id": "bonk",
         "title": "Bonk.io",
         "creator": "Bonk",
-        "description": "Jeu multijoueur: combats physiques en arène.",
+        "description": "Jeu multijoueur: combats physiques en arÃ¨ne.",
         "category": "games",
-        "icon": "🪐",
+        "icon": "ðŸª",
         "url": "https://bonk.io/"
     },
     {
         "id": "tetrio",
         "title": "TETR.IO",
         "creator": "TETR.IO",
-        "description": "Tetris compétitif multijoueur, classé et custom rooms.",
+        "description": "Tetris compÃ©titif multijoueur, classÃ© et custom rooms.",
         "category": "games",
-        "icon": "🧱",
+        "icon": "ðŸ§±",
         "url": "https://tetr.io/"
     },
     {
@@ -448,34 +456,34 @@
         "creator": "Jstris",
         "description": "Tetris multijoueur rapide, simple et efficace.",
         "category": "games",
-        "icon": "⚡",
+        "icon": "âš¡",
         "url": "https://jstris.jezevec10.com/"
     },
     {
         "id": "lichess",
         "title": "Lichess",
         "creator": "Lichess",
-        "description": "Échecs en ligne gratuits, parties classées et variantes.",
+        "description": "Ã‰checs en ligne gratuits, parties classÃ©es et variantes.",
         "category": "games",
-        "icon": "♟️",
+        "icon": "â™Ÿï¸",
         "url": "https://lichess.org/"
     },
     {
         "id": "chesscom",
         "title": "Chess.com",
         "creator": "Chess.com",
-        "description": "Échecs multijoueur, défis et tournois.",
+        "description": "Ã‰checs multijoueur, dÃ©fis et tournois.",
         "category": "games",
-        "icon": "♜",
+        "icon": "â™œ",
         "url": "https://www.chess.com/play/online"
     },
     {
         "id": "colonist",
         "title": "Colonist.io",
         "creator": "Colonist",
-        "description": "Jeu multijoueur de stratégie inspiré de Catan.",
+        "description": "Jeu multijoueur de stratÃ©gie inspirÃ© de Catan.",
         "category": "games",
-        "icon": "🏝️",
+        "icon": "ðŸï¸",
         "url": "https://colonist.io/"
     },
     {
@@ -484,25 +492,25 @@
         "creator": "Community",
         "description": "Jeu multijoueur d'association de mots.",
         "category": "games",
-        "icon": "🕵️",
+        "icon": "ðŸ•µï¸",
         "url": "https://codenames.game/"
     },
     {
         "id": "spyfall",
         "title": "Spyfall",
         "creator": "Community",
-        "description": "Jeu multijoueur de bluff et déduction.",
+        "description": "Jeu multijoueur de bluff et dÃ©duction.",
         "category": "games",
-        "icon": "🕶️",
+        "icon": "ðŸ•¶ï¸",
         "url": "https://spyfall.app/"
     },
     {
         "id": "shellshockers",
         "title": "Shell Shockers",
         "creator": "Blue Wizard",
-        "description": "FPS multijoueur délirant (œufs armés).",
+        "description": "FPS multijoueur dÃ©lirant (Å“ufs armÃ©s).",
         "category": "games",
-        "icon": "🥚",
+        "icon": "ðŸ¥š",
         "url": "https://shellshockers.io/"
     },
     {
@@ -511,7 +519,7 @@
         "creator": "Krunker",
         "description": "FPS multijoueur rapide, navigateur.",
         "category": "games",
-        "icon": "🔫",
+        "icon": "ðŸ”«",
         "url": "https://krunker.io/"
     },
     {
@@ -520,25 +528,25 @@
         "creator": "Deadshot.io",
         "description": "FPS multijoueur en ligne (deadshot.io).",
         "category": "games",
-        "icon": "🎯",
+        "icon": "ðŸŽ¯",
         "appFile": "deadshot.html"
     },
     {
         "id": "krunkerstrike",
         "title": "Krunker Strike",
         "creator": "Krunker",
-        "description": "Version wrapper pour lancer Krunker en plein écran.",
+        "description": "Version wrapper pour lancer Krunker en plein Ã©cran.",
         "category": "games",
-        "icon": "💥",
+        "icon": "ðŸ’¥",
         "appFile": "krunkerstrike.html"
     },
     {
         "id": "animesama",
         "title": "Anime-sama",
         "creator": "anime-sama.tv",
-        "description": "Accès direct à Anime-sama via proxy discret intégré.",
+        "description": "AccÃ¨s direct Ã  Anime-sama via proxy discret intÃ©grÃ©.",
         "category": "online",
-        "icon": "🎬",
+        "icon": "ðŸŽ¬",
         "appFile": "animesama.html"
     },
     {
@@ -547,7 +555,7 @@
         "creator": "JustPlay.LOL",
         "description": "Build + shooter multijoueur.",
         "category": "games",
-        "icon": "🏗️",
+        "icon": "ðŸ—ï¸",
         "url": "https://1v1.lol/"
     },
     {
@@ -556,7 +564,7 @@
         "creator": "ZombsRoyale",
         "description": "Battle royale 2D multijoueur.",
         "category": "games",
-        "icon": "🪂",
+        "icon": "ðŸª‚",
         "url": "https://zombsroyale.io/"
     },
     {
@@ -565,43 +573,43 @@
         "creator": "MooMoo",
         "description": "Survie multijoueur, craft & base building.",
         "category": "games",
-        "icon": "🪓",
+        "icon": "ðŸª“",
         "url": "https://moomoo.io/"
     },
     {
         "id": "evowars",
         "title": "EvoWars.io",
         "creator": "Night Steed Games",
-        "description": "Arena multijoueur: évolue et domine.",
+        "description": "Arena multijoueur: Ã©volue et domine.",
         "category": "games",
-        "icon": "⚔️",
+        "icon": "âš”ï¸",
         "url": "https://evowars.io/"
     },
     {
         "id": "splix",
         "title": "Splix.io",
         "creator": "Splix",
-        "description": "Conquête de territoire multijoueur.",
+        "description": "ConquÃªte de territoire multijoueur.",
         "category": "games",
-        "icon": "🟩",
+        "icon": "ðŸŸ©",
         "url": "https://splix.io/"
     },
     {
         "id": "paperio2",
         "title": "Paper.io 2",
         "creator": "Voodoo",
-        "description": "Conquête de zone multijoueur.",
+        "description": "ConquÃªte de zone multijoueur.",
         "category": "games",
-        "icon": "🟦",
+        "icon": "ðŸŸ¦",
         "url": "https://paper-io.com/"
     },
     {
         "id": "crazygames",
         "title": "CrazyGames",
         "creator": "CrazyGames",
-        "description": "Portail de jeux web (type CrazyGames) avec plein de jeux à lancer vite.",
+        "description": "Portail de jeux web (type CrazyGames) avec plein de jeux Ã  lancer vite.",
         "category": "games",
-        "icon": "🕹️",
+        "icon": "ðŸ•¹ï¸",
         "url": "https://www.crazygames.com/"
     },
     {
@@ -610,16 +618,16 @@
         "creator": "Poki",
         "description": "Catalogue de jeux gratuits (Poki).",
         "category": "games",
-        "icon": "🎮",
+        "icon": "ðŸŽ®",
         "url": "https://poki.com/"
     },
     {
         "id": "itchio_games",
         "title": "itch.io (Games)",
         "creator": "itch.io",
-        "description": "Indie games : découverte, top charts et nouveautés.",
+        "description": "Indie games : dÃ©couverte, top charts et nouveautÃ©s.",
         "category": "games",
-        "icon": "🧩",
+        "icon": "ðŸ§©",
         "url": "https://itch.io/games"
     },
     {
@@ -628,16 +636,16 @@
         "creator": "Lagged",
         "description": "Jeux web rapides (puzzle, arcade, multi).",
         "category": "games",
-        "icon": "⚡",
+        "icon": "âš¡",
         "url": "https://lagged.com/"
     },
     {
         "id": "playpager",
         "title": "Playpager",
         "creator": "Playpager",
-        "description": "Petits jeux web instantanés (gratuits, sans install).",
+        "description": "Petits jeux web instantanÃ©s (gratuits, sans install).",
         "category": "games",
-        "icon": "📄",
+        "icon": "ðŸ“„",
         "url": "https://playpager.com/"
     },
     {
@@ -646,7 +654,7 @@
         "creator": "Tall Team",
         "description": "Kart multijoueur rapide (arena).",
         "category": "games",
-        "icon": "🏎️",
+        "icon": "ðŸŽï¸",
         "url": "https://smashkarts.io/"
     },
     {
@@ -655,17 +663,17 @@
         "creator": "Community",
         "description": "Battle royale 2D (surviv.io).",
         "category": "games",
-        "icon": "🪖",
-        "appFile": "webwrap.html#name=surviv.io&icon=🪖&url=https%3A%2F%2Fsurviv.io%2F"
+        "icon": "ðŸª–",
+        "appFile": "webwrap.html#name=surviv.io&icon=ðŸª–&url=https%3A%2F%2Fsurviv.io%2F"
     },
     {
         "id": "krunkerhub",
         "title": "Krunker Hub",
         "creator": "Krunker",
-        "description": "Communauté, maps et modes autour de Krunker.",
+        "description": "CommunautÃ©, maps et modes autour de Krunker.",
         "category": "games",
-        "icon": "🧭",
-        "appFile": "webwrap.html#name=Krunker%20Hub&icon=🧭&url=https%3A%2F%2Fkrunker.io%2Fsocial.html"
+        "icon": "ðŸ§­",
+        "appFile": "webwrap.html#name=Krunker%20Hub&icon=ðŸ§­&url=https%3A%2F%2Fkrunker.io%2Fsocial.html"
     },
     {
         "id": "gartic",
@@ -673,26 +681,26 @@
         "creator": "Gartic",
         "description": "Dessine et fais deviner (Gartic.io).",
         "category": "games",
-        "icon": "🎨",
-        "appFile": "webwrap.html#name=Gartic.io&icon=🎨&url=https%3A%2F%2Fgartic.io%2F"
+        "icon": "ðŸŽ¨",
+        "appFile": "webwrap.html#name=Gartic.io&icon=ðŸŽ¨&url=https%3A%2F%2Fgartic.io%2F"
     },
     {
         "id": "littlealchemy2",
         "title": "Little Alchemy 2",
         "creator": "Recloak",
-        "description": "Combine des éléments et découvre des recettes.",
+        "description": "Combine des Ã©lÃ©ments et dÃ©couvre des recettes.",
         "category": "games",
-        "icon": "🧪",
-        "appFile": "webwrap.html#name=Little%20Alchemy%202&icon=🧪&url=https%3A%2F%2Flittlealchemy2.com%2F"
+        "icon": "ðŸ§ª",
+        "appFile": "webwrap.html#name=Little%20Alchemy%202&icon=ðŸ§ª&url=https%3A%2F%2Flittlealchemy2.com%2F"
     },
     {
         "id": "geoguessr_free",
         "title": "GeoGuessr (Accueil)",
         "creator": "GeoGuessr",
-        "description": "Jeu de géographie (accueil / modes).",
+        "description": "Jeu de gÃ©ographie (accueil / modes).",
         "category": "games",
-        "icon": "🗺️",
-        "appFile": "webwrap.html#name=GeoGuessr&icon=🗺️&url=https%3A%2F%2Fwww.geoguessr.com%2F"
+        "icon": "ðŸ—ºï¸",
+        "appFile": "webwrap.html#name=GeoGuessr&icon=ðŸ—ºï¸&url=https%3A%2F%2Fwww.geoguessr.com%2F"
     },
     {
         "id": "slope",
@@ -700,8 +708,8 @@
         "creator": "Game",
         "description": "Course infinie 3D (Slope) via Poki.",
         "category": "games",
-        "icon": "🌀",
-        "appFile": "webwrap.html#name=Slope&icon=🌀&url=https%3A%2F%2Fpoki.com%2Fen%2Fg%2Fslope"
+        "icon": "ðŸŒ€",
+        "appFile": "webwrap.html#name=Slope&icon=ðŸŒ€&url=https%3A%2F%2Fpoki.com%2Fen%2Fg%2Fslope"
     },
     {
         "id": "templerun2",
@@ -709,8 +717,8 @@
         "creator": "Imangi",
         "description": "Runner classique (Temple Run 2) via Poki.",
         "category": "games",
-        "icon": "🏃",
-        "appFile": "webwrap.html#name=Temple%20Run%202&icon=🏃&url=https%3A%2F%2Fpoki.com%2Fen%2Fg%2Ftemple-run-2"
+        "icon": "ðŸƒ",
+        "appFile": "webwrap.html#name=Temple%20Run%202&icon=ðŸƒ&url=https%3A%2F%2Fpoki.com%2Fen%2Fg%2Ftemple-run-2"
     },
     {
         "id": "stickmanhook",
@@ -718,8 +726,8 @@
         "creator": "Madbox",
         "description": "Swing / plateforme (Stickman Hook) via Poki.",
         "category": "games",
-        "icon": "🪝",
-        "appFile": "webwrap.html#name=Stickman%20Hook&icon=🪝&url=https%3A%2F%2Fpoki.com%2Fen%2Fg%2Fstickman-hook"
+        "icon": "ðŸª",
+        "appFile": "webwrap.html#name=Stickman%20Hook&icon=ðŸª&url=https%3A%2F%2Fpoki.com%2Fen%2Fg%2Fstickman-hook"
     },
     {
         "id": "narrowone",
@@ -727,8 +735,8 @@
         "creator": "Pelican Party Studios",
         "description": "Archerie multijoueur (Narrow.One).",
         "category": "games",
-        "icon": "🏹",
-        "appFile": "webwrap.html#name=Narrow.One&icon=🏹&url=https%3A%2F%2Fnarrow.one%2F"
+        "icon": "ðŸ¹",
+        "appFile": "webwrap.html#name=Narrow.One&icon=ðŸ¹&url=https%3A%2F%2Fnarrow.one%2F"
     },
     {
         "id": "sketchful",
@@ -736,8 +744,8 @@
         "creator": "Sketchful",
         "description": "Dessine et fais deviner (sketchful.io).",
         "category": "games",
-        "icon": "🖊️",
-        "appFile": "webwrap.html#name=Sketchful.io&icon=🖊️&url=https%3A%2F%2Fsketchful.io%2F"
+        "icon": "ðŸ–Šï¸",
+        "appFile": "webwrap.html#name=Sketchful.io&icon=ðŸ–Šï¸&url=https%3A%2F%2Fsketchful.io%2F"
     },
     {
         "id": "tetrio_lobby",
@@ -745,17 +753,17 @@
         "creator": "TETR.IO",
         "description": "Vers le lobby TETR.IO directement.",
         "category": "games",
-        "icon": "🧱",
-        "appFile": "webwrap.html#name=TETR.IO&icon=🧱&url=https%3A%2F%2Ftetr.io%2F"
+        "icon": "ðŸ§±",
+        "appFile": "webwrap.html#name=TETR.IO&icon=ðŸ§±&url=https%3A%2F%2Ftetr.io%2F"
     },
     {
         "id": "chessarena",
         "title": "Chess Arena",
         "creator": "ChessArena",
-        "description": "Échecs en ligne rapides (chessarena.com).",
+        "description": "Ã‰checs en ligne rapides (chessarena.com).",
         "category": "games",
-        "icon": "♟️",
-        "appFile": "webwrap.html#name=Chess%20Arena&icon=♟️&url=https%3A%2F%2Fwww.chessarena.com%2F"
+        "icon": "â™Ÿï¸",
+        "appFile": "webwrap.html#name=Chess%20Arena&icon=â™Ÿï¸&url=https%3A%2F%2Fwww.chessarena.com%2F"
     },
     {
         "id": "obs",
@@ -763,20 +771,20 @@
         "creator": "FunnyCorp",
         "description": "Scenes/sources, mix audio et enregistrement WebM (version navigateur).",
         "category": "productivity",
-        "icon": "🎥",
+        "icon": "ðŸŽ¥",
         "appFile": "obs.html"
     },
     {
         "id": "mickey",
         "title": "Mickey",
         "creator": "System",
-        "description": "Assistant IA intégré (Groq) : commandes système (thème, apps, fond d’écran) + réponses à vos questions.",
+        "description": "Assistant IA intÃ©grÃ© (Groq) : commandes systÃ¨me (thÃ¨me, apps, fond dâ€™Ã©cran) + rÃ©ponses Ã  vos questions.",
         "category": "system",
-        "icon": "🤖",
+        "icon": "ðŸ¤–",
         "screenshots": [
-            "🗣️",
-            "🎛️",
-            "✨"
+            "ðŸ—£ï¸",
+            "ðŸŽ›ï¸",
+            "âœ¨"
         ],
         "appFile": "mickey.html"
     },
@@ -784,9 +792,10 @@
         "id": "admin",
         "title": "Admin Center",
         "creator": "Mouns",
-        "description": "Outils dâ€™administration pour gÃ©rer les icÃ´nes/noms et les overrides via Supabase.",
+        "description": "Outils dÃ¢â‚¬â„¢administration pour gÃƒÂ©rer les icÃƒÂ´nes/noms et les overrides via Supabase.",
         "category": "system",
-        "icon": "ðŸ›¡ï¸",
+        "icon": "Ã°Å¸â€ºÂ¡Ã¯Â¸Â",
         "appFile": "admin.html"
     }
 ]
+
