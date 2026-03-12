@@ -6,5 +6,6 @@ compatibility_date = "2026-03-11"
 # Example:
 #   ALLOWED_ORIGINS = "https://funnywebos.github.io"
 [vars]
-ALLOWED_ORIGINS = "https://funnywebos.github.io/"
-
+# IMPORTANT: Origin headers never include a trailing slash.
+# Use comma-separated values if you need multiple origins.
+ALLOWED_ORIGINS = "https://funnywebos.github.io"
