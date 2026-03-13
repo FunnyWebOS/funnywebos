@@ -1,94 +1,653 @@
 <!DOCTYPE html>
-<html>
-
+<html lang="fr">
 <head>
-    <style>
-        body {
-            background: #111;
-            color: white;
-            font-family: sans-serif;
-            height: 100vh;
-            margin: 0;
-            display: flex;
-            flex-direction: column;
-        }
+<meta charset="UTF-8">
+<title>Calculatrice</title>
+<link href="https://fonts.googleapis.com/css2?family=Segoe+UI:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #1c1c1c;
+    --surface: #2b2b2b;
+    --surface2: #323232;
+    --surface3: #3d3d3d;
+    --border: rgba(255,255,255,0.08);
+    --accent: #60cdff;
+    --accent2: #0078d4;
+    --text: #ffffff;
+    --text2: rgba(255,255,255,0.72);
+    --text3: rgba(255,255,255,0.4);
+    --btn-num: #2b2b2b;
+    --btn-num-h: #383838;
+    --btn-op: #3a3a3a;
+    --btn-op-h: #484848;
+    --btn-eq: #0078d4;
+    --btn-eq-h: #1a8ad4;
+    --btn-fn: #252525;
+    --btn-fn-h: #303030;
+    --radius: 6px;
+    --shadow: 0 4px 20px rgba(0,0,0,0.5);
+  }
 
-        #display {
-            font-size: 48px;
-            text-align: right;
-            padding: 20px;
-            background: #000;
-            flex: none;
-            height: 60px;
-            overflow: hidden;
-        }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
 
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 10px;
-            padding: 20px;
-            flex: 1;
-        }
+  body {
+    font-family: 'Segoe UI', -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    user-select: none;
+  }
 
-        button {
-            background: #333;
-            border: none;
-            color: white;
-            font-size: 24px;
-            border-radius: 10px;
-            cursor: pointer;
-            transition: 0.1s;
-        }
+  /* ── HEADER ── */
+  .header {
+    padding: 14px 16px 8px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+  }
+  .header-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text2);
+  }
+  .mode-tabs {
+    display: flex;
+    gap: 2px;
+    background: var(--surface);
+    border-radius: var(--radius);
+    padding: 3px;
+  }
+  .mode-tab {
+    padding: 4px 12px;
+    border-radius: 4px;
+    font-size: 12px;
+    color: var(--text3);
+    cursor: pointer;
+    transition: all 0.15s;
+    border: none;
+    background: transparent;
+  }
+  .mode-tab:hover { color: var(--text2); background: rgba(255,255,255,0.06); }
+  .mode-tab.active { background: var(--surface3); color: var(--text); }
 
-        button:active {
-            transform: scale(0.95);
-            background: #444;
-        }
+  /* ── DISPLAY ── */
+  .display-wrap {
+    padding: 0 16px;
+    flex-shrink: 0;
+  }
+  .expr-line {
+    font-size: 13px;
+    color: var(--text3);
+    text-align: right;
+    min-height: 20px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    margin-bottom: 2px;
+    font-weight: 300;
+  }
+  .main-display {
+    text-align: right;
+    font-size: 52px;
+    font-weight: 300;
+    letter-spacing: -2px;
+    line-height: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    transition: font-size 0.1s;
+    padding: 4px 0 8px;
+  }
+  .main-display.small { font-size: 36px; letter-spacing: -1px; }
+  .main-display.xsmall { font-size: 24px; letter-spacing: 0; }
+  .memory-bar {
+    display: flex;
+    gap: 6px;
+    justify-content: flex-end;
+    min-height: 20px;
+    padding-bottom: 6px;
+  }
+  .mem-badge {
+    font-size: 11px;
+    color: var(--text3);
+    background: var(--surface2);
+    padding: 2px 6px;
+    border-radius: 4px;
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+  .mem-badge.visible { opacity: 1; }
 
-        .op {
-            background: #ff9500;
-        }
-    </style>
+  /* ── HISTORY PANEL ── */
+  .history-panel {
+    display: none;
+    flex-direction: column;
+    flex: 1;
+    overflow: hidden;
+    margin: 0 16px 8px;
+    background: var(--surface);
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+  }
+  .history-panel.show { display: flex; }
+  .history-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--border);
+    font-size: 12px;
+    color: var(--text3);
+    font-weight: 600;
+  }
+  .history-clear {
+    background: transparent; border: none;
+    color: var(--accent); font-size: 11px; cursor: pointer;
+  }
+  .history-list {
+    flex: 1; overflow-y: auto; padding: 6px 0;
+  }
+  .history-list::-webkit-scrollbar { width: 4px; }
+  .history-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 2px; }
+  .history-item {
+    padding: 8px 12px;
+    cursor: pointer;
+    border-radius: 4px;
+    margin: 0 4px;
+    transition: background 0.1s;
+  }
+  .history-item:hover { background: rgba(255,255,255,0.06); }
+  .hi-expr { font-size: 12px; color: var(--text3); text-align: right; }
+  .hi-result { font-size: 18px; font-weight: 300; text-align: right; color: var(--text2); }
+  .history-empty { text-align: center; color: var(--text3); font-size: 13px; padding: 24px; }
+
+  /* ── DIVIDER ── */
+  .divider { height: 1px; background: var(--border); margin: 0 16px 8px; flex-shrink: 0; }
+
+  /* ── BUTTONS ── */
+  .btn-grid {
+    display: grid;
+    gap: 5px;
+    padding: 0 12px 12px;
+    flex: 1;
+    min-height: 0;
+  }
+  .btn-grid.standard { grid-template-columns: repeat(4, 1fr); grid-template-rows: repeat(6, 1fr); }
+  .btn-grid.scientific { grid-template-columns: repeat(5, 1fr); grid-template-rows: repeat(6, 1fr); }
+
+  .btn {
+    border: none;
+    border-radius: var(--radius);
+    font-family: inherit;
+    font-size: 16px;
+    font-weight: 400;
+    color: var(--text);
+    cursor: pointer;
+    transition: background 0.08s, transform 0.06s, box-shadow 0.08s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+    background: var(--btn-num);
+    min-height: 0;
+  }
+  .btn:hover { background: var(--btn-num-h); }
+  .btn:active { transform: scale(0.94); }
+
+  .btn::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at center, rgba(255,255,255,0.15) 0%, transparent 70%);
+    opacity: 0;
+    transition: opacity 0.15s;
+  }
+  .btn:active::after { opacity: 1; }
+
+  .btn.op { background: var(--btn-op); }
+  .btn.op:hover { background: var(--btn-op-h); }
+
+  .btn.fn { background: var(--btn-fn); font-size: 13px; color: var(--text2); }
+  .btn.fn:hover { background: var(--btn-fn-h); color: var(--text); }
+
+  .btn.eq {
+    background: var(--btn-eq);
+    font-size: 22px;
+    font-weight: 600;
+    box-shadow: 0 2px 8px rgba(0,120,212,0.4);
+  }
+  .btn.eq:hover { background: var(--btn-eq-h); box-shadow: 0 4px 16px rgba(0,120,212,0.5); }
+
+  .btn.accent { background: rgba(96,205,255,0.15); color: var(--accent); }
+  .btn.accent:hover { background: rgba(96,205,255,0.22); }
+
+  .btn.danger { color: #ff6b6b; }
+
+  .btn.wide { grid-column: span 2; }
+
+  .btn.mem { font-size: 12px; }
+
+  /* ── SCIENTIFIC extras ── */
+  .sci-label { font-size: 10px; color: var(--text3); position: absolute; top: 3px; right: 5px; }
+
+  /* ── TOGGLE ROW ── */
+  .toggle-row {
+    display: flex;
+    gap: 6px;
+    padding: 0 12px 6px;
+    flex-shrink: 0;
+  }
+  .toggle-pill {
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    background: var(--surface2);
+    color: var(--text3);
+    border: 1px solid var(--border);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .toggle-pill:hover { color: var(--text2); }
+  .toggle-pill.on { background: rgba(96,205,255,0.12); color: var(--accent); border-color: rgba(96,205,255,0.3); }
+
+  /* ── HISTORY TOGGLE ── */
+  .hist-toggle {
+    background: transparent; border: none;
+    color: var(--text3); cursor: pointer; font-size: 14px;
+    padding: 4px 8px; border-radius: var(--radius);
+    transition: all 0.15s;
+  }
+  .hist-toggle:hover { background: var(--surface2); color: var(--text2); }
+  .hist-toggle.on { color: var(--accent); }
+</style>
 </head>
-
 <body>
-    <div id="display">0</div>
-    <div class="grid">
-        <button onclick="press('C')">C</button>
-        <button onclick="press('/')">÷</button>
-        <button onclick="press('*')">×</button>
-        <button onclick="press('del')">←</button>
-        <button onclick="press('7')">7</button>
-        <button onclick="press('8')">8</button>
-        <button onclick="press('9')">9</button>
-        <button class="op" onclick="press('-')">-</button>
-        <button onclick="press('4')">4</button>
-        <button onclick="press('5')">5</button>
-        <button onclick="press('6')">6</button>
-        <button class="op" onclick="press('+')">+</button>
-        <button onclick="press('1')">1</button>
-        <button onclick="press('2')">2</button>
-        <button onclick="press('3')">3</button>
-        <button class="op" onclick="press('=')">=</button>
-        <button onclick="press('0')" style="grid-column: span 2;">0</button>
-        <button onclick="press('.')">.</button>
+
+<!-- HEADER -->
+<div class="header">
+  <span class="header-title" id="mode-label">Calculatrice standard</span>
+  <div style="display:flex;gap:8px;align-items:center">
+    <button class="hist-toggle" id="hist-toggle-btn" onclick="toggleHistory()" title="Historique">🕐</button>
+    <div class="mode-tabs">
+      <button class="mode-tab active" onclick="setMode('standard')">Standard</button>
+      <button class="mode-tab" onclick="setMode('scientific')">Scientifique</button>
     </div>
+  </div>
+</div>
 
-    <script>
-        const d = document.getElementById('display');
-        function press(k) {
-            if (k === 'C') d.textContent = '0';
-            else if (k === 'del') d.textContent = d.textContent.slice(0, -1) || '0';
-            else if (k === '=') {
-                try { d.textContent = eval(d.textContent.replace('×', '*').replace('÷', '/')); }
-                catch { d.textContent = 'Erreur'; }
-            } else {
-                if (d.textContent === '0' || d.textContent === 'Erreur') d.textContent = k;
-                else d.textContent += k;
-            }
-        }
-    </script>
+<!-- DISPLAY -->
+<div class="display-wrap">
+  <div class="expr-line" id="expr-line"></div>
+  <div class="main-display" id="main-display">0</div>
+  <div class="memory-bar">
+    <span class="mem-badge" id="mem-badge">M</span>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- HISTORY PANEL -->
+<div class="history-panel" id="history-panel">
+  <div class="history-header">
+    <span>Historique</span>
+    <button class="history-clear" onclick="clearHistory()">Effacer tout</button>
+  </div>
+  <div class="history-list" id="history-list">
+    <div class="history-empty">Aucun calcul récent</div>
+  </div>
+</div>
+
+<!-- TOGGLE ROW (standard) -->
+<div class="toggle-row" id="toggle-row-std">
+  <button class="toggle-pill" id="tog-deg" onclick="toggleAngle()">DEG</button>
+</div>
+
+<!-- BUTTONS -->
+<div class="btn-grid standard" id="btn-grid"></div>
+
+<script>
+let current = '0';
+let expr = '';
+let memory = 0;
+let hasMemory = false;
+let justEvaled = false;
+let mode = 'standard';
+let angleMode = 'deg'; // deg | rad
+let showHistory = false;
+let calcHistory = [];
+let invMode = false;
+
+const DISPLAY = document.getElementById('main-display');
+const EXPR = document.getElementById('expr-line');
+const MEM_BADGE = document.getElementById('mem-badge');
+const GRID = document.getElementById('btn-grid');
+
+/* ── DISPLAY UPDATE ── */
+function updateDisplay() {
+  DISPLAY.textContent = formatNum(current);
+  const len = current.length;
+  DISPLAY.className = 'main-display' + (len > 12 ? ' xsmall' : len > 8 ? ' small' : '');
+  MEM_BADGE.className = 'mem-badge' + (hasMemory ? ' visible' : '');
+}
+
+function formatNum(val) {
+  if (isNaN(val) || val === 'Erreur' || val === 'Inf' || val === '-Inf') return val;
+  const n = parseFloat(val);
+  if (!isFinite(n)) return val;
+  // Avoid scientific notation for display unless very large/small
+  if (Math.abs(n) > 1e15 || (Math.abs(n) < 1e-10 && n !== 0)) return n.toExponential(6);
+  // Remove trailing zeros after decimal
+  return String(parseFloat(n.toPrecision(12)));
+}
+
+/* ── INPUT HANDLING ── */
+function press(k) {
+  if (k === 'C') { current = '0'; expr = ''; justEvaled = false; updateDisplay(); EXPR.textContent=''; return; }
+  if (k === 'CE') { current = '0'; updateDisplay(); return; }
+  if (k === '±') { current = current.startsWith('-') ? current.slice(1) : '-' + current; updateDisplay(); return; }
+  if (k === '%') { current = String(parseFloat(current) / 100); updateDisplay(); return; }
+  if (k === 'del') {
+    if (current.length <= 1 || current === 'Erreur') current = '0';
+    else current = current.slice(0, -1);
+    updateDisplay(); return;
+  }
+  if (k === '=') { compute(); return; }
+
+  // Operators
+  if (['+','-','*','/'].includes(k)) {
+    if (justEvaled) { expr = current + ' ' + opSym(k) + ' '; }
+    else if (expr && !endsWithOp(expr)) { expr += current + ' ' + opSym(k) + ' '; }
+    else if (!expr) { expr = current + ' ' + opSym(k) + ' '; }
+    else { expr = expr.slice(0,-3) + opSym(k) + ' '; }
+    EXPR.textContent = expr;
+    current = '0';
+    justEvaled = false;
+    updateDisplay();
+    return;
+  }
+
+  // Digits / dot
+  if (k === '.') {
+    if (justEvaled) { current = '0.'; justEvaled = false; }
+    else if (!current.includes('.')) current += '.';
+    updateDisplay(); return;
+  }
+
+  if (justEvaled) { current = k; justEvaled = false; }
+  else if (current === '0' || current === '-0') current = (current === '-0' ? '-' : '') + k;
+  else current += k;
+  updateDisplay();
+}
+
+function opSym(op) { return {'+':'+','-':'−','*':'×','/':'÷'}[op] || op; }
+function opChar(sym) { return {'−':'-','×':'*','÷':'/'}[sym] || sym; }
+function endsWithOp(e) { return /[+\-×÷] $/.test(e); }
+
+function compute() {
+  if (!expr) return;
+  const full = expr + current;
+  const safeExpr = full.replace(/−/g,'-').replace(/×/g,'*').replace(/÷/g,'/');
+  let result;
+  try {
+    result = Function('"use strict"; return (' + safeExpr + ')')();
+    if (!isFinite(result)) { current = result > 0 ? 'Inf' : '-Inf'; }
+    else { current = String(parseFloat(result.toPrecision(12))); }
+  } catch(e) { current = 'Erreur'; }
+
+  addHistory(full + ' =', current);
+  EXPR.textContent = full + ' =';
+  expr = '';
+  justEvaled = true;
+  updateDisplay();
+}
+
+/* ── SCIENTIFIC FUNCTIONS ── */
+function toRad(x) { return angleMode === 'deg' ? x * Math.PI / 180 : x; }
+function fromRad(x) { return angleMode === 'deg' ? x * 180 / Math.PI : x; }
+
+function sciCalc(fn) {
+  const x = parseFloat(current);
+  let result;
+  try {
+    switch(fn) {
+      case 'sin':  result = Math.sin(toRad(x)); break;
+      case 'cos':  result = Math.cos(toRad(x)); break;
+      case 'tan':  result = Math.tan(toRad(x)); break;
+      case 'asin': result = fromRad(Math.asin(x)); break;
+      case 'acos': result = fromRad(Math.acos(x)); break;
+      case 'atan': result = fromRad(Math.atan(x)); break;
+      case 'sinh': result = Math.sinh(x); break;
+      case 'cosh': result = Math.cosh(x); break;
+      case 'tanh': result = Math.tanh(x); break;
+      case 'log':  result = Math.log10(x); break;
+      case 'ln':   result = Math.log(x); break;
+      case 'log2': result = Math.log2(x); break;
+      case 'sqrt': result = Math.sqrt(x); break;
+      case 'cbrt': result = Math.cbrt(x); break;
+      case 'sq':   result = x * x; break;
+      case 'cube': result = x * x * x; break;
+      case 'inv':  result = 1 / x; break;
+      case 'fact': result = factorial(Math.round(x)); break;
+      case 'abs':  result = Math.abs(x); break;
+      case 'exp':  result = Math.exp(x); break;
+      case '10x':  result = Math.pow(10, x); break;
+      case '2x':   result = Math.pow(2, x); break;
+      case 'pi':   current = String(Math.PI); updateDisplay(); return;
+      case 'e':    current = String(Math.E); updateDisplay(); return;
+      default: return;
+    }
+    if (!isFinite(result) || isNaN(result)) { current = isNaN(result) ? 'Erreur' : (result > 0 ? 'Inf' : '-Inf'); }
+    else current = String(parseFloat(result.toPrecision(12)));
+    justEvaled = true;
+    updateDisplay();
+  } catch(e) { current = 'Erreur'; updateDisplay(); }
+}
+
+function factorial(n) {
+  if (n < 0 || n > 170) return Infinity;
+  if (n <= 1) return 1;
+  let r = 1;
+  for (let i = 2; i <= n; i++) r *= i;
+  return r;
+}
+
+function pressXY(op) {
+  // x^y, x√y — set up operator
+  if (op === 'pow') { expr = current + ' ^ '; current = '0'; EXPR.textContent = expr; updateDisplay(); }
+  if (op === 'xrt') { expr = 'rt(' + current + ', '; current = '0'; EXPR.textContent = expr; updateDisplay(); }
+}
+
+/* ── MEMORY ── */
+function memOp(op) {
+  const x = parseFloat(current);
+  switch(op) {
+    case 'MC': memory = 0; hasMemory = false; break;
+    case 'MR': current = String(memory); justEvaled = true; break;
+    case 'M+': memory += x; hasMemory = true; break;
+    case 'M-': memory -= x; hasMemory = true; break;
+    case 'MS': memory = x; hasMemory = true; break;
+  }
+  updateDisplay();
+}
+
+/* ── HISTORY ── */
+function addHistory(expression, result) {
+  calcHistory.unshift({ expression, result });
+  if (calcHistory.length > 50) calcHistory.pop();
+  renderHistory();
+}
+function clearHistory() {
+  calcHistory = [];
+  renderHistory();
+}
+function renderHistory() {
+  const list = document.getElementById('history-list');
+  if (!calcHistory.length) {
+    list.innerHTML = '<div class="history-empty">Aucun calcul récent</div>'; return;
+  }
+  list.innerHTML = calcHistory.map((h,i) => `
+    <div class="history-item" onclick="recallHistory(${i})">
+      <div class="hi-expr">${h.expression}</div>
+      <div class="hi-result">${h.result}</div>
+    </div>`).join('');
+}
+function recallHistory(i) {
+  current = calcHistory[i].result;
+  justEvaled = true;
+  updateDisplay();
+}
+function toggleHistory() {
+  showHistory = !showHistory;
+  document.getElementById('history-panel').classList.toggle('show', showHistory);
+  document.getElementById('hist-toggle-btn').classList.toggle('on', showHistory);
+}
+
+/* ── MODE ── */
+function setMode(m) {
+  mode = m;
+  document.querySelectorAll('.mode-tab').forEach((t,i) => t.classList.toggle('active', (i===0&&m==='standard')||(i===1&&m==='scientific')));
+  document.getElementById('mode-label').textContent = m === 'standard' ? 'Calculatrice standard' : 'Calculatrice scientifique';
+  GRID.className = 'btn-grid ' + m;
+  document.getElementById('toggle-row-std').style.display = m === 'scientific' ? 'flex' : 'none';
+  buildGrid();
+}
+
+function toggleAngle() {
+  angleMode = angleMode === 'deg' ? 'rad' : 'deg';
+  document.getElementById('tog-deg').textContent = angleMode.toUpperCase();
+  document.getElementById('tog-deg').classList.toggle('on', angleMode === 'rad');
+}
+
+/* ── GRID BUILDER ── */
+function buildGrid() {
+  GRID.innerHTML = '';
+  const btns = mode === 'standard' ? getStandardBtns() : getScienceBtns();
+  btns.forEach(b => GRID.appendChild(makeBtn(b)));
+}
+
+function makeBtn({ label, sub, action, cls, wide }) {
+  const el = document.createElement('button');
+  el.className = 'btn' + (cls ? ' ' + cls : '') + (wide ? ' wide' : '');
+  el.innerHTML = label + (sub ? `<span class="sci-label">${sub}</span>` : '');
+  el.onclick = () => action();
+  return el;
+}
+
+function getStandardBtns() {
+  return [
+    // Row 1: memory
+    { label:'MC', cls:'mem fn', action:()=>memOp('MC') },
+    { label:'MR', cls:'mem fn', action:()=>memOp('MR') },
+    { label:'M+', cls:'mem fn', action:()=>memOp('M+') },
+    { label:'M-', cls:'mem fn', action:()=>memOp('M-') },
+    // Row 2
+    { label:'%', cls:'fn', action:()=>press('%') },
+    { label:'CE', cls:'fn', action:()=>press('CE') },
+    { label:'C', cls:'fn danger', action:()=>press('C') },
+    { label:'⌫', cls:'fn', action:()=>press('del') },
+    // Row 3
+    { label:'1/x', cls:'fn', action:()=>sciCalc('inv') },
+    { label:'x²', cls:'fn', action:()=>sciCalc('sq') },
+    { label:'√x', cls:'fn', action:()=>sciCalc('sqrt') },
+    { label:'÷', cls:'op accent', action:()=>press('/') },
+    // Row 4
+    { label:'7', action:()=>press('7') },
+    { label:'8', action:()=>press('8') },
+    { label:'9', action:()=>press('9') },
+    { label:'×', cls:'op accent', action:()=>press('*') },
+    // Row 5
+    { label:'4', action:()=>press('4') },
+    { label:'5', action:()=>press('5') },
+    { label:'6', action:()=>press('6') },
+    { label:'−', cls:'op accent', action:()=>press('-') },
+    // Row 6
+    { label:'1', action:()=>press('1') },
+    { label:'2', action:()=>press('2') },
+    { label:'3', action:()=>press('3') },
+    { label:'+', cls:'op accent', action:()=>press('+') },
+    // Row 7
+    { label:'±', cls:'fn', action:()=>press('±') },
+    { label:'0', action:()=>press('0') },
+    { label:'.', action:()=>press('.') },
+    { label:'=', cls:'eq', action:()=>press('=') },
+  ];
+}
+
+function getScienceBtns() {
+  return [
+    // Row 1: memory (5 cols)
+    { label:'MC', cls:'mem fn', action:()=>memOp('MC') },
+    { label:'MR', cls:'mem fn', action:()=>memOp('MR') },
+    { label:'MS', cls:'mem fn', action:()=>memOp('MS') },
+    { label:'M+', cls:'mem fn', action:()=>memOp('M+') },
+    { label:'M-', cls:'mem fn', action:()=>memOp('M-') },
+    // Row 2: sci functions
+    { label:'sin', cls:'fn', action:()=>sciCalc('sin') },
+    { label:'cos', cls:'fn', action:()=>sciCalc('cos') },
+    { label:'tan', cls:'fn', action:()=>sciCalc('tan') },
+    { label:'log', cls:'fn', action:()=>sciCalc('log') },
+    { label:'ln', cls:'fn', action:()=>sciCalc('ln') },
+    // Row 3
+    { label:'sin⁻¹', cls:'fn', action:()=>sciCalc('asin') },
+    { label:'cos⁻¹', cls:'fn', action:()=>sciCalc('acos') },
+    { label:'tan⁻¹', cls:'fn', action:()=>sciCalc('atan') },
+    { label:'x²', cls:'fn', action:()=>sciCalc('sq') },
+    { label:'√x', cls:'fn', action:()=>sciCalc('sqrt') },
+    // Row 4: mixed
+    { label:'π', cls:'fn accent', action:()=>sciCalc('pi') },
+    { label:'e', cls:'fn accent', action:()=>sciCalc('e') },
+    { label:'x!', cls:'fn', action:()=>sciCalc('fact') },
+    { label:'CE', cls:'fn', action:()=>press('CE') },
+    { label:'C', cls:'fn danger', action:()=>press('C') },
+    // Row 5: digits + ops
+    { label:'7', action:()=>press('7') },
+    { label:'8', action:()=>press('8') },
+    { label:'9', action:()=>press('9') },
+    { label:'⌫', cls:'fn', action:()=>press('del') },
+    { label:'÷', cls:'op accent', action:()=>press('/') },
+    // Row 6
+    { label:'4', action:()=>press('4') },
+    { label:'5', action:()=>press('5') },
+    { label:'6', action:()=>press('6') },
+    { label:'%', cls:'fn', action:()=>press('%') },
+    { label:'×', cls:'op accent', action:()=>press('*') },
+    // Row 7
+    { label:'1', action:()=>press('1') },
+    { label:'2', action:()=>press('2') },
+    { label:'3', action:()=>press('3') },
+    { label:'±', cls:'fn', action:()=>press('±') },
+    { label:'−', cls:'op accent', action:()=>press('-') },
+    // Row 8
+    { label:'1/x', cls:'fn', action:()=>sciCalc('inv') },
+    { label:'0', action:()=>press('0') },
+    { label:'.', action:()=>press('.') },
+    { label:'=', cls:'eq', action:()=>press('=') },
+    { label:'+', cls:'op accent', action:()=>press('+') },
+  ];
+}
+
+/* ── KEYBOARD ── */
+document.addEventListener('keydown', e => {
+  if (e.key >= '0' && e.key <= '9') press(e.key);
+  else if (e.key === '+') press('+');
+  else if (e.key === '-') press('-');
+  else if (e.key === '*') press('*');
+  else if (e.key === '/') { e.preventDefault(); press('/'); }
+  else if (e.key === '.') press('.');
+  else if (e.key === 'Enter' || e.key === '=') press('=');
+  else if (e.key === 'Backspace') press('del');
+  else if (e.key === 'Escape') press('C');
+  else if (e.key === '%') press('%');
+});
+
+/* ── INIT ── */
+buildGrid();
+updateDisplay();
+</script>
 </body>
-
 </html>
