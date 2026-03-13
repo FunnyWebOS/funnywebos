@@ -3,581 +3,1269 @@
 <head>
     <meta charset="UTF-8">
     <title>Explorateur de Fichiers</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
     <style>
         :root {
-            --bg: rgba(20, 20, 20, 0.95);
-            --sidebar: rgba(30, 30, 30, 0.5);
-            --hover: rgba(255, 255, 255, 0.1);
-            --accent: #0A84FF;
-            --text: #fff;
-            --glass: rgba(30, 30, 30, 0.6);
+            --bg: #202020;
+            --surface: #2b2b2b;
+            --surface2: #323232;
+            --surface3: #3a3a3a;
+            --border: rgba(255,255,255,0.08);
+            --border2: rgba(255,255,255,0.12);
+            --accent: #60cdff;
+            --accent-bg: rgba(96,205,255,0.15);
+            --accent-hover: rgba(96,205,255,0.1);
+            --text: #ffffff;
+            --text2: rgba(255,255,255,0.75);
+            --text3: rgba(255,255,255,0.45);
+            --hover: rgba(255,255,255,0.07);
+            --active: rgba(255,255,255,0.12);
+            --nav-active: rgba(96,205,255,0.15);
+            --radius: 4px;
+            --radius-lg: 8px;
+            --shadow: 0 2px 8px rgba(0,0,0,0.4);
         }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
         body {
-            margin: 0; padding: 0;
-            font-family: 'Segoe UI', sans-serif;
+            font-family: 'Segoe UI', -apple-system, sans-serif;
+            font-size: 13px;
             color: var(--text);
-            background: transparent; /* Glass effect handled by window */
+            background: var(--bg);
             height: 100vh;
             display: flex;
             flex-direction: column;
+            overflow: hidden;
             user-select: none;
         }
-        .toolbar {
-            height: 40px;
-            background: var(--glass);
+
+        /* ── TITLE BAR ── */
+        .titlebar {
+            height: 32px;
+            background: var(--surface);
             display: flex;
             align-items: center;
-            padding: 0 15px;
-            gap: 10px;
-            border-bottom: 1px solid rgba(255,255,255,0.05);
+            padding: 0 12px;
+            gap: 8px;
+            border-bottom: 1px solid var(--border);
+            flex-shrink: 0;
         }
-        .btn {
-            background: transparent; border: none; color: white;
-            padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 13px;
-            display: flex; align-items: center; gap: 6px;
+        .titlebar-icon { font-size: 14px; }
+        .titlebar-title { font-size: 12px; color: var(--text2); flex:1; }
+        .titlebar-controls { display:flex; gap:2px; }
+        .titlebar-btn {
+            width: 46px; height: 32px;
+            background: transparent; border: none; color: var(--text2);
+            font-size: 11px; cursor: pointer; display:flex; align-items:center; justify-content:center;
         }
-        .btn:hover { background: var(--hover); }
-        .btn-primary { background: var(--accent); }
-        .btn-primary:hover { background: #0077ED; }
+        .titlebar-btn:hover { background: var(--hover); color: var(--text); }
+        .titlebar-btn.close:hover { background: #c42b1c; color: white; }
 
-        .main-layout { display: flex; flex: 1; overflow: hidden; }
-        
-        .sidebar {
-            width: 200px;
-            background: rgba(0,0,0,0.2);
-            padding: 10px 0;
-            display: flex; flex-direction: column; gap: 2px;
-            border-right: 1px solid rgba(255,255,255,0.05);
+        /* ── RIBBON / COMMAND BAR ── */
+        .ribbon {
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            flex-shrink: 0;
         }
-        .nav-item {
-            padding: 8px 15px;
+        .ribbon-tabs {
+            display: flex;
+            gap: 0;
+            padding: 0 12px;
+        }
+        .ribbon-tab {
+            padding: 6px 14px 5px;
+            font-size: 12px;
+            color: var(--text2);
             cursor: pointer;
-            font-size: 13px;
-            display: flex; align-items: center; gap: 10px;
-            color: rgba(255,255,255,0.8);
+            border-bottom: 2px solid transparent;
+            transition: all 0.15s;
         }
-        .nav-item:hover { background: var(--hover); color: white; }
-        .nav-item.active { background: rgba(10, 132, 255, 0.2); color: #4facfe; border-left: 3px solid #4facfe; }
-        .nav-sep { height: 1px; background: rgba(255,255,255,0.1); margin: 8px 15px; }
-        .nav-header { font-size: 11px; font-weight: bold; color: rgba(255,255,255,0.4); padding: 5px 15px; text-transform: uppercase; }
+        .ribbon-tab:hover { color: var(--text); }
+        .ribbon-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
 
-        .content-area {
-            flex: 1;
-            padding: 20px;
-            overflow-y: auto;
+        .ribbon-bar {
+            padding: 4px 8px;
+            display: flex;
+            align-items: center;
+            gap: 2px;
+            flex-wrap: wrap;
+        }
+        .ribbon-group {
+            display: flex;
+            align-items: center;
+            gap: 1px;
+            padding: 0 4px;
+            border-right: 1px solid var(--border2);
+        }
+        .ribbon-group:last-child { border-right: none; }
+
+        .rb-btn {
             display: flex;
             flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 2px;
+            padding: 4px 8px;
+            border-radius: var(--radius);
+            background: transparent;
+            border: none;
+            color: var(--text);
+            cursor: pointer;
+            min-width: 48px;
+            height: 52px;
+            font-size: 11px;
+            transition: background 0.1s;
+            white-space: nowrap;
         }
-        .path-bar { margin-bottom: 20px; font-size: 18px; font-weight: 600; display:flex; justify-content:space-between; align-items:center; }
-        .view-toggle { font-size:12px; background:rgba(255,255,255,0.1); padding:4px 8px; border-radius:4px; cursor:pointer; }
+        .rb-btn:hover { background: var(--hover); }
+        .rb-btn:active { background: var(--active); }
+        .rb-btn .ico { font-size: 20px; line-height: 1; }
+        .rb-btn.sm {
+            flex-direction: row;
+            height: 26px;
+            min-width: unset;
+            padding: 4px 8px;
+            font-size: 12px;
+            gap: 6px;
+        }
+        .rb-btn.sm .ico { font-size: 14px; }
+
+        .rb-sep { width: 1px; height: 36px; background: var(--border2); margin: 0 4px; }
+
+        /* View toggle group */
+        .view-group {
+            display: flex;
+            background: var(--surface2);
+            border-radius: var(--radius);
+            overflow: hidden;
+            border: 1px solid var(--border2);
+        }
+        .view-btn {
+            padding: 4px 8px;
+            background: transparent;
+            border: none;
+            color: var(--text2);
+            cursor: pointer;
+            font-size: 13px;
+            height: 26px;
+            display:flex; align-items:center; justify-content:center;
+            transition: background 0.1s;
+        }
+        .view-btn:hover { background: var(--hover); color: var(--text); }
+        .view-btn.active { background: var(--accent-bg); color: var(--accent); }
+
+        /* ── NAV BAR ── */
+        .navbar {
+            height: 36px;
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 0 10px;
+            flex-shrink: 0;
+        }
+        .nav-arrow {
+            width: 28px; height: 28px;
+            border-radius: var(--radius);
+            background: transparent; border: none;
+            color: var(--text2);
+            font-size: 14px;
+            cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            transition: background 0.1s;
+        }
+        .nav-arrow:hover { background: var(--hover); color: var(--text); }
+        .nav-arrow:disabled { opacity: 0.3; cursor: default; }
+        .nav-arrow:disabled:hover { background: transparent; }
+
+        .breadcrumb {
+            flex: 1;
+            height: 28px;
+            background: var(--surface2);
+            border: 1px solid var(--border2);
+            border-radius: var(--radius);
+            display: flex;
+            align-items: center;
+            padding: 0 10px;
+            gap: 4px;
+            font-size: 12px;
+            color: var(--text2);
+            cursor: text;
+            transition: border-color 0.15s;
+        }
+        .breadcrumb:hover { border-color: rgba(255,255,255,0.2); }
+        .breadcrumb .crumb { color: var(--text); }
+        .breadcrumb .sep { color: var(--text3); font-size: 10px; }
+        .breadcrumb .ico { font-size: 14px; }
+
+        .search-box {
+            width: 220px;
+            height: 28px;
+            background: var(--surface2);
+            border: 1px solid var(--border2);
+            border-radius: var(--radius);
+            display: flex;
+            align-items: center;
+            padding: 0 8px;
+            gap: 6px;
+            color: var(--text3);
+            font-size: 12px;
+            transition: border-color 0.15s, width 0.2s;
+        }
+        .search-box:focus-within { border-color: var(--accent); color: var(--text); width: 260px; }
+        .search-box input {
+            background: transparent; border: none; outline: none;
+            color: var(--text); font-size: 12px; width: 100%;
+            font-family: inherit;
+        }
+        .search-box input::placeholder { color: var(--text3); }
+
+        /* ── LAYOUT ── */
+        .main {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        /* ── SIDEBAR ── */
+        .sidebar {
+            width: 220px;
+            background: var(--surface);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+            overflow-x: hidden;
+            flex-shrink: 0;
+            padding: 4px 0;
+        }
+        .sidebar::-webkit-scrollbar { width: 4px; }
+        .sidebar::-webkit-scrollbar-track { background: transparent; }
+        .sidebar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 2px; }
+
+        .nav-section { margin-bottom: 2px; }
+        .nav-header {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text3);
+            padding: 8px 16px 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 5px 8px 5px 16px;
+            border-radius: var(--radius);
+            margin: 0 6px;
+            cursor: pointer;
+            font-size: 13px;
+            color: var(--text2);
+            transition: background 0.1s;
+            position: relative;
+        }
+        .nav-item:hover { background: var(--hover); color: var(--text); }
+        .nav-item.active {
+            background: var(--nav-active);
+            color: var(--accent);
+        }
+        .nav-item.active::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 4px; bottom: 4px;
+            width: 3px;
+            background: var(--accent);
+            border-radius: 0 2px 2px 0;
+        }
+        .nav-item .nav-ico { font-size: 16px; flex-shrink: 0; width: 20px; text-align: center; }
+        .nav-sep { height: 1px; background: var(--border); margin: 6px 16px; }
+
+        /* ── CONTENT ── */
+        .content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            background: var(--bg);
+        }
+
+        .content-scroll {
+            flex: 1;
+            overflow-y: auto;
+            padding: 12px 16px;
+        }
+        .content-scroll::-webkit-scrollbar { width: 6px; }
+        .content-scroll::-webkit-scrollbar-track { background: transparent; }
+        .content-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 3px; }
+        .content-scroll::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.25); }
+
+        /* Section header in content */
+        .section-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text3);
+            margin-bottom: 8px;
+            padding-bottom: 4px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        /* GRID VIEW */
+        .file-grid {
+            display: grid;
+            gap: 2px;
+        }
+        .file-grid.view-icons { grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); gap: 4px; }
+        .file-grid.view-large { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 8px; }
+        .file-grid.view-list { grid-template-columns: 1fr; gap: 0; }
+        .file-grid.view-details { grid-template-columns: 1fr; gap: 0; }
+        .file-grid.view-gallery { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 10px; }
+
+        /* FILE ITEM — Icons/Large */
+        .file-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            padding: 8px 6px 6px;
+            border-radius: var(--radius-lg);
+            cursor: pointer;
+            transition: background 0.1s;
+            position: relative;
+            text-align: center;
+        }
+        .file-item:hover { background: var(--hover); }
+        .file-item.selected { background: var(--accent-bg); outline: 1px solid var(--accent); }
+        .file-item .fi-icon { font-size: 36px; line-height: 1; margin-bottom: 6px; flex-shrink:0; }
+        .file-item .fi-name {
+            font-size: 12px;
+            color: var(--text2);
+            word-break: break-word;
+            max-width: 100%;
+            line-height: 1.3;
+            max-height: 2.6em;
+            overflow: hidden;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+        }
+        .file-item:hover .fi-name { color: var(--text); }
+        .file-item.selected .fi-name { color: var(--text); }
+
+        /* Large icons */
+        .view-large .file-item .fi-icon { font-size: 52px; margin-bottom: 8px; }
+
+        /* List view */
+        .view-list .file-item, .view-details .file-item {
+            flex-direction: row;
+            align-items: center;
+            padding: 3px 8px;
+            border-radius: var(--radius);
+            gap: 10px;
+            text-align: left;
+        }
+        .view-list .file-item .fi-icon,
+        .view-details .file-item .fi-icon { font-size: 18px; margin-bottom: 0; }
+        .view-list .file-item .fi-name,
+        .view-details .file-item .fi-name { font-size: 13px; max-height: unset; -webkit-line-clamp: 1; }
+
+        /* Details view extras */
+        .view-details .file-item .fi-meta {
+            display: flex;
+            gap: 16px;
+            margin-left: auto;
+            flex-shrink: 0;
+        }
+        .view-details .file-item .fi-date,
+        .view-details .file-item .fi-type,
+        .view-details .file-item .fi-size {
+            font-size: 12px;
+            color: var(--text3);
+            min-width: 80px;
+            text-align: right;
+        }
+
+        /* Details header */
+        .details-header {
+            display: none;
+        }
+        .view-details ~ .details-header,
+        .details-header.show {
+            display: flex;
+        }
+        .details-header {
+            display: flex;
+            align-items: center;
+            padding: 4px 8px;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 2px;
+            gap: 10px;
+        }
+        .dh-name { flex: 1; font-size: 12px; color: var(--text3); font-weight: 600; }
+        .dh-meta { display: flex; gap: 16px; }
+        .dh-col { font-size: 12px; color: var(--text3); font-weight: 600; min-width: 80px; text-align: right; }
+
+        /* Gallery thumbs */
+        .view-gallery .file-item {
+            background: var(--surface2);
+            padding: 6px;
+            border: 1px solid var(--border);
+        }
+        .view-gallery .file-item:hover { border-color: var(--border2); background: var(--surface3); }
+        .gallery-thumb {
+            width: 100%;
+            aspect-ratio: 4/3;
+            object-fit: cover;
+            border-radius: 4px;
+            margin-bottom: 6px;
+            background: var(--surface3);
+        }
+        .view-gallery .file-item .fi-icon { font-size: 40px; margin-bottom: 6px; }
+
+        /* Empty state */
+        .empty-state {
+            grid-column: 1 / -1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            padding: 60px 20px;
+            color: var(--text3);
+        }
+        .empty-state .es-icon { font-size: 48px; }
+        .empty-state .es-text { font-size: 14px; }
+        .empty-state .es-sub { font-size: 12px; color: var(--text3); }
+
+        /* ── STATUS BAR ── */
+        .statusbar {
+            height: 24px;
+            background: var(--surface);
+            border-top: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            padding: 0 12px;
+            gap: 16px;
+            flex-shrink: 0;
+        }
+        .statusbar span { font-size: 12px; color: var(--text3); }
+        .statusbar .view-icons-row { margin-left: auto; display: flex; gap: 2px; }
+
+        /* ── PICKER BAR ── */
         .picker-bar {
             display: none;
-            margin-top: auto;
-            padding: 14px 16px;
-            border: 1px solid rgba(255,255,255,0.08);
-            border-radius: 14px;
-            background: rgba(18, 18, 24, 0.92);
-            box-shadow: 0 16px 32px rgba(0,0,0,0.28);
+            padding: 10px 16px;
+            background: var(--surface);
+            border-top: 1px solid var(--border2);
             align-items: center;
             justify-content: space-between;
             gap: 12px;
-            position: sticky;
-            bottom: 0;
-            z-index: 5;
+            flex-shrink: 0;
         }
         .picker-bar.active { display: flex; }
+        .picker-copy { display: flex; flex-direction: column; gap: 3px; }
+        .picker-title { font-size: 13px; font-weight: 600; }
+        .picker-label { font-size: 12px; color: var(--text3); }
         .picker-actions { display: flex; gap: 8px; }
-        .picker-copy {
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
+        .picker-btn {
+            padding: 5px 16px;
+            border-radius: var(--radius);
+            border: 1px solid var(--border2);
+            background: var(--surface2);
+            color: var(--text);
+            font-size: 13px;
+            cursor: pointer;
+            transition: background 0.1s;
         }
-        .picker-title {
-            font-size: 14px;
+        .picker-btn:hover { background: var(--surface3); }
+        .picker-btn.primary {
+            background: var(--accent);
+            color: #000;
+            border-color: transparent;
             font-weight: 600;
-            color: #fff;
         }
-        .picker-label {
-            font-size: 12px;
-            color: rgba(255,255,255,0.66);
-        }
-        
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
-            gap: 15px;
-        }
-        .grid.gallery-mode {
-            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-        }
+        .picker-btn.primary:hover { filter: brightness(1.1); }
 
-        .file-item {
-            display: flex; flex-direction: column; align-items: center;
-            padding: 10px; border-radius: 6px; cursor: pointer;
-            transition: 0.2s;
-            position: relative;
+        /* ── CONTEXT MENU ── */
+        .ctx-menu {
+            position: fixed;
+            background: #2b2b2b;
+            border: 1px solid rgba(255,255,255,0.12);
+            border-radius: var(--radius-lg);
+            padding: 4px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.6);
+            z-index: 9999;
+            min-width: 180px;
+            display: none;
         }
-        .file-item:hover { background: var(--hover); }
-        .file-icon { font-size: 32px; margin-bottom: 5px; }
-        .file-name { font-size: 12px; text-align: center; word-break: break-all; max-width: 100%; }
+        .ctx-menu.show { display: block; }
+        .ctx-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 6px 12px;
+            border-radius: var(--radius);
+            cursor: pointer;
+            font-size: 13px;
+            color: var(--text2);
+            transition: background 0.1s;
+        }
+        .ctx-item:hover { background: var(--hover); color: var(--text); }
+        .ctx-item .ctx-ico { font-size: 14px; width: 18px; text-align: center; }
+        .ctx-sep { height: 1px; background: var(--border); margin: 4px 8px; }
 
-        /* Gallery Styles */
-        .gallery-thumb {
-            width: 100%; height: 100px; object-fit: cover; border-radius: 6px; margin-bottom: 8px;
-            background: #000;
-        }
-        .gallery-mode .file-item {
-            background: rgba(255,255,255,0.03);
-            padding: 8px;
-        }
-        .gallery-mode .file-icon { font-size: 48px; }
+        /* Upload input hidden */
+        #upload-input { display: none; }
 
-        /* Cloud Badge */
-        .cloud-badge { position:absolute; top:5px; right:5px; font-size:10px; background:#0A84FF; padding:2px 4px; border-radius:4px; }
+        /* Scrollbars global */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
     </style>
 </head>
 <body>
-    <div class="toolbar">
-        <button class="btn btn-primary" onclick="document.getElementById('upload-input').click()">
-            <span>⬆️</span> Upload
-        </button>
-        <button class="btn" onclick="createFile()">
-            <span>📄</span> Nouveau fichier
-        </button>
-        <button class="btn" onclick="createFolder()">
-            <span>📁</span> Nouveau dossier
-        </button>
-        <div style="flex:1"></div>
-        <button class="btn" onclick="toggleView()" id="view-btn">🖼️ Galerie</button>
-        <input type="file" id="upload-input" style="display:none" multiple onchange="handleUpload(this)">
-    </div>
 
-    <div class="main-layout">
-        <div class="sidebar">
-            <div class="nav-header">Accès Rapide</div>
-            <div class="nav-item active" onclick="navigate('/Bureau')"><span>🖥️</span> Bureau</div>
-            <div class="nav-item" onclick="navigate('/Documents')"><span>📄</span> Documents</div>
-            <div class="nav-item" onclick="navigate('/Downloads')"><span>⬇️</span> Téléchargements</div>
-            <div class="nav-item" onclick="navigate('/Images')"><span>🖼️</span> Images</div>
-            
-            <div class="nav-sep"></div>
+<!-- TITLE BAR -->
+<div class="titlebar">
+    <span class="titlebar-icon">📁</span>
+    <span class="titlebar-title" id="titlebar-title">Explorateur de fichiers</span>
+    <div style="flex:1"></div>
+</div>
+
+<!-- RIBBON -->
+<div class="ribbon">
+    <div class="ribbon-tabs">
+        <div class="ribbon-tab active" onclick="switchRibbon('home')">Accueil</div>
+        <div class="ribbon-tab" onclick="switchRibbon('view')">Affichage</div>
+    </div>
+    <div class="ribbon-bar" id="ribbon-home">
+        <div class="ribbon-group">
+            <button class="rb-btn" onclick="document.getElementById('upload-input').click()">
+                <span class="ico">⬆️</span>
+                <span>Upload</span>
+            </button>
+            <button class="rb-btn" onclick="createFile()">
+                <span class="ico">📄</span>
+                <span>Nouveau fichier</span>
+            </button>
+            <button class="rb-btn" onclick="createFolder()">
+                <span class="ico">📁</span>
+                <span>Nouveau dossier</span>
+            </button>
+        </div>
+        <div class="ribbon-group">
+            <button class="rb-btn sm" onclick="cutItem()" title="Couper">
+                <span class="ico">✂️</span>
+                <span>Couper</span>
+            </button>
+            <button class="rb-btn sm" onclick="copyItem()" title="Copier">
+                <span class="ico">📋</span>
+                <span>Copier</span>
+            </button>
+            <button class="rb-btn sm" onclick="pasteItem()" title="Coller">
+                <span class="ico">📌</span>
+                <span>Coller</span>
+            </button>
+            <button class="rb-btn sm" onclick="renameSelected()" title="Renommer">
+                <span class="ico">✏️</span>
+                <span>Renommer</span>
+            </button>
+            <button class="rb-btn sm" onclick="deleteSelected()" title="Supprimer">
+                <span class="ico">🗑️</span>
+                <span>Supprimer</span>
+            </button>
+        </div>
+        <div class="ribbon-group" style="margin-left:auto">
+            <div class="view-group">
+                <button class="view-btn active" id="vb-icons" onclick="setView('icons')" title="Icônes moyennes">⊞</button>
+                <button class="view-btn" id="vb-large" onclick="setView('large')" title="Grandes icônes">⊟</button>
+                <button class="view-btn" id="vb-list" onclick="setView('list')" title="Liste">☰</button>
+                <button class="view-btn" id="vb-details" onclick="setView('details')" title="Détails">≡</button>
+                <button class="view-btn" id="vb-gallery" onclick="setView('gallery')" title="Galerie">▦</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- NAV BAR -->
+<div class="navbar">
+    <button class="nav-arrow" id="btn-back" onclick="goBack()" disabled title="Précédent">‹</button>
+    <button class="nav-arrow" id="btn-fwd" onclick="goForward()" disabled title="Suivant">›</button>
+    <button class="nav-arrow" onclick="goUp()" title="Dossier parent">↑</button>
+    <button class="nav-arrow" onclick="render()" title="Actualiser">⟳</button>
+    <div class="breadcrumb" id="breadcrumb-bar">
+        <span class="ico">📁</span>
+        <span class="crumb" id="bc-path">Bureau</span>
+    </div>
+    <div class="search-box">
+        <span>🔍</span>
+        <input type="text" placeholder="Rechercher..." id="search-input" oninput="applySearch()">
+    </div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+        <div class="nav-section">
+            <div class="nav-header">Accès rapide</div>
+            <div class="nav-item active" onclick="navigate('/Bureau')" id="nav-Bureau">
+                <span class="nav-ico">🖥️</span> Bureau
+            </div>
+            <div class="nav-item" onclick="navigate('/Documents')" id="nav-Documents">
+                <span class="nav-ico">📄</span> Documents
+            </div>
+            <div class="nav-item" onclick="navigate('/Downloads')" id="nav-Downloads">
+                <span class="nav-ico">⬇️</span> Téléchargements
+            </div>
+            <div class="nav-item" onclick="navigate('/Images')" id="nav-Images">
+                <span class="nav-ico">🖼️</span> Images
+            </div>
+        </div>
+
+        <div class="nav-sep"></div>
+
+        <div class="nav-section">
             <div class="nav-header">Cloud</div>
-            <div class="nav-item" onclick="openCloud('onedrive')"><span>☁️</span> OneDrive</div>
-            <div class="nav-item" onclick="openCloud('gdrive')"><span>🔺</span> Google Drive</div>
-            
-            <div class="nav-sep"></div>
-            <div class="nav-header">Système</div>
-            <div class="nav-item" onclick="navigate('/')"><span>💿</span> Ce PC</div>
+            <div class="nav-item" onclick="openCloud('onedrive')">
+                <span class="nav-ico">☁️</span> OneDrive
+            </div>
+            <div class="nav-item" onclick="openCloud('gdrive')">
+                <span class="nav-ico">🔺</span> Google Drive
+            </div>
         </div>
 
-        <div class="content-area">
-            <div class="path-bar"><span id="current-path">Bureau</span></div>
-            <div class="grid" id="file-grid">
-                <!-- Files go here -->
-            </div>
-            <div class="picker-bar" id="picker-bar">
-                <div class="picker-copy">
-                    <span class="picker-title">Sélectionner ce dossier</span>
-                    <span class="picker-label" id="picker-label">Choisissez un dossier puis cliquez sur Ouvrir</span>
-                </div>
-                <div class="picker-actions">
-                    <button class="btn" onclick="cancelPicker()">Annuler</button>
-                    <button class="btn btn-primary" onclick="confirmPicker()">Ouvrir</button>
-                </div>
+        <div class="nav-sep"></div>
+
+        <div class="nav-section">
+            <div class="nav-header">Ce PC</div>
+            <div class="nav-item" onclick="navigate('/')" id="nav-root">
+                <span class="nav-ico">💿</span> Disque local (C:)
             </div>
         </div>
     </div>
 
-    <script>
-        const wm = window.parent.windowManager;
-        let currentPath = '/Bureau';
-        let viewMode = 'grid'; // 'grid' or 'gallery'
-        let pickerState = null;
-        let cloudState = { service: null, folderId: 'root', breadcrumb: [] };
+    <!-- CONTENT -->
+    <div class="content">
+        <div class="content-scroll" id="content-scroll">
+            <!-- Details header (hidden by default) -->
+            <div class="details-header" id="details-header">
+                <span style="width:28px"></span>
+                <span class="dh-name">Nom</span>
+                <div class="dh-meta">
+                    <span class="dh-col" style="min-width:120px">Date de modification</span>
+                    <span class="dh-col">Type</span>
+                    <span class="dh-col">Taille</span>
+                </div>
+            </div>
 
-        function toggleView() {
-            viewMode = viewMode === 'grid' ? 'gallery' : 'grid';
-            document.getElementById('view-btn').textContent = viewMode === 'grid' ? '🖼️ Galerie' : '📄 Liste';
-            render();
+            <div class="file-grid view-icons" id="file-grid"></div>
+        </div>
+
+        <!-- PICKER BAR -->
+        <div class="picker-bar" id="picker-bar">
+            <div class="picker-copy">
+                <span class="picker-title">Sélectionner ce dossier</span>
+                <span class="picker-label" id="picker-label">Choisissez un dossier puis cliquez sur Ouvrir</span>
+            </div>
+            <div class="picker-actions">
+                <button class="picker-btn" onclick="cancelPicker()">Annuler</button>
+                <button class="picker-btn primary" onclick="confirmPicker()">Ouvrir</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- STATUS BAR -->
+<div class="statusbar">
+    <span id="status-count">0 éléments</span>
+    <span id="status-selected" style="display:none"></span>
+</div>
+
+<!-- CONTEXT MENU -->
+<div class="ctx-menu" id="ctx-menu">
+    <div class="ctx-item" onclick="ctxOpen()"><span class="ctx-ico">📂</span> Ouvrir</div>
+    <div class="ctx-item" onclick="renameSelected()"><span class="ctx-ico">✏️</span> Renommer</div>
+    <div class="ctx-sep"></div>
+    <div class="ctx-item" onclick="cutItem()"><span class="ctx-ico">✂️</span> Couper</div>
+    <div class="ctx-item" onclick="copyItem()"><span class="ctx-ico">📋</span> Copier</div>
+    <div class="ctx-item" onclick="pasteItem()"><span class="ctx-ico">📌</span> Coller</div>
+    <div class="ctx-sep"></div>
+    <div class="ctx-item" onclick="deleteSelected()"><span class="ctx-ico">🗑️</span> Supprimer</div>
+</div>
+
+<input type="file" id="upload-input" multiple onchange="handleUpload(this)">
+
+<script>
+    const wm = window.parent.windowManager;
+    let currentPath = '/Bureau';
+    let viewMode = 'icons';
+    let pickerState = null;
+    let cloudState = { service: null, folderId: 'root', breadcrumb: [] };
+    let history = ['/Bureau'];
+    let histIdx = 0;
+    let selectedPath = null;
+    let clipboard = null; // { path, op: 'cut'|'copy' }
+    let searchQuery = '';
+
+    /* ── VIEW MODE ── */
+    function setView(mode) {
+        viewMode = mode;
+        document.querySelectorAll('.view-btn').forEach(b => b.classList.remove('active'));
+        const btn = document.getElementById('vb-' + mode);
+        if (btn) btn.classList.add('active');
+        render();
+    }
+
+    /* ── RIBBON TABS ── */
+    function switchRibbon(tab) {
+        document.querySelectorAll('.ribbon-tab').forEach((t,i) => t.classList.toggle('active', i === (tab==='home'?0:1)));
+    }
+
+    /* ── NAVIGATE ── */
+    function navigate(path, addHistory = true) {
+        cloudState = { service: null, folderId: 'root', breadcrumb: [] };
+        currentPath = path;
+        searchQuery = '';
+        document.getElementById('search-input').value = '';
+
+        if (addHistory) {
+            history = history.slice(0, histIdx + 1);
+            history.push(path);
+            histIdx = history.length - 1;
+        }
+        updateNavBtns();
+        updateBreadcrumb();
+        updateSidebar();
+        render();
+    }
+
+    function goBack() {
+        if (histIdx > 0) { histIdx--; navigate(history[histIdx], false); }
+    }
+    function goForward() {
+        if (histIdx < history.length - 1) { histIdx++; navigate(history[histIdx], false); }
+    }
+    function goUp() {
+        if (currentPath === '/') return;
+        const parent = currentPath.substring(0, currentPath.lastIndexOf('/')) || '/';
+        navigate(parent);
+    }
+
+    function updateNavBtns() {
+        document.getElementById('btn-back').disabled = histIdx <= 0;
+        document.getElementById('btn-fwd').disabled = histIdx >= history.length - 1;
+    }
+
+    function updateBreadcrumb() {
+        const parts = currentPath === '/' ? ['Ce PC'] : currentPath.split('/').filter(Boolean);
+        const el = document.getElementById('bc-path');
+        el.textContent = parts.join(' › ');
+        document.getElementById('titlebar-title').textContent = parts[parts.length - 1] || 'Explorateur';
+    }
+
+    function updateSidebar() {
+        document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+        const key = currentPath === '/' ? 'root' : currentPath.split('/').pop();
+        const el = document.getElementById('nav-' + key);
+        if (el) el.classList.add('active');
+    }
+
+    /* ── RENDER ── */
+    function render() {
+        if (cloudState.service === 'googledrive') {
+            renderGoogleDriveFolder(cloudState.folderId);
+            return;
         }
 
-        function navigate(path) {
-            cloudState = { service: null, folderId: 'root', breadcrumb: [] };
-            currentPath = path;
-            document.getElementById('current-path').textContent = path === '/' ? 'Ce PC' : path.split('/').pop();
-            
-            // Update sidebar active state
-            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-            // Simple heuristic for active state
-            const items = document.querySelectorAll('.nav-item');
-            for(let item of items) {
-                if(item.textContent.includes(path.split('/').pop())) item.classList.add('active');
+        const grid = document.getElementById('file-grid');
+        const header = document.getElementById('details-header');
+        grid.className = 'file-grid view-' + viewMode;
+        header.style.display = viewMode === 'details' ? 'flex' : 'none';
+        grid.innerHTML = '';
+
+        const vfs = wm ? wm.vfs : {};
+        let files = Object.keys(vfs).filter(key => {
+            if (key === currentPath) return false;
+            const parent = key.substring(0, key.lastIndexOf('/')) || '/';
+            if (currentPath === '/' && parent === '') return true;
+            return parent === currentPath;
+        });
+
+        // Search filter
+        if (searchQuery) {
+            files = files.filter(f => f.split('/').pop().toLowerCase().includes(searchQuery.toLowerCase()));
+        }
+
+        // Sort: folders first, then alphabetical
+        files.sort((a, b) => {
+            const af = vfs[a]?.type === 'folder';
+            const bf = vfs[b]?.type === 'folder';
+            if (af && !bf) return -1;
+            if (!af && bf) return 1;
+            return a.localeCompare(b, 'fr');
+        });
+
+        updateStatus(files.length);
+
+        if (!files.length) {
+            grid.innerHTML = `<div class="empty-state">
+                <div class="es-icon">${searchQuery ? '🔍' : '📂'}</div>
+                <div class="es-text">${searchQuery ? 'Aucun résultat' : 'Ce dossier est vide'}</div>
+                <div class="es-sub">${searchQuery ? 'Essayez un autre terme de recherche' : 'Faites glisser des fichiers ici ou utilisez le bouton Upload'}</div>
+            </div>`;
+            return;
+        }
+
+        files.forEach(path => {
+            const item = vfs[path];
+            const name = path.split('/').pop();
+            const isFolder = item?.type === 'folder';
+            const icon = isFolder ? '📁' : (wm ? wm.getFileIcon(name) : '📄');
+            const isImage = /\.(png|jpg|jpeg|gif|webp)$/i.test(name);
+            const isSelected = selectedPath === path;
+
+            const el = document.createElement('div');
+            el.className = 'file-item' + (isSelected ? ' selected' : '');
+
+            // Thumbnail for gallery
+            if (viewMode === 'gallery' && isImage && item?.content?.startsWith?.('data:')) {
+                el.innerHTML = `<img src="${item.content}" class="gallery-thumb"><div class="fi-name">${name}</div>`;
+            } else if (viewMode === 'details') {
+                el.innerHTML = `
+                    <div class="fi-icon">${icon}</div>
+                    <div class="fi-name">${name}</div>
+                    <div class="fi-meta">
+                        <span class="fi-date">${formatDate()}</span>
+                        <span class="fi-type">${isFolder ? 'Dossier' : getExt(name)}</span>
+                        <span class="fi-size">${isFolder ? '' : '—'}</span>
+                    </div>`;
+            } else {
+                el.innerHTML = `<div class="fi-icon">${icon}</div><div class="fi-name">${name}</div>`;
             }
 
-            render();
-        }
+            el.onclick = (e) => handleItemClick(e, path, isFolder, el);
+            el.ondblclick = () => handleItemDblClick(path, isFolder);
+            el.oncontextmenu = (e) => handleContextMenu(e, path);
+            grid.appendChild(el);
+        });
+    }
 
-        function updatePickerUI() {
-            const bar = document.getElementById('picker-bar');
-            const label = document.getElementById('picker-label');
-            if (!pickerState) {
-                bar.classList.remove('active');
+    function formatDate() {
+        const d = new Date();
+        return d.toLocaleDateString('fr-FR') + ' ' + d.toLocaleTimeString('fr-FR', {hour:'2-digit',minute:'2-digit'});
+    }
+    function getExt(name) {
+        const ext = name.split('.').pop().toUpperCase();
+        return name.includes('.') ? `Fichier ${ext}` : 'Fichier';
+    }
+
+    function handleItemClick(e, path, isFolder, el) {
+        if (pickerState) {
+            if (isFolder) navigate(path);
+            else if (pickerState.mode === 'file') {
+                selectedPath = path;
+                document.querySelectorAll('.file-item').forEach(i => i.classList.remove('selected'));
+                el.classList.add('selected');
+                pickerState.selectedPath = path;
+            }
+            return;
+        }
+        selectedPath = path;
+        document.querySelectorAll('.file-item').forEach(i => i.classList.remove('selected'));
+        el.classList.add('selected');
+        updateStatusSelected(path.split('/').pop());
+    }
+
+    function handleItemDblClick(path, isFolder) {
+        if (pickerState) return;
+        if (isFolder) navigate(path);
+        else if (wm) wm.openFile(path);
+    }
+
+    /* ── CONTEXT MENU ── */
+    function handleContextMenu(e, path) {
+        e.preventDefault();
+        e.stopPropagation();
+        selectedPath = path;
+        document.querySelectorAll('.file-item').forEach(i => {
+            const name = i.querySelector('.fi-name')?.textContent;
+            if (name === path.split('/').pop()) i.classList.add('selected');
+            else i.classList.remove('selected');
+        });
+        const menu = document.getElementById('ctx-menu');
+        menu.style.left = e.clientX + 'px';
+        menu.style.top = e.clientY + 'px';
+        menu.classList.add('show');
+    }
+
+    document.addEventListener('click', () => document.getElementById('ctx-menu').classList.remove('show'));
+    document.addEventListener('contextmenu', (e) => {
+        if (!e.target.closest('.file-item')) {
+            e.preventDefault();
+            document.getElementById('ctx-menu').classList.remove('show');
+        }
+    });
+
+    function ctxOpen() {
+        if (!selectedPath) return;
+        const vfs = wm?.vfs || {};
+        const item = vfs[selectedPath];
+        if (item?.type === 'folder') navigate(selectedPath);
+        else if (wm) wm.openFile(selectedPath);
+    }
+
+    /* ── CLIPBOARD OPS ── */
+    function cutItem() {
+        if (selectedPath) { clipboard = { path: selectedPath, op: 'cut' }; }
+    }
+    function copyItem() {
+        if (selectedPath) { clipboard = { path: selectedPath, op: 'copy' }; }
+    }
+    function pasteItem() {
+        if (!clipboard || !wm) return;
+        const vfs = wm.vfs;
+        const name = clipboard.path.split('/').pop();
+        const dest = (currentPath === '/' ? '' : currentPath) + '/' + name;
+        const item = vfs[clipboard.path];
+        if (item) {
+            wm.vfs_write(dest, item.content || {}, item.type || 'file');
+            if (clipboard.op === 'cut') {
+                try { wm.vfs_delete && wm.vfs_delete(clipboard.path); } catch(e) {}
+            }
+        }
+        clipboard = null;
+        render();
+    }
+
+    function renameSelected() {
+        if (!selectedPath || !wm) return;
+        const old = selectedPath.split('/').pop();
+        const name = prompt('Renommer :', old);
+        if (!name || name === old) return;
+        const parent = selectedPath.substring(0, selectedPath.lastIndexOf('/'));
+        const newPath = parent + '/' + name;
+        const item = wm.vfs[selectedPath];
+        if (item) {
+            wm.vfs_write(newPath, item.content || {}, item.type || 'file');
+            try { wm.vfs_delete && wm.vfs_delete(selectedPath); } catch(e) {}
+        }
+        selectedPath = null;
+        render();
+    }
+
+    function deleteSelected() {
+        if (!selectedPath || !wm) return;
+        const name = selectedPath.split('/').pop();
+        if (!confirm(`Supprimer "${name}" ?`)) return;
+        try { wm.vfs_delete && wm.vfs_delete(selectedPath); } catch(e) {}
+        selectedPath = null;
+        render();
+    }
+
+    /* ── STATUS ── */
+    function updateStatus(count) {
+        document.getElementById('status-count').textContent = `${count} élément${count !== 1 ? 's' : ''}`;
+        document.getElementById('status-selected').style.display = 'none';
+    }
+    function updateStatusSelected(name) {
+        const el = document.getElementById('status-selected');
+        el.textContent = `"${name}" sélectionné`;
+        el.style.display = '';
+    }
+
+    /* ── SEARCH ── */
+    function applySearch() {
+        searchQuery = document.getElementById('search-input').value;
+        render();
+    }
+
+    /* ── PICKER ── */
+    function updatePickerUI() {
+        const bar = document.getElementById('picker-bar');
+        const label = document.getElementById('picker-label');
+        if (!pickerState) { bar.classList.remove('active'); return; }
+        bar.classList.add('active');
+        label.textContent = pickerState.mode === 'file'
+            ? 'Choisissez un fichier puis cliquez sur Ouvrir'
+            : 'Choisissez un dossier puis cliquez sur Ouvrir';
+    }
+
+    function confirmPicker() {
+        if (!pickerState) return;
+        const chosenPath = pickerState.mode === 'file' ? pickerState.selectedPath : currentPath;
+        if (!chosenPath) return;
+        window.parent.postMessage({ type: 'OS_RESOLVE_PATH_PICKER', requestId: pickerState.requestId, path: chosenPath }, '*');
+        pickerState = null;
+        updatePickerUI();
+        render();
+    }
+    function cancelPicker() {
+        pickerState = null;
+        updatePickerUI();
+        render();
+    }
+
+    /* ── UPLOAD ── */
+    async function handleUpload(input) {
+        if (!input.files || !input.files.length) return;
+        try {
+            if (cloudState.service === 'googledrive') {
+                for (const file of Array.from(input.files)) {
+                    await uploadGoogleDriveFile(file, cloudState.folderId || 'root');
+                }
+                await renderGoogleDriveFolder(cloudState.folderId || 'root');
                 return;
             }
-            bar.classList.add('active');
-            label.textContent = pickerState.mode === 'file'
-                ? 'Choisissez un fichier puis cliquez sur Ouvrir'
-                : 'Choisissez un dossier puis cliquez sur Ouvrir';
-        }
-
-        function render() {
-            const grid = document.getElementById('file-grid');
-            grid.innerHTML = '';
-            grid.className = 'grid ' + (viewMode === 'gallery' ? 'gallery-mode' : '');
-            
-            const vfs = wm.vfs;
-            // Filter files in current path
-            // VFS structure is flat keys: "/Bureau/file.txt"
-            // We need to find direct children
-            
-            const files = Object.keys(vfs).filter(key => {
-                if (key === currentPath) return false; // Don't show self
-                const parent = key.substring(0, key.lastIndexOf('/')) || '/';
-                // Handle root special case
-                if (currentPath === '/' && parent === '') return true; 
-                return parent === currentPath;
+            Array.from(input.files).forEach(file => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const path = (currentPath === '/' ? '' : currentPath) + '/' + file.name;
+                    wm.vfs_write(path, e.target.result, 'binary');
+                    render();
+                };
+                reader.readAsDataURL(file);
             });
+        } catch (error) {
+            alert(`Upload impossible : ${error.message}`);
+        } finally {
+            input.value = '';
+        }
+    }
 
-            if (files.length === 0) {
-                grid.innerHTML = '<div style="opacity:0.5; grid-column:1/-1; text-align:center; margin-top:50px;">Dossier vide</div>';
+    /* ── CREATE ── */
+    async function createFolder() {
+        const name = prompt('Nom du dossier :');
+        if (!name) return;
+        try {
+            if (cloudState.service === 'googledrive') {
+                await createGoogleDriveFolder(name, cloudState.folderId || 'root');
+                await renderGoogleDriveFolder(cloudState.folderId || 'root');
+                return;
+            }
+            const path = (currentPath === '/' ? '' : currentPath) + '/' + name;
+            wm.vfs_write(path, {}, 'folder');
+            render();
+        } catch (error) { alert(`Erreur : ${error.message}`); }
+    }
+
+    async function createFile() {
+        const name = prompt('Nom du fichier :', 'Nouveau fichier.txt');
+        if (!name) return;
+        try {
+            if (cloudState.service === 'googledrive') {
+                await createGoogleDriveFile(name, cloudState.folderId || 'root');
+                await renderGoogleDriveFolder(cloudState.folderId || 'root');
+                return;
+            }
+            const path = (currentPath === '/' ? '' : currentPath) + '/' + name;
+            wm.vfs_write(path, '', 'file');
+            render();
+        } catch (error) { alert(`Erreur : ${error.message}`); }
+    }
+
+    /* ── GOOGLE DRIVE ── */
+    function loadLinkedAccounts() {
+        try { return JSON.parse(localStorage.getItem('aether_settings') || '{}').accounts || {}; }
+        catch(e) { return {}; }
+    }
+
+    async function parseGoogleError(response) {
+        try {
+            const data = await response.json();
+            if (data?.error) {
+                if (typeof data.error === 'string') return data.error;
+                if (data.error.message) return data.error.message;
+                if (Array.isArray(data.error.errors) && data.error.errors.length)
+                    return data.error.errors.map(e => e.message || e.reason).filter(Boolean).join(' | ');
+            }
+        } catch(e) {}
+        return `HTTP ${response.status}`;
+    }
+
+    function getGoogleDriveSession() {
+        const accounts = loadLinkedAccounts();
+        const drive = accounts.googledrive || {};
+        if (!drive.connected || !drive.accessToken) throw new Error("Google Drive n'est pas lié dans Paramètres.");
+        if (drive.expiresAt && Date.now() >= drive.expiresAt) throw new Error("Session Google Drive expirée.");
+        return drive;
+    }
+
+    async function renderGoogleDriveFolder(folderId = 'root') {
+        const grid = document.getElementById('file-grid');
+        const header = document.getElementById('details-header');
+        grid.className = 'file-grid view-' + viewMode;
+        header.style.display = 'none';
+        const accounts = loadLinkedAccounts();
+        const drive = accounts.googledrive || {};
+
+        if (!drive.connected || !drive.accessToken) {
+            grid.innerHTML = `<div class="empty-state"><div class="es-icon">☁️</div><div class="es-text">Google Drive non connecté</div><div class="es-sub">Liez votre compte dans Paramètres</div></div>`;
+            return;
+        }
+        if (drive.expiresAt && Date.now() >= drive.expiresAt) {
+            grid.innerHTML = `<div class="empty-state"><div class="es-icon">⚠️</div><div class="es-text">Session expirée</div><div class="es-sub">Renouvelez dans Paramètres</div></div>`;
+            return;
+        }
+
+        const bcParts = ['Google Drive', ...cloudState.breadcrumb.map(i => i.name)];
+        document.getElementById('bc-path').textContent = bcParts.join(' › ');
+        document.getElementById('titlebar-title').textContent = bcParts[bcParts.length-1];
+        grid.innerHTML = `<div class="empty-state"><div class="es-icon">⏳</div><div class="es-text">Chargement…</div></div>`;
+
+        try {
+            const q = encodeURIComponent(`'${folderId}' in parents and trashed = false`);
+            const fields = encodeURIComponent('files(id,name,mimeType,modifiedTime,size,iconLink,thumbnailLink,webViewLink,webContentLink),nextPageToken');
+            const response = await fetch(`https://www.googleapis.com/drive/v3/files?q=${q}&pageSize=100&fields=${fields}&orderBy=folder,name_natural`, {
+                headers: { Authorization: `Bearer ${drive.accessToken}` }
+            });
+            if (!response.ok) throw new Error(await parseGoogleError(response));
+            const data = await response.json();
+            const files = Array.isArray(data.files) ? data.files : [];
+            grid.innerHTML = '';
+
+            if (cloudState.breadcrumb.length > 0) {
+                const back = document.createElement('div');
+                back.className = 'file-item';
+                back.innerHTML = `<div class="fi-icon">↩️</div><div class="fi-name">Retour</div>`;
+                back.onclick = () => {
+                    cloudState.breadcrumb.pop();
+                    const prev = cloudState.breadcrumb.length ? cloudState.breadcrumb[cloudState.breadcrumb.length-1].id : 'root';
+                    cloudState.folderId = prev;
+                    renderGoogleDriveFolder(prev);
+                };
+                grid.appendChild(back);
+            }
+
+            if (!files.length) {
+                grid.innerHTML += `<div class="empty-state"><div class="es-icon">📂</div><div class="es-text">Dossier Drive vide</div></div>`;
                 return;
             }
 
-            files.forEach(path => {
-                const item = vfs[path];
-                const name = path.split('/').pop();
-                const isFolder = item.type === 'folder';
-                const icon = isFolder ? '📁' : wm.getFileIcon(name);
-                const isImage = /\.(png|jpg|jpeg|gif|webp)$/i.test(name);
-                
+            files.forEach(file => {
+                const isFolder = file.mimeType === 'application/vnd.google-apps.folder';
                 const el = document.createElement('div');
                 el.className = 'file-item';
-                
-                if (viewMode === 'gallery' && isImage && item.content && item.content.startsWith('data:')) {
-                    el.innerHTML = `<img src="${item.content}" class="gallery-thumb"><div class="file-name">${name}</div>`;
+                const thumb = file.thumbnailLink || file.iconLink;
+                if (thumb && (viewMode === 'gallery' || viewMode === 'large')) {
+                    el.innerHTML = `<img src="${thumb}" class="gallery-thumb"><div class="fi-name">${file.name}</div>`;
                 } else {
-                    el.innerHTML = `<div class="file-icon">${icon}</div><div class="file-name">${name}</div>`;
+                    el.innerHTML = `<div class="fi-icon">${isFolder ? '📁' : '📄'}</div><div class="fi-name">${file.name}</div>`;
                 }
-
                 el.onclick = () => {
-                    if (pickerState) {
-                        if (isFolder) {
-                            navigate(path);
-                        } else if (pickerState.mode === 'file') {
-                            pickerState.selectedPath = path;
-                            render();
+                    if (isFolder) {
+                        cloudState.folderId = file.id;
+                        cloudState.breadcrumb.push({ id: file.id, name: file.name });
+                        renderGoogleDriveFolder(file.id);
+                    } else {
+                        const url = file.webViewLink || file.webContentLink;
+                        if (url && wm) {
+                            wm.createWindow('browser', file.name, true);
+                            setTimeout(() => wm.windows.get('browser').iframe.contentWindow.postMessage({ type: 'open_url', url }, '*'), 700);
                         }
-                        return;
                     }
-                    if (isFolder) navigate(path);
-                    else wm.openFile(path);
                 };
-                if (pickerState) {
-                    const selected = pickerState.mode === 'file'
-                        ? pickerState.selectedPath === path
-                        : currentPath === path && isFolder;
-                    if (selected) el.style.outline = '2px solid #4facfe';
-                }
                 grid.appendChild(el);
             });
+            updateStatus(files.length);
+        } catch (error) {
+            grid.innerHTML = `<div class="empty-state"><div class="es-icon">❌</div><div class="es-text">Erreur Google Drive</div><div class="es-sub">${error.message}</div></div>`;
         }
+    }
 
-        async function renderGoogleDriveFolder(folderId = 'root') {
-            const grid = document.getElementById('file-grid');
-            const accounts = loadLinkedAccounts();
-            const drive = accounts.googledrive || {};
-            if (!drive.connected || !drive.accessToken) {
-                grid.innerHTML = "<div style=\"opacity:0.7; grid-column:1/-1; text-align:center; margin-top:50px;\">Google Drive n'est pas lié dans Paramètres.</div>";
-                return;
-            }
-            if (drive.expiresAt && Date.now() >= drive.expiresAt) {
-                grid.innerHTML = '<div style="opacity:0.7; grid-column:1/-1; text-align:center; margin-top:50px;">La session Google Drive a expiré. Renouvelez-la dans Paramètres.</div>';
-                return;
-            }
+    async function createGoogleDriveFolder(name, parentId) {
+        const drive = getGoogleDriveSession();
+        const response = await fetch('https://www.googleapis.com/drive/v3/files', {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${drive.accessToken}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name, mimeType: 'application/vnd.google-apps.folder', parents: [parentId] })
+        });
+        if (!response.ok) throw new Error(await parseGoogleError(response));
+        return response.json();
+    }
 
-            document.getElementById('current-path').textContent = cloudState.breadcrumb.length
-                ? `Google Drive / ${cloudState.breadcrumb.map(item => item.name).join(' / ')}`
-                : 'Google Drive';
+    async function createGoogleDriveFile(name, parentId) {
+        const drive = getGoogleDriveSession();
+        const form = new FormData();
+        form.append('metadata', new Blob([JSON.stringify({ name, parents: [parentId] })], { type: 'application/json' }));
+        form.append('file', new Blob([''], { type: 'text/plain' }), name);
+        const response = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,name', {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${drive.accessToken}` },
+            body: form
+        });
+        if (!response.ok) throw new Error(await parseGoogleError(response));
+        return response.json();
+    }
 
-            grid.innerHTML = '<div style="opacity:0.7; grid-column:1/-1; text-align:center; margin-top:50px;">Chargement Google Drive…</div>';
-            try {
-                const q = encodeURIComponent(`'${folderId}' in parents and trashed = false`);
-                const fields = encodeURIComponent('files(id,name,mimeType,modifiedTime,size,iconLink,thumbnailLink,webViewLink,webContentLink),nextPageToken');
-                const response = await fetch(`https://www.googleapis.com/drive/v3/files?q=${q}&pageSize=100&fields=${fields}&orderBy=folder,name_natural`, {
-                    headers: { Authorization: `Bearer ${drive.accessToken}` }
-                });
-                if (!response.ok) throw new Error(await parseGoogleError(response));
-                const data = await response.json();
-                const files = Array.isArray(data.files) ? data.files : [];
-                grid.innerHTML = '';
+    async function uploadGoogleDriveFile(file, parentId) {
+        const drive = getGoogleDriveSession();
+        const form = new FormData();
+        form.append('metadata', new Blob([JSON.stringify({ name: file.name, parents: [parentId] })], { type: 'application/json' }));
+        form.append('file', file, file.name);
+        const response = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,name', {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${drive.accessToken}` },
+            body: form
+        });
+        if (!response.ok) throw new Error(await parseGoogleError(response));
+        return response.json();
+    }
 
-                if (cloudState.breadcrumb.length > 0) {
-                    const back = document.createElement('div');
-                    back.className = 'file-item';
-                    back.innerHTML = `<div class="file-icon">↩️</div><div class="file-name">Retour</div>`;
-                    back.onclick = () => {
-                        cloudState.breadcrumb.pop();
-                        const prev = cloudState.breadcrumb.length ? cloudState.breadcrumb[cloudState.breadcrumb.length - 1].id : 'root';
-                        cloudState.folderId = prev;
-                        renderGoogleDriveFolder(prev);
-                    };
-                    grid.appendChild(back);
-                }
-
-                if (!files.length) {
-                    grid.innerHTML += '<div style="opacity:0.5; grid-column:1/-1; text-align:center; margin-top:50px;">Dossier Drive vide</div>';
-                    return;
-                }
-
-                files.forEach(file => {
-                    const isFolder = file.mimeType === 'application/vnd.google-apps.folder';
-                    const el = document.createElement('div');
-                    el.className = 'file-item';
-                    const thumb = file.thumbnailLink || file.iconLink;
-                    if (thumb) {
-                        el.innerHTML = `<img src="${thumb}" class="gallery-thumb"><div class="file-name">${file.name}</div>`;
-                    } else {
-                        el.innerHTML = `<div class="file-icon">${isFolder ? '📁' : '📄'}</div><div class="file-name">${file.name}</div>`;
-                    }
-                    el.onclick = () => {
-                        if (isFolder) {
-                            cloudState.folderId = file.id;
-                            cloudState.breadcrumb.push({ id: file.id, name: file.name });
-                            renderGoogleDriveFolder(file.id);
-                        } else {
-                            const url = file.webViewLink || file.webContentLink;
-                            if (url) {
-                                wm.createWindow('browser', file.name, true);
-                                setTimeout(() => wm.windows.get('browser').iframe.contentWindow.postMessage({ type: 'open_url', url }, '*'), 700);
-                            }
-                        }
-                    };
-                    grid.appendChild(el);
-                });
-            } catch (error) {
-                grid.innerHTML = `<div style="opacity:0.8; grid-column:1/-1; text-align:center; margin-top:50px;">Erreur Google Drive: ${error.message}</div>`;
-            }
-        }
-
-        function confirmPicker() {
-            if (!pickerState) return;
-            const chosenPath = pickerState.mode === 'file'
-                ? pickerState.selectedPath
-                : currentPath;
-            if (!chosenPath) return;
-            window.parent.postMessage({
-                type: 'OS_RESOLVE_PATH_PICKER',
-                requestId: pickerState.requestId,
-                path: chosenPath
-            }, '*');
-            pickerState = null;
-            updatePickerUI();
-            render();
-        }
-
-        function cancelPicker() {
-            pickerState = null;
-            updatePickerUI();
-            render();
-        }
-
-        async function handleUpload(input) {
-            if (!input.files || !input.files.length) return;
-            try {
-                if (cloudState.service === 'googledrive') {
-                    for (const file of Array.from(input.files)) {
-                        await uploadGoogleDriveFile(file, cloudState.folderId || 'root');
-                    }
-                    await renderGoogleDriveFolder(cloudState.folderId || 'root');
-                    return;
-                }
-
-                Array.from(input.files).forEach(file => {
-                    const reader = new FileReader();
-                    reader.onload = (e) => {
-                        const path = (currentPath === '/' ? '' : currentPath) + '/' + file.name;
-                        wm.vfs_write(path, e.target.result, 'binary');
-                        render();
-                    };
-                    reader.readAsDataURL(file);
-                });
-            } catch (error) {
-                alert(`Upload impossible : ${error.message}`);
-            } finally {
-                input.value = '';
-            }
-        }
-
-        async function createFolder() {
-            const name = prompt("Nom du dossier :");
-            if (!name) return;
-            try {
-                if (cloudState.service === 'googledrive') {
-                    await createGoogleDriveFolder(name, cloudState.folderId || 'root');
-                    await renderGoogleDriveFolder(cloudState.folderId || 'root');
-                    return;
-                }
-
-                const path = (currentPath === '/' ? '' : currentPath) + '/' + name;
-                wm.vfs_write(path, {}, 'folder');
-                render();
-            } catch (error) {
-                alert(`Création du dossier impossible : ${error.message}`);
-            }
-        }
-
-        async function createFile() {
-            const name = prompt("Nom du fichier :", "Nouveau fichier.txt");
-            if (!name) return;
-            try {
-                if (cloudState.service === 'googledrive') {
-                    await createGoogleDriveFile(name, cloudState.folderId || 'root');
-                    await renderGoogleDriveFolder(cloudState.folderId || 'root');
-                    return;
-                }
-
-                const path = (currentPath === '/' ? '' : currentPath) + '/' + name;
-                wm.vfs_write(path, '', 'file');
-                render();
-            } catch (error) {
-                alert(`Création du fichier impossible : ${error.message}`);
-            }
-        }
-
-        function loadLinkedAccounts() {
-            try {
-                const raw = JSON.parse(localStorage.getItem('aether_settings') || '{}');
-                return raw.accounts || {};
-            } catch (e) {
-                return {};
-            }
-        }
-
-        async function parseGoogleError(response) {
-            try {
-                const data = await response.json();
-                if (data && data.error) {
-                    if (typeof data.error === 'string') return data.error;
-                    if (data.error.message) return data.error.message;
-                    if (Array.isArray(data.error.errors) && data.error.errors.length) {
-                        return data.error.errors.map(err => err.message || err.reason).filter(Boolean).join(' | ');
-                    }
-                }
-            } catch (e) {}
-            return `HTTP ${response.status}`;
-        }
-
-        function getGoogleDriveSession() {
-            const accounts = loadLinkedAccounts();
-            const drive = accounts.googledrive || {};
-            if (!drive.connected || !drive.accessToken) {
-                throw new Error("Google Drive n'est pas lié dans Paramètres.");
-            }
-            if (drive.expiresAt && Date.now() >= drive.expiresAt) {
-                throw new Error("La session Google Drive a expiré. Renouvelez-la dans Paramètres.");
-            }
-            return drive;
-        }
-
-        async function createGoogleDriveFolder(name, parentId) {
-            const drive = getGoogleDriveSession();
-            const response = await fetch('https://www.googleapis.com/drive/v3/files', {
-                method: 'POST',
-                headers: {
-                    Authorization: `Bearer ${drive.accessToken}`,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    name,
-                    mimeType: 'application/vnd.google-apps.folder',
-                    parents: [parentId]
-                })
-            });
-            if (!response.ok) throw new Error(await parseGoogleError(response));
-            return response.json();
-        }
-
-        async function createGoogleDriveFile(name, parentId) {
-            const drive = getGoogleDriveSession();
-            const metadata = { name, parents: [parentId] };
-            const form = new FormData();
-            form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
-            form.append('file', new Blob([''], { type: 'text/plain' }), name);
-            const response = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,name', {
-                method: 'POST',
-                headers: {
-                    Authorization: `Bearer ${drive.accessToken}`
-                },
-                body: form
-            });
-            if (!response.ok) throw new Error(await parseGoogleError(response));
-            return response.json();
-        }
-
-        async function uploadGoogleDriveFile(file, parentId) {
-            const drive = getGoogleDriveSession();
-            const metadata = { name: file.name, parents: [parentId] };
-            const form = new FormData();
-            form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
-            form.append('file', file, file.name);
-            const response = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,name', {
-                method: 'POST',
-                headers: {
-                    Authorization: `Bearer ${drive.accessToken}`
-                },
-                body: form
-            });
-            if (!response.ok) throw new Error(await parseGoogleError(response));
-            return response.json();
-        }
-
-        function openCloud(service) {
-            const accounts = loadLinkedAccounts();
-            const key = service === 'onedrive' ? 'onedrive' : 'googledrive';
-            const linked = accounts[key] || {};
-            if (!linked.connected || !linked.driveUrl) {
-                alert(`Le compte ${service === 'onedrive' ? 'OneDrive' : 'Google Drive'} n'est pas encore lié dans Paramètres > Comptes.`);
-                return;
-            }
-
+    function openCloud(service) {
+        const accounts = loadLinkedAccounts();
+        const key = service === 'onedrive' ? 'onedrive' : 'googledrive';
+        const linked = accounts[key] || {};
+        if (!linked.connected || !linked.driveUrl) {
             if (service === 'gdrive' || service === 'googledrive') {
                 cloudState = { service: 'googledrive', folderId: 'root', breadcrumb: [] };
                 renderGoogleDriveFolder('root');
                 return;
             }
-
-            const url = linked.driveUrl;
-            wm.createWindow('browser', service === 'onedrive' ? 'OneDrive' : 'Google Drive', true);
-            setTimeout(() => wm.windows.get('browser').iframe.contentWindow.postMessage({type: 'open_url', url: url}, '*'), 1000);
+            alert(`Le compte ${service === 'onedrive' ? 'OneDrive' : 'Google Drive'} n'est pas encore lié dans Paramètres > Comptes.`);
+            return;
         }
+        if (service === 'gdrive' || service === 'googledrive') {
+            cloudState = { service: 'googledrive', folderId: 'root', breadcrumb: [] };
+            renderGoogleDriveFolder('root');
+            return;
+        }
+        const url = linked.driveUrl;
+        if (wm) {
+            wm.createWindow('browser', 'OneDrive', true);
+            setTimeout(() => wm.windows.get('browser').iframe.contentWindow.postMessage({ type: 'open_url', url }, '*'), 1000);
+        }
+    }
 
-        // Initial render
-        render();
-        
-        // Listen for VFS changes from OS
-        window.addEventListener('message', (e) => {
-            if (e.data.type === 'funnyweb_vfs_update') {
-                render();
-            } else if (e.data.type === 'OS_PICK_PATH') {
-                pickerState = {
-                    requestId: e.data.requestId,
-                    mode: e.data.mode || 'folder',
-                    selectedPath: ''
-                };
-                navigate(e.data.startPath || '/Documents');
-                updatePickerUI();
-            }
-        });
-    </script>
+    /* ── MESSAGES ── */
+    window.addEventListener('message', (e) => {
+        if (e.data.type === 'funnyweb_vfs_update') {
+            render();
+        } else if (e.data.type === 'OS_PICK_PATH') {
+            pickerState = { requestId: e.data.requestId, mode: e.data.mode || 'folder', selectedPath: '' };
+            navigate(e.data.startPath || '/Documents');
+            updatePickerUI();
+        }
+    });
+
+    /* ── KEYBOARD SHORTCUTS ── */
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'F2') renameSelected();
+        if (e.key === 'Delete') deleteSelected();
+        if (e.ctrlKey && e.key === 'c') copyItem();
+        if (e.ctrlKey && e.key === 'x') cutItem();
+        if (e.ctrlKey && e.key === 'v') pasteItem();
+        if (e.key === 'Backspace') goBack();
+        if (e.key === 'F5') render();
+    });
+
+    /* ── INIT ── */
+    render();
+</script>
 </body>
 </html>
