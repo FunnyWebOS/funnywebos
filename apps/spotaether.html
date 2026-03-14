@@ -1,0 +1,1907 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aether Music</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        :root {
+            --bg-primary: #000000;
+            --bg-secondary: #111111;
+            --bg-tertiary: #1a1a1a;
+            --border-color: #333333;
+            --text-primary: #ffffff;
+            --text-secondary: #888888;
+            --text-tertiary: #666666;
+            --accent: #ffffff;
+            --accent-hover: #cccccc;
+            --card-radius: 24px;
+            --button-radius: 100px;
+            --transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+
+        body {
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        /* Header avec effet glassmorphism */
+        .header {
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            padding: 1rem 3rem;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 3rem;
+        }
+
+        .logo {
+            font-size: 2rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #fff, #aaa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -0.5px;
+            position: relative;
+        }
+
+        .logo::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 0;
+            width: 30px;
+            height: 3px;
+            background: var(--accent);
+            border-radius: 2px;
+        }
+
+        /* Barre de recherche stylisée */
+        .search-container {
+            position: relative;
+            width: 300px;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 12px 20px 12px 45px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-color);
+            border-radius: var(--button-radius);
+            color: var(--text-primary);
+            font-size: 0.95rem;
+            transition: var(--transition);
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--accent);
+            background: rgba(255, 255, 255, 0.1);
+            box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.1);
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-tertiary);
+            font-size: 1.2rem;
+        }
+
+        /* Profil utilisateur */
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 0.5rem 1rem;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-color);
+            border-radius: var(--button-radius);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .user-profile:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: var(--accent);
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #333, #111);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            border: 2px solid var(--accent);
+        }
+
+        .user-avatar img {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        .user-name {
+            font-weight: 600;
+            margin-right: 0.5rem;
+        }
+
+        /* Navigation */
+        .nav-tabs {
+            display: flex;
+            gap: 0.5rem;
+            margin: 2rem 3rem;
+            padding: 0.5rem;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: var(--button-radius);
+            border: 1px solid var(--border-color);
+            width: fit-content;
+        }
+
+        .nav-tab {
+            padding: 0.8rem 2rem;
+            border-radius: var(--button-radius);
+            cursor: pointer;
+            font-weight: 500;
+            transition: var(--transition);
+            color: var(--text-secondary);
+        }
+
+        .nav-tab:hover {
+            color: var(--text-primary);
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .nav-tab.active {
+            background: var(--accent);
+            color: var(--bg-primary);
+        }
+
+        /* Section upload */
+        .upload-section {
+            display: none;
+            background: var(--bg-secondary);
+            padding: 2rem;
+            margin: 0 3rem 2rem;
+            border-radius: var(--card-radius);
+            border: 1px solid var(--border-color);
+            animation: slideDown 0.5s ease;
+        }
+
+        .upload-section.show {
+            display: block;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .upload-form {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.5rem;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .form-group.full-width {
+            grid-column: span 2;
+        }
+
+        .form-group label {
+            font-size: 0.9rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-secondary);
+        }
+
+        .upload-form input,
+        .upload-form select,
+        .upload-form textarea {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 15px;
+            padding: 12px 15px;
+            color: var(--text-primary);
+            font-size: 1rem;
+            transition: var(--transition);
+        }
+
+        .upload-form input:focus,
+        .upload-form select:focus,
+        .upload-form textarea:focus {
+            outline: none;
+            border-color: var(--accent);
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .upload-form button {
+            grid-column: span 2;
+            background: var(--accent);
+            color: var(--bg-primary);
+            border: none;
+            padding: 15px;
+            border-radius: var(--button-radius);
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: var(--transition);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-top: 1rem;
+        }
+
+        .upload-form button:hover {
+            background: var(--accent-hover);
+            transform: scale(1.02);
+            box-shadow: 0 10px 20px -5px rgba(255, 255, 255, 0.3);
+        }
+
+        #importLegacyBtn {
+            background: rgba(255, 255, 255, 0.08);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+        }
+
+        #importLegacyBtn:hover {
+            background: rgba(255, 255, 255, 0.14);
+            box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.35);
+        }
+
+        /* Grille principale */
+        .content-grid {
+            padding: 0 3rem 6rem;
+        }
+
+        .section-title {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 2rem;
+            letter-spacing: -0.5px;
+        }
+
+        .music-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 2rem;
+            margin-bottom: 4rem;
+        }
+
+        /* Card design ultra moderne */
+        .music-card {
+            background: var(--bg-secondary);
+            border-radius: var(--card-radius);
+            overflow: hidden;
+            transition: var(--transition);
+            cursor: pointer;
+            border: 1px solid var(--border-color);
+            position: relative;
+        }
+
+        .music-card:hover {
+            transform: translateY(-10px);
+            border-color: var(--accent);
+            box-shadow: 0 20px 30px -10px rgba(255, 255, 255, 0.2);
+        }
+
+        .card-cover {
+            width: 100%;
+            height: 280px;
+            background: var(--bg-tertiary);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card-cover img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.6s ease;
+        }
+
+        .music-card:hover .card-cover img {
+            transform: scale(1.1);
+        }
+
+        .card-cover .no-cover {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 4rem;
+            background: linear-gradient(135deg, #222, #111);
+            color: rgba(255, 255, 255, 0.2);
+        }
+
+        .play-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: var(--transition);
+            backdrop-filter: blur(5px);
+        }
+
+        .music-card:hover .play-overlay {
+            opacity: 1;
+        }
+
+        .play-button {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: var(--accent);
+            color: var(--bg-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            transform: scale(0.8);
+            transition: var(--transition);
+        }
+
+        .music-card:hover .play-button {
+            transform: scale(1);
+        }
+
+        .card-info {
+            padding: 1.5rem;
+        }
+
+        .card-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin-bottom: 0.3rem;
+        }
+
+        .card-artist {
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+            font-size: 1rem;
+        }
+
+        .card-type {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(5px);
+            padding: 0.3rem 1rem;
+            border-radius: 50px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            z-index: 2;
+        }
+
+        .card-meta {
+            display: flex;
+            justify-content: space-between;
+            color: var(--text-tertiary);
+            font-size: 0.85rem;
+            border-top: 1px solid var(--border-color);
+            padding-top: 1rem;
+            margin-top: 0.5rem;
+        }
+
+        .empty-state {
+            grid-column: 1 / -1;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid var(--border-color);
+            border-radius: 18px;
+            padding: 24px;
+            color: var(--text-secondary);
+        }
+
+        .empty-state button {
+            margin-top: 12px;
+            background: var(--accent);
+            color: var(--bg-primary);
+            border: none;
+            padding: 10px 14px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: 700;
+        }
+
+        /* Page artiste */
+        .artist-header {
+            display: flex;
+            gap: 3rem;
+            padding: 2rem;
+            background: var(--bg-secondary);
+            border-radius: var(--card-radius);
+            border: 1px solid var(--border-color);
+            margin-bottom: 3rem;
+        }
+
+        .artist-avatar-large {
+            width: 200px;
+            height: 200px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #333, #111);
+            border: 3px solid var(--accent);
+            overflow: hidden;
+        }
+
+        .artist-avatar-large img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .artist-info h1 {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        .artist-stats {
+            display: flex;
+            gap: 2rem;
+            margin: 1.5rem 0;
+        }
+
+        .stat {
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 1.8rem;
+            font-weight: 700;
+        }
+
+        .stat-label {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .follow-btn {
+            background: var(--accent);
+            color: var(--bg-primary);
+            border: none;
+            padding: 1rem 3rem;
+            border-radius: var(--button-radius);
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .follow-btn:hover {
+            background: var(--accent-hover);
+            transform: scale(1.05);
+        }
+
+        /* Player bar ultra stylisé */
+        .player-bar {
+            position: fixed;
+            bottom: 30px;
+            left: 30px;
+            right: 30px;
+            background: rgba(17, 17, 17, 0.95);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            padding: 1.2rem 2rem;
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 100px;
+            transform: translateY(200%);
+            transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+            z-index: 1000;
+            box-shadow: 0 20px 40px -10px black;
+        }
+
+        .player-bar.show {
+            transform: translateY(0);
+        }
+
+        .player-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            min-width: 250px;
+        }
+
+        .player-cover {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            background: var(--bg-tertiary);
+            overflow: hidden;
+        }
+
+        .player-cover img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .player-text .title {
+            font-weight: 700;
+            margin-bottom: 0.2rem;
+        }
+
+        .player-text .artist {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .player-controls {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .control-btn {
+            background: none;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            color: var(--text-primary);
+            font-size: 1.3rem;
+            cursor: pointer;
+            width: 45px;
+            height: 45px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: var(--transition);
+        }
+
+        .control-btn:hover {
+            background: var(--accent);
+            color: var(--bg-primary);
+            border-color: var(--accent);
+            transform: scale(1.1);
+        }
+
+        .progress-area {
+            flex: 3;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .progress-bar {
+            flex: 1;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 100%;
+            background: var(--accent);
+            width: 0%;
+            transition: width 0.1s linear;
+        }
+
+        .time {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            min-width: 80px;
+        }
+
+        /* Messages */
+        .message {
+            position: fixed;
+            top: 100px;
+            right: 30px;
+            background: var(--accent);
+            color: var(--bg-primary);
+            padding: 1rem 2rem;
+            border-radius: 50px;
+            font-weight: 600;
+            z-index: 2000;
+            animation: slideIn 0.3s ease;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        .message.error {
+            background: #ff4444;
+            color: white;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .header {
+                padding: 1rem 2rem;
+            }
+            
+            .content-grid {
+                padding: 0 2rem 6rem;
+            }
+            
+            .artist-header {
+                flex-direction: column;
+                align-items: center;
+                text-align: center;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .header-left {
+                gap: 1rem;
+            }
+            
+            .search-container {
+                width: 200px;
+            }
+            
+            .player-bar {
+                flex-wrap: wrap;
+                border-radius: 30px;
+                bottom: 15px;
+                left: 15px;
+                right: 15px;
+            }
+            
+            .upload-form {
+                grid-template-columns: 1fr;
+            }
+            
+            .form-group.full-width {
+                grid-column: span 1;
+            }
+            
+            .upload-form button {
+                grid-column: span 1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-left">
+            <div class="logo">Aether Music</div>
+            <div class="search-container">
+                <span class="search-icon">🔍</span>
+                <input type="text" class="search-input" placeholder="Rechercher..." id="searchInput" oninput="handleSearch()">
+            </div>
+        </div>
+        
+        <div class="user-profile" onclick="showArtistPage(currentUser.name || 'Visiteur')">
+            <div class="user-avatar" id="userAvatar">👤</div>
+            <span class="user-name" id="userName">Visiteur</span>
+        </div>
+    </header>
+
+    <!-- Navigation Tabs -->
+    <div class="nav-tabs">
+        <div class="nav-tab active" onclick="switchTab('discover', event)">Découvrir</div>
+        <div class="nav-tab" onclick="switchTab('albums', event)">Albums</div>
+        <div class="nav-tab" onclick="switchTab('artists', event)">Artistes</div>
+        <div class="nav-tab" onclick="toggleUpload()">+ Upload</div>
+    </div>
+
+    <!-- Section upload -->
+    <div id="uploadSection" class="upload-section">
+        <form class="upload-form" id="uploadForm">
+            <div class="form-group">
+                <label>TITRE</label>
+                <input type="text" id="title" placeholder="Titre de la musique" required>
+            </div>
+            
+            <div class="form-group">
+                <label>ARTISTE</label>
+                <input type="text" id="artist" placeholder="Nom de l'artiste" required>
+            </div>
+            
+            <div class="form-group full-width">
+                <label>TYPE</label>
+                <select id="uploadType" onchange="toggleAlbumFields()">
+                    <option value="single">Single</option>
+                    <option value="album">Album</option>
+                </select>
+            </div>
+            
+            <div class="form-group" id="albumNameGroup" style="display: none;">
+                <label>NOM DE L'ALBUM</label>
+                <input type="text" id="albumName" placeholder="Nom de l'album">
+            </div>
+            
+            <div class="form-group" id="trackNumberGroup" style="display: none;">
+                <label>N° DE PISTE</label>
+                <input type="number" id="trackNumber" placeholder="1">
+            </div>
+            
+            <div class="form-group full-width">
+                <label>DESCRIPTION</label>
+                <textarea id="description" placeholder="Description..." rows="3"></textarea>
+            </div>
+            
+            <div class="form-group">
+                <label>COVER</label>
+                <input type="file" id="coverImage" accept="image/*">
+            </div>
+            
+            <div class="form-group">
+                <label>FICHIER AUDIO</label>
+                <input type="file" id="audioFile" accept="audio/*" required>
+            </div>
+            
+            <button type="button" onclick="handleUpload()">PUBLIER</button>
+            <button type="button" id="importLegacyBtn" style="display:none;" onclick="importLegacyLibrary()">Importer depuis cet appareil</button>
+        </form>
+    </div>
+
+    <!-- Page Artiste (cachée par défaut) -->
+    <div id="artistPage" style="display: none;">
+        <div class="content-grid">
+            <div class="artist-header">
+                <div class="artist-avatar-large" id="artistAvatarLarge">
+                    <img src="" alt="" id="artistAvatarImg" style="display: none;">
+                    <div id="artistAvatarPlaceholder" style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:4rem;">👤</div>
+                </div>
+                <div class="artist-info">
+                    <h1 id="artistName">Artiste</h1>
+                    <div class="artist-stats">
+                        <div class="stat">
+                            <div class="stat-number" id="artistTracks">0</div>
+                            <div class="stat-label">Titres</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-number" id="artistAlbums">0</div>
+                            <div class="stat-label">Albums</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-number" id="artistPlays">0</div>
+                            <div class="stat-label">Écoutes</div>
+                        </div>
+                    </div>
+                    <button class="follow-btn" onclick="followArtist()">Suivre</button>
+                </div>
+            </div>
+            
+            <h2 class="section-title">Albums</h2>
+            <div id="artistAlbumsGrid" class="music-grid"></div>
+            
+            <h2 class="section-title">Singles</h2>
+            <div id="artistSinglesGrid" class="music-grid"></div>
+        </div>
+    </div>
+
+    <!-- Page principale -->
+    <div id="mainContent">
+        <div class="content-grid">
+            <h2 class="section-title">Populaire cette semaine</h2>
+            <div id="popularGrid" class="music-grid"></div>
+            
+            <h2 class="section-title">Nouveautés</h2>
+            <div id="newReleasesGrid" class="music-grid"></div>
+            
+            <h2 class="section-title">Albums récents</h2>
+            <div id="albumsGrid" class="music-grid"></div>
+        </div>
+    </div>
+
+    <!-- Player bar -->
+    <div id="playerBar" class="player-bar">
+        <div class="player-info">
+            <div class="player-cover" id="playerCover">
+                <img src="" alt="" id="playerCoverImg" style="display: none;">
+                <div id="playerCoverPlaceholder" style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;">🎵</div>
+            </div>
+            <div class="player-text">
+                <div class="title" id="playerTitle">-</div>
+                <div class="artist" id="playerArtist">-</div>
+            </div>
+        </div>
+        
+        <div class="player-controls">
+            <button class="control-btn" onclick="togglePlay()">▶</button>
+            <button class="control-btn" onclick="stopMusic()">⏹</button>
+        </div>
+        
+        <div class="progress-area">
+            <div class="progress-bar" onclick="seekAudio(event)">
+                <div id="progressFill" class="progress-fill"></div>
+            </div>
+            <div class="time">
+                <span id="currentTime">0:00</span> / <span id="duration">0:00</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Message container -->
+    <div id="messageContainer"></div>
+
+    <script>
+        // ==================== DONNÉES ====================
+        let musicLibrary = [];
+        let albums = [];
+        let artists = [];
+        let currentUser = {
+            name: 'Visiteur',
+            sessionID: null,
+            profilePic: null,
+            theme: 'dark',
+            preferences: {}
+        };
+
+        const LEGACY_LOCAL_KEY = 'musicLibrary'; // ancienne version (grosse, base64) -> Ã  migrer puis supprimer
+        const LOCAL_CACHE_KEY = 'aether_music_cache'; // cache lÃ©ger (sans audio)
+        const CLOUD_TABLE = 'aether_music_tracks';
+        let cloudConfig = null;
+        let cloudReady = false;
+        let musicProxyBase = '';
+        
+        let currentAudio = null;
+        let currentTrack = null;
+        let isPlaying = false;
+        let currentView = 'discover';
+        let currentArtist = null;
+
+        // ==================== CLOUD (SUPABASE REST) ====================
+        function findWindowManager() {
+            try {
+                let w = window;
+                for (let i = 0; i < 6; i++) {
+                    if (w && w.windowManager) return w.windowManager;
+                    if (!w || !w.parent || w.parent === w) break;
+                    w = w.parent;
+                }
+            } catch (err) {}
+            return null;
+        }
+
+        function findRuntimeEnv() {
+            try {
+                let w = window;
+                for (let i = 0; i < 6; i++) {
+                    if (w && w.AETHER_RUNTIME_ENV) return w.AETHER_RUNTIME_ENV;
+                    if (!w || !w.parent || w.parent === w) break;
+                    w = w.parent;
+                }
+            } catch (err) {}
+            return {};
+        }
+
+        function resolveMusicProxyBase() {
+            const env = findRuntimeEnv();
+            const raw = String(env.AETHER_MUSIC_PROXY_URL || env.AETHER_AI_PROXY_URL || '').trim();
+            if (!raw) return '';
+            if (!/^https?:\/\//i.test(raw)) return '';
+            return raw.replace(/\/+$/, '');
+        }
+
+        async function musicProxyRequest(path, options = {}) {
+            if (!musicProxyBase) throw new Error('Proxy non configuré');
+            const method = (options.method || 'GET').toUpperCase();
+            const headers = { ...(options.headers || {}) };
+            headers.Accept = headers.Accept || 'application/json';
+            if (options.body !== undefined) headers['Content-Type'] = 'application/json';
+
+            const url = `${musicProxyBase}${path.startsWith('/') ? '' : '/'}${path}`;
+            const resp = await fetch(url, { method, headers, body: options.body !== undefined ? JSON.stringify(options.body) : undefined });
+            if (!resp.ok) {
+                const text = await resp.text().catch(() => '');
+                if (resp.status === 413) throw new Error('Payload trop volumineux (HTTP 413).');
+                throw new Error((text || '').trim() || `HTTP ${resp.status}`);
+            }
+            const ct = (resp.headers.get('content-type') || '').toLowerCase();
+            if (ct.includes('application/json')) return await resp.json();
+            return null;
+        }
+
+        function resolveSupabaseConfig() {
+            const fromOS = (() => {
+                try {
+                    const wm = findWindowManager();
+                    if (wm && typeof wm.resolveSetupSupabaseConfig === 'function') return wm.resolveSetupSupabaseConfig();
+                } catch (err) {}
+                return null;
+            })();
+
+            const runtimeEnv = (() => {
+                try {
+                    return findRuntimeEnv();
+                } catch (err) {}
+                return {};
+            })();
+
+            const fromWindow = (() => {
+                try {
+                    if (window.AETHER_SUPABASE_CONFIG) return window.AETHER_SUPABASE_CONFIG;
+                    // walk ancestors (store preview nests iframes)
+                    let w = window;
+                    for (let i = 0; i < 6; i++) {
+                        if (w && w.AETHER_SUPABASE_CONFIG) return w.AETHER_SUPABASE_CONFIG;
+                        if (!w || !w.parent || w.parent === w) break;
+                        w = w.parent;
+                    }
+                } catch (err) {}
+                return null;
+            })();
+
+            const picked = fromOS || fromWindow || {};
+            return {
+                url: (picked.url || runtimeEnv.AETHER_SUPABASE_URL || '').trim(),
+                anonKey: (picked.anonKey || runtimeEnv.AETHER_SUPABASE_ANON_KEY || '').trim()
+            };
+        }
+
+        function isSupabaseReady(config) {
+            return !!(config && typeof config.url === 'string' && config.url.trim() && typeof config.anonKey === 'string' && config.anonKey.trim());
+        }
+
+        async function supabaseRequest(path, options = {}) {
+            if (!cloudConfig || !cloudReady) throw new Error('Supabase non configurÃ©');
+            const method = (options.method || 'GET').toUpperCase();
+            const headers = { ...(options.headers || {}) };
+            headers.apikey = cloudConfig.anonKey;
+            headers.Authorization = `Bearer ${cloudConfig.anonKey}`;
+            headers.Accept = headers.Accept || 'application/json';
+            if (options.body !== undefined) headers['Content-Type'] = 'application/json';
+
+            const url = `${cloudConfig.url.replace(/\/+$/,'')}/rest/v1/${path.replace(/^\/+/,'')}`;
+            const resp = await fetch(url, { method, headers, body: options.body !== undefined ? JSON.stringify(options.body) : undefined });
+            if (!resp.ok) {
+                const text = await resp.text().catch(() => '');
+                if (resp.status === 413) throw new Error('Payload trop volumineux (HTTP 413).');
+                throw new Error((text || '').trim() || `HTTP ${resp.status}`);
+            }
+            const ct = (resp.headers.get('content-type') || '').toLowerCase();
+            if (ct.includes('application/json')) return await resp.json();
+            return null;
+        }
+
+        function mapRowToTrack(row) {
+            const createdAt = row && row.created_at ? new Date(row.created_at) : null;
+            return {
+                id: row.id,
+                owner: row.owner || '',
+                title: row.title || '',
+                artist: row.artist || '',
+                description: row.description || '',
+                type: row.type || 'single',
+                album: row.album || null,
+                trackNumber: row.track_number || null,
+                audioUrl: row.audio_data || null,
+                coverUrl: row.cover_data || null,
+                date: createdAt ? createdAt.toLocaleDateString() : '',
+                plays: Number(row.plays) || 0,
+                likes: Number(row.likes) || 0
+            };
+        }
+
+        async function loadLibraryFromCloud() {
+            // Prefer Cloudflare Worker proxy when available.
+            if (musicProxyBase) {
+                try {
+                    const res = await musicProxyRequest('/aether/v1/music/tracks?limit=200', { method: 'GET' });
+                    const rows = res && Array.isArray(res.rows) ? res.rows : [];
+                    return rows.map(mapRowToTrack);
+                } catch (err) {
+                    // Fallback to direct Supabase if proxy route isn't deployed yet.
+                }
+            }
+
+            const select = [
+                'id',
+                'owner',
+                'title',
+                'artist',
+                'description',
+                'type',
+                'album',
+                'track_number',
+                'audio_data',
+                'cover_data',
+                'created_at',
+                'plays',
+                'likes'
+            ].join(',');
+
+            const rows = await supabaseRequest(`${CLOUD_TABLE}?select=${encodeURIComponent(select)}&order=created_at.desc&limit=200`);
+            return (Array.isArray(rows) ? rows : []).map(mapRowToTrack);
+        }
+
+        function loadLibraryFromCache() {
+            try {
+                const raw = localStorage.getItem(LOCAL_CACHE_KEY);
+                if (!raw) return [];
+                const parsed = JSON.parse(raw);
+                if (!Array.isArray(parsed)) return [];
+                return parsed.map(t => ({ ...t, audioUrl: null, coverUrl: null }));
+            } catch (err) {
+                return [];
+            }
+        }
+
+        function persistLibraryCache() {
+            try {
+                const light = musicLibrary.map(t => ({
+                    id: t.id,
+                    owner: t.owner || '',
+                    title: t.title,
+                    artist: t.artist,
+                    description: t.description || '',
+                    type: t.type || 'single',
+                    album: t.album || null,
+                    trackNumber: t.trackNumber || null,
+                    date: t.date || '',
+                    plays: Number(t.plays) || 0,
+                    likes: Number(t.likes) || 0
+                }));
+                localStorage.setItem(LOCAL_CACHE_KEY, JSON.stringify(light));
+            } catch (err) {}
+        }
+
+        function updateLegacyImportButton() {
+            const btn = document.getElementById('importLegacyBtn');
+            if (!btn) return;
+            if (!cloudReady) {
+                btn.style.display = 'none';
+                return;
+            }
+            try {
+                const raw = localStorage.getItem(LEGACY_LOCAL_KEY);
+                btn.style.display = raw ? 'block' : 'none';
+            } catch (err) {
+                btn.style.display = 'none';
+            }
+        }
+
+        async function refreshLibrary() {
+            if (!cloudReady) return;
+            musicLibrary = await loadLibraryFromCloud();
+            persistLibraryCache();
+            organizeData();
+            renderDiscover();
+        }
+
+        async function importLegacyLibrary() {
+            if (!cloudReady) {
+                showMessage('Cloud indisponible (Supabase). Configure-le dans AetherOS.', true);
+                return;
+            }
+
+            let legacy = [];
+            try {
+                const raw = localStorage.getItem(LEGACY_LOCAL_KEY);
+                legacy = raw ? JSON.parse(raw) : [];
+            } catch (err) {
+                showMessage('Impossible de lire la bibliothÃ¨que locale.', true);
+                return;
+            }
+
+            const publishable = (Array.isArray(legacy) ? legacy : [])
+                .filter(t => t && typeof t.audioUrl === 'string' && t.audioUrl.startsWith('data:audio'));
+
+            if (publishable.length === 0) {
+                showMessage('Rien Ã  importer (fichiers audio manquants).', true);
+                return;
+            }
+
+            showMessage(`Import en cours... (${publishable.length})`);
+
+            for (let i = 0; i < publishable.length; i++) {
+                const t = publishable[i];
+                try {
+                    await supabaseRequest(CLOUD_TABLE, {
+                        method: 'POST',
+                        headers: { Prefer: 'return=minimal' },
+                        body: [{
+                            owner: currentUser.name || 'Visiteur',
+                            title: t.title || '',
+                            artist: t.artist || '',
+                            description: t.description || '',
+                            type: t.type || 'single',
+                            album: t.album || null,
+                            track_number: t.trackNumber || null,
+                            audio_data: t.audioUrl || null,
+                            cover_data: t.coverUrl || null,
+                            plays: Number(t.plays) || 0,
+                            likes: Number(t.likes) || 0
+                        }]
+                    });
+                } catch (err) {
+                    showMessage(`Import: Ã©chec sur \"${t.title || 'track'}\"`, true);
+                }
+            }
+
+            try { localStorage.removeItem(LEGACY_LOCAL_KEY); } catch (err) {}
+            updateLegacyImportButton();
+            await refreshLibrary();
+            showMessage('Import terminÃ©.');
+        }
+
+        // ==================== API UTILISATEUR ====================
+        window.addEventListener('message', (event) => {
+            if (event.data && event.data.type === 'funnyweb_user_sync') {
+                const { userName, sessionID, profilePic, theme, uiPreferences } = event.data;
+                
+                currentUser = {
+                    name: userName || 'Utilisateur',
+                    sessionID: sessionID,
+                    profilePic: profilePic,
+                    theme: theme || 'dark',
+                    preferences: uiPreferences || {}
+                };
+                
+                // Mettre à jour l'interface
+                document.getElementById('userName').textContent = currentUser.name;
+
+                const artistInput = document.getElementById('artist');
+                if (artistInput && !String(artistInput.value || '').trim()) {
+                    artistInput.value = currentUser.name;
+                }
+
+                if (profilePic) {
+                    const avatar = document.getElementById('userAvatar');
+                    avatar.innerHTML = `<img src="${profilePic}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`;
+                }
+                
+                if (theme === 'light') {
+                    document.documentElement.style.setProperty('--bg-primary', '#ffffff');
+                    document.documentElement.style.setProperty('--text-primary', '#000000');
+                    document.documentElement.style.setProperty('--bg-secondary', '#f5f5f5');
+                }
+                
+                showMessage(`Bienvenue ${currentUser.name} !`);
+                
+                // Créer l'artiste utilisateur
+                createOrUpdateCurrentUserArtist();
+            }
+        });
+
+        function createOrUpdateCurrentUserArtist() {
+            const id = String(currentUser.name || 'Visiteur');
+            const existing = artists.find(a => a && a.id === id);
+            if (existing) {
+                existing.name = currentUser.name;
+                existing.avatar = currentUser.profilePic;
+                return;
+            }
+            artists.unshift({
+                id,
+                name: currentUser.name,
+                avatar: currentUser.profilePic,
+                tracks: [],
+                albums: [],
+                plays: 0
+            });
+        }
+
+        // ==================== CHARGEMENT INITIAL ====================
+        function initCloud() {
+            musicProxyBase = resolveMusicProxyBase();
+            cloudConfig = resolveSupabaseConfig();
+            cloudReady = !!musicProxyBase || isSupabaseReady(cloudConfig);
+        }
+
+        function getAppIdFromIframe() {
+            try {
+                const frameId = window.frameElement && window.frameElement.id ? String(window.frameElement.id) : '';
+                if (frameId.startsWith('iframe-')) return frameId.slice('iframe-'.length);
+            } catch (err) {}
+            return 'spotaether';
+        }
+
+        function requestUserSync() {
+            try {
+                const wm = findWindowManager();
+                if (!wm || typeof wm.initIframeUser !== 'function') return;
+                const appId = getAppIdFromIframe();
+                wm.initIframeUser(appId || 'spotaether');
+                // In nested previews (App Store), iframe id can be different: also attempt by known app id.
+                if (appId !== 'spotaether') {
+                    try { wm.initIframeUser('spotaether'); } catch (e) {}
+                }
+            } catch (err) {}
+        }
+
+        function openInDesktop() {
+            try {
+                const wm = findWindowManager();
+                if (!wm || typeof wm.installApp !== 'function') return;
+                wm.installApp('spotaether');
+            } catch (err) {}
+        }
+
+        function bestEffortHydrateUserFromParent() {
+            try {
+                const wm = findWindowManager();
+                const userName = wm && wm.userName ? String(wm.userName) : '';
+                const profilePic = wm && wm.profilePic ? String(wm.profilePic) : '';
+                if (!userName) return;
+
+                currentUser.name = userName;
+                currentUser.profilePic = profilePic || currentUser.profilePic;
+                const nameEl = document.getElementById('userName');
+                if (nameEl) nameEl.textContent = currentUser.name;
+                if (profilePic) {
+                    const avatar = document.getElementById('userAvatar');
+                    if (avatar) avatar.innerHTML = `<img src="${profilePic}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`;
+                }
+
+                const artistInput = document.getElementById('artist');
+                if (artistInput && !String(artistInput.value || '').trim()) {
+                    artistInput.value = currentUser.name;
+                }
+            } catch (err) {}
+        }
+
+        function bootApp() {
+            initCloud();
+            bestEffortHydrateUserFromParent();
+            requestUserSync();
+
+            // If the OS user becomes available slightly later, pick it up.
+            let userPolls = 0;
+            const userPoll = setInterval(() => {
+                userPolls += 1;
+                if (currentUser.name !== 'Visiteur' && currentUser.name !== 'Utilisateur' && currentUser.name) {
+                    clearInterval(userPoll);
+                    return;
+                }
+                bestEffortHydrateUserFromParent();
+                if (userPolls >= 12) clearInterval(userPoll);
+            }, 400);
+            setTimeout(() => {
+                if (!currentUser.sessionID && (currentUser.name === 'Visiteur' || !currentUser.name || currentUser.name === 'Utilisateur')) {
+                    requestUserSync();
+                }
+            }, 350);
+            setTimeout(() => {
+                if (currentUser.name === 'Visiteur' || !currentUser.name || currentUser.name === 'Utilisateur') {
+                    const hasWM = !!findWindowManager();
+                    if (!hasWM) {
+                        showMessage('Ouvre Aether Music depuis AetherOS (sinon pas de profil / pas de cloud).', true);
+                    } else {
+                        showMessage('Session utilisateur non reÃ§ue. DÃ©verrouille avec ton PIN puis relance l\u2019app.', true);
+                    }
+                }
+            }, 1200);
+
+            // Render something immediately (offline / cache mode).
+            musicLibrary = loadLibraryFromCache();
+            organizeData();
+            renderDiscover();
+
+            if (!cloudReady) {
+                showMessage('Aether Music Cloud indisponible (Supabase non configurÃ©). Ouvre AetherOS > Setup/Comptes et configure Supabase.', true);
+                updateLegacyImportButton();
+
+                // If the OS is still booting its Supabase config, retry a few times.
+                const hasWM = !!findWindowManager();
+                if (hasWM) {
+                    let attempts = 0;
+                    const retry = () => {
+                        attempts += 1;
+                        initCloud();
+                        if (cloudReady) {
+                            showMessage('Cloud connectÃ©.');
+                            refreshLibrary().catch(() => {});
+                            updateLegacyImportButton();
+                            return;
+                        }
+                        if (attempts < 5) setTimeout(retry, 700);
+                    };
+                    setTimeout(retry, 700);
+                }
+                return;
+            }
+
+            refreshLibrary().catch(() => {
+                showMessage('Impossible de charger la bibliothÃ¨que depuis la database.', true);
+            }).finally(() => {
+                updateLegacyImportButton();
+            });
+        }
+
+        function organizeData() {
+            // Organiser les albums
+            albums = [];
+            artists = [];
+            
+            musicLibrary.forEach(track => {
+                // Grouper par album
+                if (track.album) {
+                    let album = albums.find(a => a.name === track.album && a.artist === track.artist);
+                    if (!album) {
+                        album = {
+                            id: `${track.artist}::${track.album}`,
+                            name: track.album,
+                            artist: track.artist,
+                            cover: track.coverUrl,
+                            tracks: [],
+                            year: new Date().getFullYear()
+                        };
+                        albums.push(album);
+                    }
+                    album.tracks.push(track);
+                }
+                
+                // Grouper par artiste
+                let artist = artists.find(a => a.id === track.artist);
+                if (!artist) {
+                    artist = {
+                        id: track.artist,
+                        name: track.artist,
+                        avatar: null,
+                        tracks: [],
+                        albums: [],
+                        plays: 0
+                    };
+                    artists.push(artist);
+                }
+                artist.tracks.push(track);
+                artist.plays += track.plays || 0;
+                
+                if (track.album && !artist.albums.includes(track.album)) {
+                    artist.albums.push(track.album);
+                }
+            });
+        }
+
+        // ==================== FONCTIONS UI ====================
+        function showMessage(text, isError = false) {
+            const container = document.getElementById('messageContainer');
+            const msg = document.createElement('div');
+            msg.className = `message ${isError ? 'error' : ''}`;
+            msg.textContent = text;
+            container.appendChild(msg);
+            setTimeout(() => msg.remove(), 3000);
+        }
+
+        function toggleUpload() {
+            document.getElementById('uploadSection').classList.toggle('show');
+        }
+
+        function toggleAlbumFields() {
+            const type = document.getElementById('uploadType').value;
+            const albumGroup = document.getElementById('albumNameGroup');
+            const trackGroup = document.getElementById('trackNumberGroup');
+            
+            if (type === 'album') {
+                albumGroup.style.display = 'block';
+                trackGroup.style.display = 'block';
+            } else {
+                albumGroup.style.display = 'none';
+                trackGroup.style.display = 'none';
+            }
+        }
+
+        function switchTab(tab, ev) {
+            currentView = tab;
+            
+            // Update active tab
+            document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+            const target = ev && ev.currentTarget ? ev.currentTarget : (ev && ev.target ? ev.target : null);
+            if (target && target.classList) target.classList.add('active');
+            
+            if (tab === 'discover') {
+                document.getElementById('mainContent').style.display = 'block';
+                document.getElementById('artistPage').style.display = 'none';
+                renderDiscover();
+            } else if (tab === 'albums') {
+                document.getElementById('mainContent').style.display = 'block';
+                document.getElementById('artistPage').style.display = 'none';
+                renderAlbums();
+            } else if (tab === 'artists') {
+                document.getElementById('mainContent').style.display = 'block';
+                document.getElementById('artistPage').style.display = 'none';
+                renderArtists();
+            }
+        }
+
+        function showArtistPage(artistId) {
+            currentView = 'artist';
+            document.getElementById('mainContent').style.display = 'none';
+            document.getElementById('artistPage').style.display = 'block';
+            
+            const key = String(artistId || '').trim();
+            const artist = artists.find(a => a.id === key) || artists.find(a => a.name === key);
+            
+            if (artist) {
+                currentArtist = artist;
+                document.getElementById('artistName').textContent = artist.name;
+                document.getElementById('artistTracks').textContent = artist.tracks.length;
+                document.getElementById('artistAlbums').textContent = artist.albums.length;
+                document.getElementById('artistPlays').textContent = artist.plays || 0;
+                
+                if (artist.avatar) {
+                    document.getElementById('artistAvatarImg').src = artist.avatar;
+                    document.getElementById('artistAvatarImg').style.display = 'block';
+                    document.getElementById('artistAvatarPlaceholder').style.display = 'none';
+                } else {
+                    document.getElementById('artistAvatarImg').style.display = 'none';
+                    document.getElementById('artistAvatarPlaceholder').style.display = 'flex';
+                }
+                
+                // Filtrer albums et singles
+                const singles = artist.tracks.filter(t => !t.album);
+                
+                const artistAlbums = albums.filter(a => a && a.artist === artist.name);
+                renderArtistAlbums(artistAlbums);
+                renderArtistSingles(singles);
+            } else {
+                showMessage('Artiste introuvable.', true);
+            }
+        }
+
+        function showAlbum(albumId) {
+            const album = albums.find(a => a && a.id === albumId);
+            if (!album) {
+                showMessage('Album introuvable.', true);
+                return;
+            }
+
+            currentView = 'discover';
+            document.getElementById('mainContent').style.display = 'block';
+            document.getElementById('artistPage').style.display = 'none';
+
+            document.getElementById('popularGrid').innerHTML = renderTracks(album.tracks || []);
+            document.getElementById('newReleasesGrid').innerHTML = '';
+            document.getElementById('albumsGrid').innerHTML = renderAlbumsList([album]);
+            showMessage(`Album: ${album.name}`);
+        }
+
+        // ==================== RECHERCHE ====================
+        function handleSearch() {
+            const query = document.getElementById('searchInput').value.toLowerCase();
+            
+            if (query.length < 2) {
+                renderDiscover();
+                return;
+            }
+            
+            const results = musicLibrary.filter(track => 
+                track.title.toLowerCase().includes(query) ||
+                track.artist.toLowerCase().includes(query)
+            );
+            
+            renderSearchResults(results);
+        }
+
+        // ==================== UPLOAD ====================
+        function handleUpload() {
+            // Refresh cloud config (in case OS finished loading env after app boot).
+            initCloud();
+            const title = document.getElementById('title').value;
+            const artist = document.getElementById('artist').value;
+            const description = document.getElementById('description').value;
+            const type = document.getElementById('uploadType').value;
+            const albumName = document.getElementById('albumName').value;
+            const trackNumber = document.getElementById('trackNumber').value;
+            const audioFile = document.getElementById('audioFile').files[0];
+            const coverFile = document.getElementById('coverImage').files[0];
+
+            if (!title || !artist) {
+                showMessage('Titre et artiste requis', true);
+                return;
+            }
+
+            if (!audioFile) {
+                showMessage('Fichier audio requis', true);
+                return;
+            }
+
+            if (!cloudReady) {
+                showMessage('Aether Music Cloud indisponible. Configure Supabase dans AetherOS pour publier des sons.', true);
+                return;
+            }
+
+            if (audioFile.size > 15 * 1024 * 1024) {
+                showMessage('Fichier trop gros (max 15MB en mode database)', true);
+                return;
+            }
+
+            showMessage('Upload en cours...');
+
+            const audioReader = new FileReader();
+            audioReader.onload = function(e) {
+                if (coverFile) {
+                    const coverReader = new FileReader();
+                    coverReader.onload = function(ce) {
+                        publishTrackToCloud(title, artist, description, type, albumName, trackNumber, e.target.result, ce.target.result);
+                    };
+                    coverReader.readAsDataURL(coverFile);
+                } else {
+                    publishTrackToCloud(title, artist, description, type, albumName, trackNumber, e.target.result, null);
+                }
+            };
+            audioReader.readAsDataURL(audioFile);
+        }
+
+        async function publishTrackToCloud(title, artist, description, type, album, trackNumber, audioData, coverData) {
+            try {
+                const row = {
+                    owner: currentUser.name || 'Visiteur',
+                    title: title,
+                    artist: artist,
+                    description: description || '',
+                    type: type,
+                    album: type === 'album' ? (album || null) : null,
+                    track_number: type === 'album' ? (Number(trackNumber) || null) : null,
+                    audio_data: audioData,
+                    cover_data: coverData,
+                    plays: 0,
+                    likes: 0
+                };
+
+                if (musicProxyBase) {
+                    try {
+                        const res = await musicProxyRequest('/aether/v1/music/tracks', { method: 'POST', body: { rows: [row] } });
+                        if (!res || res.ok !== true) throw new Error((res && res.error) || 'Proxy error');
+                    } catch (err) {
+                        // Fallback to direct Supabase if proxy route isn't deployed yet.
+                        if (!isSupabaseReady(cloudConfig)) throw err;
+                        await supabaseRequest(CLOUD_TABLE, {
+                            method: 'POST',
+                            headers: { Prefer: 'return=minimal' },
+                            body: [row]
+                        });
+                    }
+                } else {
+                await supabaseRequest(CLOUD_TABLE, {
+                    method: 'POST',
+                    headers: { Prefer: 'return=minimal' },
+                    body: [row]
+                });
+                }
+
+                await refreshLibrary();
+
+                // Reset form
+                document.getElementById('title').value = '';
+                document.getElementById('artist').value = currentUser.name || '';
+                document.getElementById('description').value = '';
+                document.getElementById('audioFile').value = '';
+                document.getElementById('coverImage').value = '';
+
+                document.getElementById('uploadSection').classList.remove('show');
+                renderDiscover();
+                showMessage('Track publie avec succes !');
+                return;
+            } catch (err) {
+                const raw = String((err && err.message) || err || '').trim();
+                const detail = raw ? ` (${raw.slice(0, 160)})` : '';
+                showMessage(`Upload impossible (database)${detail}`, true);
+                return;
+            }
+
+            const track = {
+                id: Date.now(),
+                title: title,
+                artist: artist,
+                description: description || '',
+                type: type,
+                album: type === 'album' ? album : null,
+                trackNumber: type === 'album' ? trackNumber : null,
+                audioUrl: audioData,
+                coverUrl: coverData,
+                date: new Date().toLocaleDateString(),
+                plays: 0,
+                likes: 0
+            };
+
+            musicLibrary.unshift(track);
+            
+            try {
+                persistLibraryCache();
+            } catch (e) {
+                // Si trop gros, sauvegarder sans les données audio
+                persistLibraryCache();
+            }
+
+            organizeData();
+
+            // Reset form
+            document.getElementById('title').value = '';
+            document.getElementById('artist').value = '';
+            document.getElementById('description').value = '';
+            document.getElementById('audioFile').value = '';
+            document.getElementById('coverImage').value = '';
+            
+            document.getElementById('uploadSection').classList.remove('show');
+            renderDiscover();
+            showMessage('✅ Track publié avec succès !');
+        }
+
+        // ==================== RENDU ====================
+        function renderDiscover() {
+            const isGuest = (currentUser.name === 'Visiteur' || currentUser.name === 'Utilisateur' || !currentUser.name);
+            const guestCard = isGuest ? `
+              <div class="empty-state">
+                <div style="font-weight:800;color:var(--text-primary);margin-bottom:6px;">Connexion requise</div>
+                <div>Ton profil n\u2019est pas synchronis\u00e9 (tu es en <b>Visiteur</b>). Ouvre l\u2019app depuis le bureau AetherOS et d\u00e9verrouille avec ton PIN.</div>
+                <div style="display:flex;gap:10px;flex-wrap:wrap;">
+                  <button type="button" onclick="requestUserSync()">Recharger le profil</button>
+                  <button type="button" onclick="openInDesktop()" style="background:rgba(255,255,255,0.10);color:var(--text-primary);border:1px solid var(--border-color);">Ouvrir dans le bureau</button>
+                </div>
+              </div>
+            ` : '';
+
+            const popular = [...musicLibrary].sort((a, b) => (b.plays || 0) - (a.plays || 0)).slice(0, 6);
+            const recent = [...musicLibrary].slice(0, 6);
+            const albumList = albums.slice(0, 6);
+            
+            document.getElementById('popularGrid').innerHTML = `${guestCard}${renderTracks(popular)}`;
+            document.getElementById('newReleasesGrid').innerHTML = renderTracks(recent);
+            document.getElementById('albumsGrid').innerHTML = renderAlbumsList(albumList);
+        }
+
+        function renderAlbums() {
+            document.getElementById('albumsGrid').innerHTML = renderAlbumsList(albums);
+        }
+
+        function renderArtists() {
+            document.getElementById('albumsGrid').innerHTML = renderArtistsList(artists);
+        }
+
+        function renderSearchResults(results) {
+            document.getElementById('popularGrid').innerHTML = renderTracks(results);
+            document.getElementById('newReleasesGrid').innerHTML = '';
+            document.getElementById('albumsGrid').innerHTML = '';
+        }
+
+        function renderTracks(tracks) {
+            if (!tracks.length) return '<div class="empty-state">Aucun track</div>';
+            
+            return tracks.map(track => `
+                <div class="music-card" onclick="playTrack(${track.id})">
+                    <div class="card-cover">
+                        ${track.coverUrl ? 
+                            `<img src="${track.coverUrl}" alt="cover">` : 
+                            `<div class="no-cover">🎵</div>`
+                        }
+                        <div class="play-overlay">
+                            <div class="play-button">▶</div>
+                        </div>
+                    </div>
+                    <div class="card-info">
+                        <div class="card-title">${track.title}</div>
+                        <div class="card-artist" onclick="event.stopPropagation(); showArtistPage('${track.artist}')">${track.artist}</div>
+                        ${track.album ? `<div class="card-type">Album</div>` : ''}
+                        <div class="card-meta">
+                            <span>👂 ${track.plays || 0}</span>
+                            <span>❤️ ${track.likes || 0}</span>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderAlbumsList(albumsList) {
+            if (!albumsList.length) return '<div class="empty-state">Aucun album</div>';
+            
+            return albumsList.map(album => `
+                <div class="music-card" onclick="showAlbum('${album.id}')">
+                    <div class="card-cover">
+                        ${album.cover ? 
+                            `<img src="${album.cover}" alt="cover">` : 
+                            `<div class="no-cover">💿</div>`
+                        }
+                        <div class="play-overlay">
+                            <div class="play-button">▶</div>
+                        </div>
+                    </div>
+                    <div class="card-info">
+                        <div class="card-title">${album.name}</div>
+                        <div class="card-artist">${album.artist}</div>
+                        <div class="card-type">${album.tracks?.length || 0} titres</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderArtistsList(artistsList) {
+            if (!artistsList.length) return '<div class="empty-state">Aucun artiste</div>';
+            
+            return artistsList.map(artist => `
+                <div class="music-card" onclick="showArtistPage('${artist.id}')">
+                    <div class="card-cover">
+                        ${artist.avatar ? 
+                            `<img src="${artist.avatar}" alt="artist" style="border-radius:50%;">` : 
+                            `<div class="no-cover">👤</div>`
+                        }
+                    </div>
+                    <div class="card-info">
+                        <div class="card-title">${artist.name}</div>
+                        <div class="card-artist">${artist.tracks?.length || 0} titres</div>
+                        <div class="card-meta">
+                            <span>👂 ${artist.plays || 0}</span>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderArtistAlbums(albums) {
+            document.getElementById('artistAlbumsGrid').innerHTML = renderAlbumsList(albums);
+        }
+
+        function renderArtistSingles(singles) {
+            document.getElementById('artistSinglesGrid').innerHTML = renderTracks(singles);
+        }
+
+        // ==================== LECTURE ====================
+        function playTrack(id) {
+            const track = musicLibrary.find(t => t.id === id);
+            if (!track || !track.audioUrl || track.audioUrl === 'stored') {
+                showMessage('Fichier audio non disponible', true);
+                return;
+            }
+            
+            if (currentAudio) {
+                currentAudio.pause();
+            }
+            
+            currentAudio = new Audio(track.audioUrl);
+            currentTrack = track;
+            
+            // Mettre à jour le player
+            document.getElementById('playerTitle').textContent = track.title;
+            document.getElementById('playerArtist').textContent = track.artist;
+            
+            if (track.coverUrl) {
+                document.getElementById('playerCoverImg').src = track.coverUrl;
+                document.getElementById('playerCoverImg').style.display = 'block';
+                document.getElementById('playerCoverPlaceholder').style.display = 'none';
+            }
+            
+            document.getElementById('playerBar').classList.add('show');
+            
+            currentAudio.addEventListener('timeupdate', updateProgress);
+            currentAudio.addEventListener('loadedmetadata', () => {
+                document.getElementById('duration').textContent = formatTime(currentAudio.duration);
+            });
+            
+            currentAudio.play();
+            isPlaying = true;
+            document.querySelector('.control-btn:first-child').textContent = '⏸';
+            
+            // Incrémenter les écoutes
+            track.plays = (track.plays || 0) + 1;
+            if (cloudReady && track.id !== undefined && track.id !== null) {
+                if (musicProxyBase) {
+                    musicProxyRequest('/aether/v1/music/tracks/plays', { method: 'POST', body: { id: track.id, plays: track.plays } }).catch(() => {});
+                } else {
+                    const idFilter = encodeURIComponent(String(track.id));
+                    supabaseRequest(`${CLOUD_TABLE}?id=eq.${idFilter}`, {
+                        method: 'PATCH',
+                        headers: { Prefer: 'return=minimal' },
+                        body: { plays: track.plays }
+                    }).catch(() => {});
+                }
+            }
+            
+            currentAudio.addEventListener('ended', () => {
+                stopMusic();
+            });
+        }
+
+        function togglePlay() {
+            if (currentAudio) {
+                if (isPlaying) {
+                    currentAudio.pause();
+                    document.querySelector('.control-btn:first-child').textContent = '▶';
+                } else {
+                    currentAudio.play();
+                    document.querySelector('.control-btn:first-child').textContent = '⏸';
+                }
+                isPlaying = !isPlaying;
+            }
+        }
+
+        function stopMusic() {
+            if (currentAudio) {
+                currentAudio.pause();
+                currentAudio.currentTime = 0;
+                isPlaying = false;
+                document.getElementById('playerBar').classList.remove('show');
+                document.querySelector('.control-btn:first-child').textContent = '▶';
+            }
+        }
+
+        function updateProgress() {
+            if (currentAudio && currentAudio.duration) {
+                const progress = (currentAudio.currentTime / currentAudio.duration) * 100;
+                document.getElementById('progressFill').style.width = progress + '%';
+                document.getElementById('currentTime').textContent = formatTime(currentAudio.currentTime);
+            }
+        }
+
+        function seekAudio(event) {
+            if (currentAudio && currentAudio.duration) {
+                const rect = event.currentTarget.getBoundingClientRect();
+                const pos = (event.clientX - rect.left) / rect.width;
+                currentAudio.currentTime = pos * currentAudio.duration;
+            }
+        }
+
+        function formatTime(seconds) {
+            if (isNaN(seconds)) return '0:00';
+            const mins = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 60);
+            return `${mins}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        // ==================== INIT ====================
+        document.addEventListener('DOMContentLoaded', () => {
+            bootApp();
+            return;
+            
+            // Simuler un message API pour test
+            setTimeout(() => {
+                window.dispatchEvent(new MessageEvent('message', {
+                    data: {
+                        type: 'funnyweb_user_sync',
+                        userName: 'Mélanie',
+                        sessionID: '123456',
+                        profilePic: null,
+                        theme: 'dark',
+                        uiPreferences: {}
+                    }
+                }));
+            }, 1000);
+        });
+    </script>
+</body>
+</html>

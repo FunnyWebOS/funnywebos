@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Aether Music</title>
+  <meta http-equiv="refresh" content="0; url=spotaether.html" />
+  <style>
+    body { margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; background: #000; color: #fff; display:flex; align-items:center; justify-content:center; min-height:100vh; }
+    a { color: #fff; }
+  </style>
+</head>
+<body>
+  <div>
+    Redirection vers <a href="spotaether.html">Aether Music</a>...
+  </div>
+</body>
+</html>

@@ -435,14 +435,28 @@ class WindowManager {
                 theme: this.theme,
                 timeZone: this.timeZone,
                 timeFormat: this.timeFormat,
-                accessibility: this.accessibility,
-                uiPreferences: this.uiPreferences,
-                vfs: this.vfs,
-                installedApps: normalizedInstalled,
-                pinnedApps: normalizedPinned
-            };
+                 accessibility: this.accessibility,
+                 uiPreferences: this.uiPreferences,
+                 vfs: this.vfs,
+                 webWrapApps: this.webWrapApps,
+                 installedApps: normalizedInstalled,
+                 pinnedApps: normalizedPinned
+             };
+         }
+        try {
+            localStorage.setItem('aether_accounts', JSON.stringify(this.accounts));
+        } catch (err) {
+            // If localStorage is full, evict known large app caches so users don't get forced back into setup.
+            try { localStorage.removeItem('musicLibrary'); } catch (e) {}
+            try { localStorage.removeItem('spotaether_musicLibrary'); } catch (e) {}
+            try { localStorage.removeItem('aether_music_cache'); } catch (e) {}
+            try {
+                localStorage.setItem('aether_accounts', JSON.stringify(this.accounts));
+                this.notify('SystÃ¨me', 'Stockage local plein : cache musique supprimÃ© pour sauvegarder votre session.', 'system');
+            } catch (e) {
+                this.notify('SystÃ¨me', 'Impossible de sauvegarder la session (stockage local plein). LibÃ¨re de l\u2019espace puis recharge la page.', 'system');
+            }
         }
-        localStorage.setItem('aether_accounts', JSON.stringify(this.accounts));
         this.scheduleAccountCloudSync();
     }
 
@@ -505,12 +519,13 @@ class WindowManager {
         this.theme = user.theme || this.theme || 'dark';
         this.timeZone = user.timeZone || Intl.DateTimeFormat().resolvedOptions().timeZone;
         this.timeFormat = user.timeFormat || "24h";
-        this.accessibility = { ...this.getDefaultAccessibility(), ...(user.accessibility || {}) };
-        this.uiPreferences = this.sanitizeUIPreferences(user.uiPreferences || {});
-        this.vfs = user.vfs || this.getDefaultVFS();
-
-        const defaultInstalledApps = ["word", "excel", "powerpoint", "store", "explorer", "wiki"];
-        const defaultPinnedApps = ["word", "excel", "powerpoint", "store", "wiki"];
+         this.accessibility = { ...this.getDefaultAccessibility(), ...(user.accessibility || {}) };
+         this.uiPreferences = this.sanitizeUIPreferences(user.uiPreferences || {});
+         this.vfs = user.vfs || this.getDefaultVFS();
+         this.webWrapApps = (user.webWrapApps && typeof user.webWrapApps === 'object') ? user.webWrapApps : {};
+ 
+         const defaultInstalledApps = ["word", "excel", "powerpoint", "store", "explorer", "wiki"];
+         const defaultPinnedApps = ["word", "excel", "powerpoint", "store", "wiki"];
 
         const savedInstalledApps = Array.isArray(user.installedApps) ? user.installedApps : [];
         const savedPinnedApps = Array.isArray(user.pinnedApps) ? user.pinnedApps : [];
@@ -1140,13 +1155,14 @@ class WindowManager {
             theme: this.theme || account.theme || 'dark',
             timeZone: this.timeZone || account.timeZone || Intl.DateTimeFormat().resolvedOptions().timeZone,
             timeFormat: this.timeFormat || account.timeFormat || "24h",
-            accessibility: this.accessibility || account.accessibility || this.getDefaultAccessibility(),
-            uiPreferences: this.uiPreferences || account.uiPreferences || this.getDefaultUIPreferences(),
-            vfs: this.vfs || account.vfs || this.getDefaultVFS(),
-            installedApps: Array.isArray(this.installedApps) ? this.installedApps : (account.installedApps || ["word", "excel", "powerpoint", "store", "explorer", "wiki"]),
-            pinnedApps: Array.isArray(this.pinnedApps) ? this.pinnedApps : (account.pinnedApps || [])
-        };
-    }
+             accessibility: this.accessibility || account.accessibility || this.getDefaultAccessibility(),
+             uiPreferences: this.uiPreferences || account.uiPreferences || this.getDefaultUIPreferences(),
+             vfs: this.vfs || account.vfs || this.getDefaultVFS(),
+             webWrapApps: (this.webWrapApps && typeof this.webWrapApps === 'object') ? this.webWrapApps : (account.webWrapApps || {}),
+             installedApps: Array.isArray(this.installedApps) ? this.installedApps : (account.installedApps || ["word", "excel", "powerpoint", "store", "explorer", "wiki"]),
+             pinnedApps: Array.isArray(this.pinnedApps) ? this.pinnedApps : (account.pinnedApps || [])
+         };
+     }
 
     sanitizeAccountCloudPayload(payload = {}) {
         return {
@@ -1157,13 +1173,14 @@ class WindowManager {
             theme: payload.theme === 'light' ? 'light' : 'dark',
             timeZone: payload.timeZone || Intl.DateTimeFormat().resolvedOptions().timeZone,
             timeFormat: payload.timeFormat || "24h",
-            accessibility: { ...this.getDefaultAccessibility(), ...(payload.accessibility || {}) },
-            uiPreferences: this.sanitizeUIPreferences(payload.uiPreferences || {}),
-            vfs: payload.vfs || this.getDefaultVFS(),
-            installedApps: Array.isArray(payload.installedApps) && payload.installedApps.length > 0
-                ? payload.installedApps
-                : ["word", "excel", "powerpoint", "store", "explorer", "wiki"],
-            pinnedApps: Array.isArray(payload.pinnedApps) ? payload.pinnedApps : []
+             accessibility: { ...this.getDefaultAccessibility(), ...(payload.accessibility || {}) },
+             uiPreferences: this.sanitizeUIPreferences(payload.uiPreferences || {}),
+             vfs: payload.vfs || this.getDefaultVFS(),
+             webWrapApps: (payload.webWrapApps && typeof payload.webWrapApps === 'object' && !Array.isArray(payload.webWrapApps)) ? payload.webWrapApps : {},
+             installedApps: Array.isArray(payload.installedApps) && payload.installedApps.length > 0
+                 ? payload.installedApps
+                 : ["word", "excel", "powerpoint", "store", "explorer", "wiki"],
+             pinnedApps: Array.isArray(payload.pinnedApps) ? payload.pinnedApps : []
         };
     }
 
@@ -2359,14 +2376,15 @@ class WindowManager {
         if (!safeUrl) return;
         const safeName = String(name || '').trim();
         const safeIcon = String(icon || '').trim();
-        const id = `webwrap_${Date.now()}_${Math.random().toString(16).slice(2, 6)}`;
-        if (!this.webWrapApps || typeof this.webWrapApps !== 'object') this.webWrapApps = {};
-        this.webWrapApps[id] = { url: safeUrl, name: safeName, icon: safeIcon };
-
-        let title = safeName;
-        if (!title) {
-            try { title = new URL(safeUrl).hostname; } catch (err) { title = 'Web'; }
-        }
+         const id = `webwrap_${Date.now()}_${Math.random().toString(16).slice(2, 6)}`;
+         if (!this.webWrapApps || typeof this.webWrapApps !== 'object') this.webWrapApps = {};
+         this.webWrapApps[id] = { url: safeUrl, name: safeName, icon: safeIcon };
+         this.saveUserData();
+ 
+         let title = safeName;
+         if (!title) {
+             try { title = new URL(safeUrl).hostname; } catch (err) { title = 'Web'; }
+         }
         if (safeIcon) title = `${safeIcon} ${title}`;
         this.createWindow(id, title, true);
         return id;
@@ -3197,30 +3215,57 @@ class WindowManager {
         }, 5000);
     }
 
+    getSessionWindowsStorageKey() {
+        const base = 'aether_last_windows_v1';
+        const name = String(this.currentAccount || this.userName || '').trim().toLowerCase();
+        return name ? `${base}:${name}` : base;
+    }
+
     persistSessionWindows() {
         try {
+            const key = this.getSessionWindowsStorageKey();
             const ids = Array.from(this.windows.keys()).filter((id) => {
                 const s = String(id || '');
                 if (!s) return false;
-                if (s.startsWith('webwrap_')) return false;
                 return true;
             });
-            localStorage.setItem('aether_last_windows_v1', JSON.stringify({ ids, at: Date.now() }));
+            localStorage.setItem(key, JSON.stringify({ ids, at: Date.now() }));
         } catch (err) { }
     }
 
     restoreSessionWindows() {
         try {
-            const raw = localStorage.getItem('aether_last_windows_v1');
+            const key = this.getSessionWindowsStorageKey();
+            let raw = localStorage.getItem(key);
+            if (!raw && key !== 'aether_last_windows_v1') {
+                raw = localStorage.getItem('aether_last_windows_v1');
+                if (raw) {
+                    try { localStorage.setItem(key, raw); } catch (err) { }
+                }
+            }
             if (!raw) return;
             const parsed = JSON.parse(raw);
             const ids = (parsed && Array.isArray(parsed.ids)) ? parsed.ids.map(String) : [];
             ids.forEach((id) => {
-                if (!id || this.windows.has(id)) return;
-                this.createWindow(id, id, true);
-            });
-        } catch (err) { }
-    }
+                 if (!id || this.windows.has(id)) return;
+                 if (id.startsWith('webwrap_')) {
+                     const cfg = (this.webWrapApps && this.webWrapApps[id] && this.webWrapApps[id].url) ? this.webWrapApps[id] : null;
+                     if (!cfg) return;
+                     const rawUrl = String(cfg.url || '').trim();
+                     const rawName = String(cfg.name || '').trim();
+                     const rawIcon = String(cfg.icon || '').trim();
+                     let title = rawName;
+                     if (!title) {
+                         try { title = new URL(rawUrl).hostname; } catch (err) { title = 'Web'; }
+                     }
+                     if (rawIcon) title = `${rawIcon} ${title}`;
+                     this.createWindow(id, title || id, true);
+                     return;
+                 }
+                 this.createWindow(id, id, true);
+             });
+         } catch (err) { }
+     }
 
     getComputedAccentColor() {
         try {
@@ -4538,14 +4583,15 @@ removeWidget(id) {
                 const dockItem = document.getElementById(`dock-item-${id}`);
                 if (dockItem) dockItem.classList.remove('active-app');
 
-                // Cleanup ephemeral web wrapper entries
-                if (this.webWrapApps && Object.prototype.hasOwnProperty.call(this.webWrapApps, id)) {
-                    delete this.webWrapApps[id];
-                }
-
-                this.persistSessionWindows();
-            }, 300);
-        }
+                 // Cleanup ephemeral web wrapper entries
+                 if (this.webWrapApps && Object.prototype.hasOwnProperty.call(this.webWrapApps, id)) {
+                     delete this.webWrapApps[id];
+                     this.saveUserData();
+                 }
+ 
+                 this.persistSessionWindows();
+             }, 300);
+         }
     }
 
     focusWindow(id) {

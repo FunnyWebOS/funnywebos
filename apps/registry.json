@@ -1,4 +1,4 @@
-﻿[
+[
     {
         "id": "wiki",
         "title": "AetherWiki",
@@ -787,6 +787,15 @@
             "âœ¨"
         ],
         "appFile": "mickey.html"
+    },
+    {
+        "id": "spotaether",
+        "title": "Aether Music",
+        "creator": "Mouns",
+        "description": "Plateforme musicale communautaire : upload, albums, artistes, lecture.",
+        "category": "online",
+        "icon": "ðŸŽµ",
+        "appFile": "spotaether.html"
     },
     {
         "id": "admin",
