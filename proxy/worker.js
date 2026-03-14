@@ -149,6 +149,281 @@ export default {
       }
     }
 
+    // Catalog: fill the app with tracks (Audius preferred, iTunes fallback).
+    if (url.pathname === "/aether/v1/catalog/trending") {
+      try {
+        if (request.method !== "GET") {
+          return withCors(json({ error: "Method not allowed" }, { status: 405 }), origin || "*");
+        }
+
+        const limit = Math.max(1, Math.min(100, Number(url.searchParams.get("limit") || 50)));
+        const audiusBearer = String(env.AUDIUS_BEARER_TOKEN || "").trim();
+        const audiusApiKey = String(env.AUDIUS_API_KEY || "").trim();
+        const audiusAppName = String(env.AUDIUS_APP_NAME || "aether_music").trim() || "aether_music";
+
+        if (audiusBearer) {
+          const headers = new Headers();
+          headers.set("authorization", `Bearer ${audiusBearer}`);
+          if (audiusApiKey) headers.set("x-api-key", audiusApiKey);
+          headers.set("accept", "application/json");
+
+          const upstream = await fetch(`https://api.audius.co/v1/tracks/trending?limit=${limit}`, { headers });
+          if (!upstream.ok) {
+            const text = await upstream.text().catch(() => "");
+            throw new Error(text || `Audius HTTP ${upstream.status}`);
+          }
+          const payload = await upstream.json();
+          const tracks = Array.isArray(payload && payload.data) ? payload.data : [];
+
+          const pickArtwork = (t) => {
+            const art = (t && (t.artwork || t.cover_art || t.coverArt)) || null;
+            if (!art) return "";
+            if (typeof art === "string") return art;
+            if (typeof art !== "object") return "";
+            return (
+              art["1000x1000"] ||
+              art["480x480"] ||
+              art["150x150"] ||
+              art["100x100"] ||
+              ""
+            );
+          };
+
+          const rows = tracks.map((t) => ({
+            source: "audius",
+            id: t && t.id ? String(t.id) : "",
+            title: t && (t.title || t.track_title || t.trackTitle) ? String(t.title || t.track_title || t.trackTitle) : "",
+            artist: t && (t.user && t.user.name ? t.user.name : (t.artist || t.genre)) ? String(t.user && t.user.name ? t.user.name : (t.artist || "")) : "",
+            genre: t && (t.genre || t.mood) ? String(t.genre || t.mood) : "",
+            coverUrl: pickArtwork(t),
+            audioUrl: `${url.origin}/aether/v1/audius/stream/${encodeURIComponent(String(t && t.id ? t.id : ""))}`,
+          })).filter((t) => t && t.id && t.title && t.audioUrl);
+
+          return withCors(json({ ok: true, rows }), origin || "*");
+        }
+
+        // Public Audius (no token): works with app_name on many deployments.
+        try {
+          const upstream = await fetch(`https://api.audius.co/v1/tracks/trending?limit=${limit}&app_name=${encodeURIComponent(audiusAppName)}`, {
+            headers: { accept: "application/json" },
+          });
+          if (upstream.ok) {
+            const payload = await upstream.json().catch(() => null);
+            const tracks = Array.isArray(payload && payload.data) ? payload.data : [];
+
+            const pickArtwork = (t) => {
+              const art = (t && (t.artwork || t.cover_art || t.coverArt)) || null;
+              if (!art) return "";
+              if (typeof art === "string") return art;
+              if (typeof art !== "object") return "";
+              return (
+                art["1000x1000"] ||
+                art["480x480"] ||
+                art["150x150"] ||
+                art["100x100"] ||
+                ""
+              );
+            };
+
+            const rows = tracks.map((t) => ({
+              source: "audius",
+              id: t && t.id ? String(t.id) : "",
+              title: t && (t.title || t.track_title || t.trackTitle) ? String(t.title || t.track_title || t.trackTitle) : "",
+              artist: t && (t.user && t.user.name ? t.user.name : (t.artist || "")) ? String(t.user && t.user.name ? t.user.name : (t.artist || "")) : "",
+              genre: t && (t.genre || t.mood) ? String(t.genre || t.mood) : "",
+              coverUrl: pickArtwork(t),
+              audioUrl: `${url.origin}/aether/v1/audius/stream/${encodeURIComponent(String(t && t.id ? t.id : ""))}`,
+            })).filter((t) => t && t.id && t.title && t.audioUrl);
+
+            if (rows.length) {
+              return withCors(json({ ok: true, rows, note: "audius_public" }), origin || "*");
+            }
+          }
+        } catch (err) {
+          // ignore, fallback to iTunes
+        }
+
+        // Fallback: iTunes search API (30s preview, but no key required).
+        const seedTerms = [
+          "top hits",
+          "rap",
+          "pop",
+          "electronic",
+          "house",
+          "afrobeats",
+          "phonk",
+          "kpop",
+        ];
+        const term = seedTerms[Math.floor(Math.random() * seedTerms.length)];
+        const itunesUrl = new URL("https://itunes.apple.com/search");
+        itunesUrl.searchParams.set("media", "music");
+        itunesUrl.searchParams.set("entity", "song");
+        itunesUrl.searchParams.set("limit", String(limit));
+        itunesUrl.searchParams.set("term", term);
+        const itunesResp = await fetch(itunesUrl.toString(), { headers: { accept: "application/json" } });
+        if (!itunesResp.ok) {
+          const text = await itunesResp.text().catch(() => "");
+          throw new Error(text || `iTunes HTTP ${itunesResp.status}`);
+        }
+        const itunesPayload = await itunesResp.json();
+        const results = Array.isArray(itunesPayload && itunesPayload.results) ? itunesPayload.results : [];
+        const rows = results
+          .map((r) => ({
+            source: "itunes",
+            id: r && r.trackId ? String(r.trackId) : "",
+            title: r && r.trackName ? String(r.trackName) : "",
+            artist: r && r.artistName ? String(r.artistName) : "",
+            genre: r && r.primaryGenreName ? String(r.primaryGenreName) : "",
+            coverUrl: r && (r.artworkUrl100 || r.artworkUrl60) ? String(r.artworkUrl100 || r.artworkUrl60) : "",
+            audioUrl: r && r.previewUrl ? String(r.previewUrl) : "",
+          }))
+          .filter((t) => t && t.id && t.title && t.audioUrl);
+
+        return withCors(json({ ok: true, rows, note: "itunes_preview_only" }), origin || "*");
+      } catch (err) {
+        return withCors(json({ ok: false, error: String(err && err.message ? err.message : err) }, { status: 500 }), origin || "*");
+      }
+    }
+
+    // Catalog search: return tracks for a user query (Audius preferred, iTunes fallback).
+    if (url.pathname === "/aether/v1/catalog/search") {
+      try {
+        if (request.method !== "GET") {
+          return withCors(json({ error: "Method not allowed" }, { status: 405 }), origin || "*");
+        }
+
+        const limit = Math.max(1, Math.min(50, Number(url.searchParams.get("limit") || 25)));
+        const query = String(url.searchParams.get("query") || url.searchParams.get("q") || "").trim();
+        if (!query) {
+          return withCors(json({ ok: true, rows: [] }), origin || "*");
+        }
+
+        const audiusBearer = String(env.AUDIUS_BEARER_TOKEN || "").trim();
+        const audiusApiKey = String(env.AUDIUS_API_KEY || "").trim();
+        const audiusAppName = String(env.AUDIUS_APP_NAME || "aether_music").trim() || "aether_music";
+
+        const pickArtwork = (t) => {
+          const art = (t && (t.artwork || t.cover_art || t.coverArt)) || null;
+          if (!art) return "";
+          if (typeof art === "string") return art;
+          if (typeof art !== "object") return "";
+          return (
+            art["1000x1000"] ||
+            art["480x480"] ||
+            art["150x150"] ||
+            art["100x100"] ||
+            ""
+          );
+        };
+
+        // Audius search (token optional).
+        try {
+          const headers = new Headers();
+          headers.set("accept", "application/json");
+          if (audiusBearer) headers.set("authorization", `Bearer ${audiusBearer}`);
+          if (audiusApiKey) headers.set("x-api-key", audiusApiKey);
+
+          const upstreamUrl = audiusBearer
+            ? `https://api.audius.co/v1/tracks/search?query=${encodeURIComponent(query)}&limit=${limit}`
+            : `https://api.audius.co/v1/tracks/search?query=${encodeURIComponent(query)}&limit=${limit}&app_name=${encodeURIComponent(audiusAppName)}`;
+
+          const upstream = await fetch(upstreamUrl, { headers });
+          if (upstream.ok) {
+            const payload = await upstream.json().catch(() => null);
+            const tracks = Array.isArray(payload && payload.data) ? payload.data : [];
+            const rows = tracks.map((t) => ({
+              source: "audius",
+              id: t && t.id ? String(t.id) : "",
+              title: t && (t.title || t.track_title || t.trackTitle) ? String(t.title || t.track_title || t.trackTitle) : "",
+              artist: t && (t.user && t.user.name ? t.user.name : (t.artist || "")) ? String(t.user && t.user.name ? t.user.name : (t.artist || "")) : "",
+              genre: t && (t.genre || t.mood) ? String(t.genre || t.mood) : "",
+              coverUrl: pickArtwork(t),
+              audioUrl: `${url.origin}/aether/v1/audius/stream/${encodeURIComponent(String(t && t.id ? t.id : ""))}`,
+            })).filter((t) => t && t.id && t.title && t.audioUrl);
+
+            if (rows.length) {
+              return withCors(json({ ok: true, rows }), origin || "*");
+            }
+          }
+        } catch (err) {
+          // ignore, fallback
+        }
+
+        // Fallback: iTunes search API (30s preview).
+        const itunesUrl = new URL("https://itunes.apple.com/search");
+        itunesUrl.searchParams.set("media", "music");
+        itunesUrl.searchParams.set("entity", "song");
+        itunesUrl.searchParams.set("limit", String(limit));
+        itunesUrl.searchParams.set("term", query);
+        const itunesResp = await fetch(itunesUrl.toString(), { headers: { accept: "application/json" } });
+        if (!itunesResp.ok) {
+          const text = await itunesResp.text().catch(() => "");
+          throw new Error(text || `iTunes HTTP ${itunesResp.status}`);
+        }
+        const itunesPayload = await itunesResp.json();
+        const results = Array.isArray(itunesPayload && itunesPayload.results) ? itunesPayload.results : [];
+        const rows = results
+          .map((r) => ({
+            source: "itunes",
+            id: r && r.trackId ? String(r.trackId) : "",
+            title: r && r.trackName ? String(r.trackName) : "",
+            artist: r && r.artistName ? String(r.artistName) : "",
+            genre: r && r.primaryGenreName ? String(r.primaryGenreName) : "",
+            coverUrl: r && (r.artworkUrl100 || r.artworkUrl60) ? String(r.artworkUrl100 || r.artworkUrl60) : "",
+            audioUrl: r && r.previewUrl ? String(r.previewUrl) : "",
+          }))
+          .filter((t) => t && t.id && t.title && t.audioUrl);
+
+        return withCors(json({ ok: true, rows, note: "itunes_preview_only" }), origin || "*");
+      } catch (err) {
+        return withCors(json({ ok: false, error: String(err && err.message ? err.message : err) }, { status: 500 }), origin || "*");
+      }
+    }
+
+    // Audius: redirect to stream URL (full tracks for Audius-hosted content).
+    if (url.pathname.startsWith("/aether/v1/audius/stream/")) {
+      try {
+        if (request.method !== "GET") {
+          return withCors(json({ error: "Method not allowed" }, { status: 405 }), origin || "*");
+        }
+
+        const trackId = url.pathname.split("/").pop();
+        const audiusBearer = String(env.AUDIUS_BEARER_TOKEN || "").trim();
+        const audiusApiKey = String(env.AUDIUS_API_KEY || "").trim();
+        const audiusAppName = String(env.AUDIUS_APP_NAME || "aether_music").trim() || "aether_music";
+
+        // Public path (no token): just redirect to Audius API stream URL (it will redirect again to the content node).
+        if (!audiusBearer) {
+          const target = `https://api.audius.co/v1/tracks/${encodeURIComponent(String(trackId || ""))}/stream?app_name=${encodeURIComponent(audiusAppName)}`;
+          return withCors(new Response(null, { status: 302, headers: { location: target } }), origin || "*");
+        }
+
+        const streamUrl = new URL(`https://api.audius.co/v1/tracks/${encodeURIComponent(String(trackId || ""))}/stream`);
+        streamUrl.searchParams.set("no_redirect", "true");
+        if (audiusApiKey) streamUrl.searchParams.set("api_key", audiusApiKey);
+
+        const headers = new Headers();
+        headers.set("authorization", `Bearer ${audiusBearer}`);
+        if (audiusApiKey) headers.set("x-api-key", audiusApiKey);
+        headers.set("accept", "application/json");
+
+        const upstream = await fetch(streamUrl.toString(), { headers });
+        if (!upstream.ok) {
+          const text = await upstream.text().catch(() => "");
+          throw new Error(text || `Audius HTTP ${upstream.status}`);
+        }
+
+        const payload = await upstream.json().catch(() => null);
+        const target = payload && payload.data ? String(payload.data) : "";
+        if (!target) throw new Error("Missing stream url");
+
+        // Redirect so the browser can stream from the content node.
+        return withCors(new Response(null, { status: 302, headers: { location: target } }), origin || "*");
+      } catch (err) {
+        return withCors(json({ ok: false, error: String(err && err.message ? err.message : err) }, { status: 500 }), origin || "*");
+      }
+    }
+
     if (url.pathname === "/openai/v1/chat/completions") {
       if (request.method !== "POST") {
         return withCors(json({ error: "Method not allowed" }, { status: 405 }), origin || "*");

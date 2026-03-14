@@ -383,9 +383,20 @@ class WindowManager {
         const data = localStorage.getItem('aether_accounts');
         const legacy = localStorage.getItem('funnyweb_accounts') || localStorage.getItem('funnyweb_user');
 
+        let loaded = false;
         if (data) {
-            this.accounts = JSON.parse(data);
-        } else if (legacy) {
+            try {
+                const parsed = JSON.parse(data);
+                this.accounts = (parsed && typeof parsed === 'object') ? parsed : {};
+                loaded = true;
+            } catch (e) {
+                // Corrupted/truncated storage: remove and try legacy migration instead of forcing OOBE on every reload.
+                this.accounts = {};
+                try { localStorage.removeItem('aether_accounts'); } catch (_) { }
+            }
+        }
+
+        if (!loaded && legacy) {
             // Migrate legacy data
             try {
                 const parsed = JSON.parse(legacy);
@@ -398,6 +409,19 @@ class WindowManager {
                 localStorage.removeItem('funnyweb_accounts');
                 localStorage.removeItem('funnyweb_user');
             } catch (e) { console.error("Migration failed"); }
+        }
+
+        // If localStorage is unavailable/full, fall back to a tiny cookie backup (keeps PIN screen usable).
+        if (!this.accounts || Object.keys(this.accounts).length === 0) {
+            try {
+                const backup = this.readAccountsCookieBackup();
+                if (backup && backup.accounts && typeof backup.accounts === 'object' && Object.keys(backup.accounts).length > 0) {
+                    this.accounts = backup.accounts;
+                    if (backup.lastUser) {
+                        try { localStorage.setItem('aether_last_user', String(backup.lastUser)); } catch (_) { }
+                    }
+                }
+            } catch (_) { }
         }
 
         const lastUser = localStorage.getItem('aether_last_user');
@@ -445,22 +469,126 @@ class WindowManager {
          }
         try {
             localStorage.setItem('aether_accounts', JSON.stringify(this.accounts));
+            try { this.clearAccountsCookieBackup(); } catch (_) { }
         } catch (err) {
             // If localStorage is full, evict known large app caches so users don't get forced back into setup.
             try { localStorage.removeItem('musicLibrary'); } catch (e) {}
             try { localStorage.removeItem('spotaether_musicLibrary'); } catch (e) {}
             try { localStorage.removeItem('aether_music_cache'); } catch (e) {}
+            // Evict other recoverable OS caches/settings if quota is exceeded.
+            try { localStorage.removeItem('aether_custom_apps'); } catch (e) {}
+            try { localStorage.removeItem('aether_settings'); } catch (e) {}
+            try { localStorage.removeItem('aether_last_windows_v2'); } catch (e) {}
+            try { localStorage.removeItem('aether_last_windows_v1'); } catch (e) {}
+            try { localStorage.removeItem('aether_pending_apps'); } catch (e) {}
+            try { localStorage.removeItem('aether_approved_apps'); } catch (e) {}
+            try { localStorage.removeItem('aether_apps_overrides'); } catch (e) {}
+            try { localStorage.removeItem('aether_deleted_apps'); } catch (e) {}
             try {
                 localStorage.setItem('aether_accounts', JSON.stringify(this.accounts));
+                try { this.clearAccountsCookieBackup(); } catch (_) { }
                 this.notify('SystÃ¨me', 'Stockage local plein : cache musique supprimÃ© pour sauvegarder votre session.', 'system');
             } catch (e) {
-                this.notify('SystÃ¨me', 'Impossible de sauvegarder la session (stockage local plein). LibÃ¨re de l\u2019espace puis recharge la page.', 'system');
+                // Last resort: save a minimal account snapshot (keeps username/PIN) without heavy fields (VFS, webwrap).
+                const minimalAccounts = {};
+                try {
+                    Object.keys(this.accounts || {}).forEach((name) => {
+                        const acc = (this.accounts && this.accounts[name]) ? this.accounts[name] : {};
+                        const rawProfilePic = typeof acc.profilePic === 'string' ? acc.profilePic : "";
+                        const rawWallpaper = typeof acc.wallpaper === 'string' ? acc.wallpaper : "";
+                        const safeProfilePic = (rawProfilePic.startsWith('data:') && rawProfilePic.length > 8000) ? "" : rawProfilePic;
+                        const safeWallpaper = (rawWallpaper.startsWith('data:') && rawWallpaper.length > 8000)
+                            ? "var(--bg-image)"
+                            : (rawWallpaper || "var(--bg-image)");
+                        minimalAccounts[name] = {
+                            pin: acc.pin,
+                            sessionID: acc.sessionID || null,
+                            profilePic: safeProfilePic,
+                            wallpaper: safeWallpaper,
+                            theme: acc.theme || "dark",
+                            timeZone: acc.timeZone || Intl.DateTimeFormat().resolvedOptions().timeZone,
+                            timeFormat: acc.timeFormat || "24h",
+                            accessibility: acc.accessibility || this.getDefaultAccessibility(),
+                            uiPreferences: acc.uiPreferences || this.getDefaultUIPreferences(),
+                            installedApps: Array.isArray(acc.installedApps) ? acc.installedApps : [],
+                            pinnedApps: Array.isArray(acc.pinnedApps) ? acc.pinnedApps : []
+                        };
+                    });
+                    localStorage.setItem('aether_accounts', JSON.stringify(minimalAccounts));
+                    try { this.writeAccountsCookieBackup(); } catch (_) { }
+                    this.notify('SystÃ¨me', 'Stockage local plein : sauvegarde minimale (connexion conservee).', 'system');
+                } catch (_) {
+                    try { this.writeAccountsCookieBackup(); } catch (_) { }
+                    this.notify('SystÃ¨me', 'Impossible de sauvegarder la session (stockage local plein). LibÃ¨re de l\u2019espace puis recharge la page.', 'system');
+                }
             }
         }
         this.scheduleAccountCloudSync();
     }
 
     saveUserData() { this.saveAccounts(); }
+
+    getCookie(name) {
+        try {
+            const needle = `${encodeURIComponent(name)}=`;
+            const parts = String(document.cookie || '').split(';');
+            for (const part of parts) {
+                const trimmed = part.trim();
+                if (trimmed.startsWith(needle)) return decodeURIComponent(trimmed.slice(needle.length));
+            }
+        } catch (_) { }
+        return '';
+    }
+
+    setCookie(name, value, days = 60) {
+        try {
+            const maxAge = Math.max(0, Math.floor(days * 86400));
+            document.cookie = `${encodeURIComponent(name)}=${encodeURIComponent(String(value || ''))}; Path=/; Max-Age=${maxAge}; SameSite=Lax`;
+        } catch (_) { }
+    }
+
+    deleteCookie(name) {
+        try {
+            document.cookie = `${encodeURIComponent(name)}=; Path=/; Max-Age=0; SameSite=Lax`;
+        } catch (_) { }
+    }
+
+    readAccountsCookieBackup() {
+        try {
+            const raw = this.getCookie('aether_accounts_backup');
+            if (!raw) return null;
+            const parsed = JSON.parse(raw);
+            if (!parsed || typeof parsed !== 'object') return null;
+            return parsed;
+        } catch (_) {
+            return null;
+        }
+    }
+
+    writeAccountsCookieBackup() {
+        try {
+            const lastUser = this.currentAccount || localStorage.getItem('aether_last_user') || '';
+            const key = this.findAccountKey(lastUser) || String(lastUser || '');
+            const acc = key && this.accounts && this.accounts[key] ? this.accounts[key] : null;
+            const pin = acc && acc.pin ? String(acc.pin) : (this.pin ? String(this.pin) : '');
+            if (!key || !pin) return;
+            const payload = {
+                lastUser: key,
+                accounts: {
+                    [key]: {
+                        pin,
+                        sessionID: (acc && acc.sessionID) ? String(acc.sessionID) : (this.sessionID ? String(this.sessionID) : null),
+                        theme: (acc && acc.theme) ? String(acc.theme) : (this.theme || 'dark')
+                    }
+                }
+            };
+            this.setCookie('aether_accounts_backup', JSON.stringify(payload), 60);
+        } catch (_) { }
+    }
+
+    clearAccountsCookieBackup() {
+        this.deleteCookie('aether_accounts_backup');
+    }
 
     normalizeAccountLookup(name = '') {
         return String(name || '').trim().toLowerCase();
@@ -556,7 +684,7 @@ class WindowManager {
             this.applyUIPreferences();
         }, 0);
         this.hydrateAccountFromSupabase(resolvedName).catch(() => {});
-        localStorage.setItem('aether_last_user', resolvedName);
+        try { localStorage.setItem('aether_last_user', resolvedName); } catch (_) { }
     }
 
     getDefaultVFS() {

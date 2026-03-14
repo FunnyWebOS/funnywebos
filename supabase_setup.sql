@@ -170,6 +170,7 @@ create table if not exists public.aether_music_tracks (
     owner text not null,
     title text not null,
     artist text not null,
+    genre text,
     description text not null default '',
     type text not null default 'single',
     album text,
@@ -180,6 +181,9 @@ create table if not exists public.aether_music_tracks (
     likes int not null default 0,
     created_at timestamptz not null default now()
 );
+
+alter table public.aether_music_tracks
+    add column if not exists genre text;
 
 create index if not exists aether_music_tracks_created_at_idx
 on public.aether_music_tracks (created_at desc);

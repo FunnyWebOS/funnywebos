@@ -406,6 +406,12 @@
             font-size: 1rem;
         }
 
+        .card-genre {
+            color: var(--text-tertiary);
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+        }
+
         .card-type {
             position: absolute;
             top: 1rem;
@@ -711,6 +717,53 @@
                 grid-column: span 1;
             }
         }
+
+        /* Action buttons & Comments */
+        .action-icon-btn {
+            background: none; border: none; font-size: 1.5rem; color: var(--text-secondary); cursor: pointer; transition: var(--transition);
+        }
+        .action-icon-btn:hover { color: var(--accent); transform: scale(1.1); }
+        .action-icon-btn.liked { color: #ff4757; }
+        
+        .comments-panel {
+            position: fixed; top: 0; right: -400px; width: 400px; height: 100vh;
+            background: rgba(17, 17, 17, 0.98); backdrop-filter: blur(20px);
+            border-left: 1px solid var(--border-color); z-index: 2000;
+            transition: right 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            display: flex; flex-direction: column; box-shadow: -10px 0 30px rgba(0,0,0,0.5);
+        }
+        .comments-panel.open { right: 0; }
+        .comments-header {
+            padding: 1.5rem; border-bottom: 1px solid var(--border-color);
+            display: flex; justify-content: space-between; align-items: center; font-weight: 700;
+        }
+        .close-comments {
+            background: none; border: none; color: var(--text-primary); font-size: 1.2rem; cursor: pointer;
+        }
+        .comments-list {
+            flex: 1; padding: 1.5rem; overflow-y: auto; display: flex; flex-direction: column; gap: 1rem;
+        }
+        .comment-item {
+            background: rgba(255,255,255,0.05); padding: 1rem; border-radius: 12px;
+        }
+        .comment-item-header {
+            display: flex; justify-content: space-between; font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 0.5rem;
+        }
+        .comment-text {
+            color: var(--text-primary); font-size: 0.95rem; line-height: 1.4;
+        }
+        .comments-input-area {
+            padding: 1.5rem; border-top: 1px solid var(--border-color); background: rgba(0,0,0,0.5);
+            display: flex; gap: 0.5rem;
+        }
+        .comments-input-area input {
+            flex: 1; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color);
+            border-radius: var(--button-radius); padding: 12px 15px; color: var(--text-primary);
+        }
+        .comments-input-area button {
+            background: var(--accent); color: var(--bg-primary); border: none; padding: 0 1.5rem;
+            border-radius: var(--button-radius); font-weight: 700; cursor: pointer;
+        }
     </style>
 </head>
 <body>
@@ -748,6 +801,11 @@
             <div class="form-group">
                 <label>ARTISTE</label>
                 <input type="text" id="artist" placeholder="Nom de l'artiste" required>
+            </div>
+            
+            <div class="form-group full-width">
+                <label>GENRE</label>
+                <input type="text" id="genre" placeholder="Ex: House, Rap, Pop...">
             </div>
             
             <div class="form-group full-width">
@@ -849,6 +907,8 @@
                 <div class="title" id="playerTitle">-</div>
                 <div class="artist" id="playerArtist">-</div>
             </div>
+            <button class="action-icon-btn" id="likeTrackBtn" onclick="toggleLikeCurrent()" aria-label="Like">🤍</button>
+            <button class="action-icon-btn" id="commentTrackBtn" onclick="toggleCommentsPanel()" aria-label="Commentaires">💬</button>
         </div>
         
         <div class="player-controls">
@@ -866,12 +926,33 @@
         </div>
     </div>
 
+    <!-- Comments Panel -->
+    <div id="commentsPanel" class="comments-panel">
+        <div class="comments-header">
+            <span>Commentaires</span>
+            <button class="close-comments" onclick="toggleCommentsPanel()" aria-label="Fermer">×</button>
+        </div>
+        <div id="commentsList" class="comments-list">
+            <div style="text-align:center; color: var(--text-secondary); margin-top: auto; margin-bottom: auto;">
+                Lancez une musique pour voir les commentaires.
+            </div>
+        </div>
+        <div class="comments-input-area">
+            <input type="text" id="commentInput" placeholder="Ajouter un commentaire..." onkeypress="if(event.key === 'Enter') submitComment()">
+            <button onclick="submitComment()">Envoyer</button>
+        </div>
+    </div>
+
     <!-- Message container -->
     <div id="messageContainer"></div>
 
     <script>
+        const likedTracks = new Set();
+        const trackComments = {};
+        const LOCAL_USER_KEY = 'spotaether_last_user';
         // ==================== DONNÉES ====================
         let musicLibrary = [];
+        let catalogTracks = [];
         let albums = [];
         let artists = [];
         let currentUser = {
@@ -1013,9 +1094,11 @@
             const createdAt = row && row.created_at ? new Date(row.created_at) : null;
             return {
                 id: row.id,
+                source: 'cloud',
                 owner: row.owner || '',
                 title: row.title || '',
                 artist: row.artist || '',
+                genre: row.genre || '',
                 description: row.description || '',
                 type: row.type || 'single',
                 album: row.album || null,
@@ -1026,6 +1109,47 @@
                 plays: Number(row.plays) || 0,
                 likes: Number(row.likes) || 0
             };
+        }
+
+        function normalizeCatalogTrack(row) {
+            const source = row && row.source ? String(row.source) : 'catalog';
+            const rawId = row && row.id !== undefined && row.id !== null ? String(row.id) : '';
+            const id = rawId ? `${source}:${rawId}` : '';
+            const coverUrl = row && row.coverUrl ? String(row.coverUrl) : '';
+
+            const improvedCover = (() => {
+                // iTunes artwork URLs commonly embed sizing like 100x100bb.jpg.
+                if (!coverUrl) return '';
+                if (source !== 'itunes') return coverUrl;
+                return coverUrl.replace(/\d+x\d+bb\./, '600x600bb.');
+            })();
+
+            return {
+                id,
+                source,
+                owner: '',
+                title: row && row.title ? String(row.title) : '',
+                artist: row && row.artist ? String(row.artist) : '',
+                genre: row && row.genre ? String(row.genre) : '',
+                description: '',
+                type: 'single',
+                album: null,
+                trackNumber: null,
+                audioUrl: row && row.audioUrl ? String(row.audioUrl) : null,
+                coverUrl: improvedCover,
+                date: '',
+                plays: 0,
+                likes: 0
+            };
+        }
+
+        function getAllTracks() {
+            return [...musicLibrary, ...catalogTracks];
+        }
+
+        function findTrackById(id) {
+            const key = String(id);
+            return getAllTracks().find(t => t && String(t.id) === key) || null;
         }
 
         async function loadLibraryFromCloud() {
@@ -1045,6 +1169,7 @@
                 'owner',
                 'title',
                 'artist',
+                'genre',
                 'description',
                 'type',
                 'album',
@@ -1058,6 +1183,40 @@
 
             const rows = await supabaseRequest(`${CLOUD_TABLE}?select=${encodeURIComponent(select)}&order=created_at.desc&limit=200`);
             return (Array.isArray(rows) ? rows : []).map(mapRowToTrack);
+        }
+
+        async function refreshCatalog() {
+            try {
+                if (musicProxyBase) {
+                    const res = await musicProxyRequest('/aether/v1/catalog/trending?limit=60', { method: 'GET' });
+                    const rows = res && Array.isArray(res.rows) ? res.rows : [];
+                    catalogTracks = rows.map(normalizeCatalogTrack).filter(t => t && t.id && t.title && t.audioUrl);
+                } else {
+                    const res = await fetch('https://discoveryprovider.audius.co/v1/tracks/trending?app_name=spotaether');
+                    const json = await res.json();
+                    const audiusData = Array.isArray(json.data) ? json.data : [];
+                    catalogTracks = audiusData.filter(t => t && t.id && t.title).map(t => ({
+                        id: 'audius:' + t.id,
+                        source: 'audius',
+                        owner: t.user?.name || 'Audius Artist',
+                        title: t.title,
+                        artist: t.user?.name || 'Unknown Artist',
+                        genre: t.genre || 'Various',
+                        description: t.description || '',
+                        type: 'single',
+                        album: null,
+                        trackNumber: null,
+                        audioUrl: `https://discoveryprovider.audius.co/v1/tracks/${encodeURIComponent(String(t.id))}/stream?app_name=spotaether`,
+                        coverUrl: t.artwork ? (t.artwork['480x480'] || t.artwork['150x150']) : '',
+                        date: t.created_at ? new Date(t.created_at).toLocaleDateString() : '',
+                        plays: t.play_count || 0,
+                        likes: t.favorite_count || 0
+                    }));
+                }
+                if (currentView === 'discover') renderDiscover();
+            } catch (err) {
+                console.error("Audius fetch error:", err);
+            }
         }
 
         function loadLibraryFromCache() {
@@ -1076,9 +1235,11 @@
             try {
                 const light = musicLibrary.map(t => ({
                     id: t.id,
+                    source: t.source || 'cloud',
                     owner: t.owner || '',
                     title: t.title,
                     artist: t.artist,
+                    genre: t.genre || '',
                     description: t.description || '',
                     type: t.type || 'single',
                     album: t.album || null,
@@ -1170,6 +1331,76 @@
             showMessage('Import terminÃ©.');
         }
 
+        function persistLocalUser() {
+            try {
+                const payload = {
+                    name: currentUser && currentUser.name ? String(currentUser.name) : '',
+                    profilePic: currentUser && currentUser.profilePic ? String(currentUser.profilePic) : ''
+                };
+                if (!payload.name || payload.name === 'Visiteur' || payload.name === 'Utilisateur') return;
+                try { localStorage.setItem(LOCAL_USER_KEY, JSON.stringify(payload)); } catch (e) {}
+                try { setCookie(LOCAL_USER_KEY, JSON.stringify(payload), 60); } catch (e) {}
+            } catch (err) {}
+        }
+
+        function getCookie(name) {
+            try {
+                const needle = `${encodeURIComponent(name)}=`;
+                const parts = String(document.cookie || '').split(';');
+                for (const part of parts) {
+                    const trimmed = part.trim();
+                    if (trimmed.startsWith(needle)) return decodeURIComponent(trimmed.slice(needle.length));
+                }
+            } catch (e) {}
+            return '';
+        }
+
+        function setCookie(name, value, days = 60) {
+            try {
+                const maxAge = Math.max(0, Math.floor(days * 86400));
+                document.cookie = `${encodeURIComponent(name)}=${encodeURIComponent(String(value || ''))}; Path=/; Max-Age=${maxAge}; SameSite=Lax`;
+            } catch (e) {}
+        }
+
+        function hydrateLocalUser() {
+            try {
+                let raw = '';
+                try { raw = localStorage.getItem(LOCAL_USER_KEY) || ''; } catch (e) { raw = ''; }
+                if (!raw) raw = getCookie(LOCAL_USER_KEY) || '';
+                if (!raw) return;
+                const parsed = JSON.parse(raw);
+                const name = parsed && parsed.name ? String(parsed.name) : '';
+                const profilePic = parsed && parsed.profilePic ? String(parsed.profilePic) : '';
+                if (!name || name === 'Visiteur' || name === 'Utilisateur') return;
+                if (currentUser && (currentUser.name === 'Visiteur' || currentUser.name === 'Utilisateur' || !currentUser.name)) {
+                    currentUser.name = name;
+                    currentUser.profilePic = profilePic || currentUser.profilePic;
+                }
+            } catch (err) {}
+        }
+
+        function updateUserUI() {
+            try {
+                const nameEl = document.getElementById('userName');
+                if (nameEl) nameEl.textContent = currentUser.name || 'Visiteur';
+
+                const avatar = document.getElementById('userAvatar');
+                if (avatar) {
+                    const profilePic = currentUser.profilePic ? String(currentUser.profilePic) : '';
+                    if (profilePic && (profilePic.startsWith('data:') || profilePic.startsWith('http'))) {
+                        avatar.innerHTML = `<img src="${profilePic}" alt="" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`;
+                    } else {
+                        avatar.textContent = '👤';
+                    }
+                }
+
+                const artistInput = document.getElementById('artist');
+                if (artistInput && !String(artistInput.value || '').trim()) {
+                    artistInput.value = currentUser.name || '';
+                }
+            } catch (err) {}
+        }
+
         // ==================== API UTILISATEUR ====================
         window.addEventListener('message', (event) => {
             if (event.data && event.data.type === 'funnyweb_user_sync') {
@@ -1201,7 +1432,9 @@
                     document.documentElement.style.setProperty('--text-primary', '#000000');
                     document.documentElement.style.setProperty('--bg-secondary', '#f5f5f5');
                 }
-                
+
+                persistLocalUser();
+                 
                 showMessage(`Bienvenue ${currentUser.name} !`);
                 
                 // Créer l'artiste utilisateur
@@ -1283,11 +1516,15 @@
                 if (artistInput && !String(artistInput.value || '').trim()) {
                     artistInput.value = currentUser.name;
                 }
+
+                persistLocalUser();
             } catch (err) {}
         }
 
         function bootApp() {
             initCloud();
+            hydrateLocalUser();
+            updateUserUI();
             bestEffortHydrateUserFromParent();
             requestUserSync();
 
@@ -1322,6 +1559,7 @@
             musicLibrary = loadLibraryFromCache();
             organizeData();
             renderDiscover();
+            refreshCatalog();
 
             if (!cloudReady) {
                 showMessage('Aether Music Cloud indisponible (Supabase non configurÃ©). Ouvre AetherOS > Setup/Comptes et configure Supabase.', true);
@@ -1413,6 +1651,15 @@
             document.getElementById('uploadSection').classList.toggle('show');
         }
 
+        function followArtist() {
+            const name = (currentArtist && (currentArtist.name || currentArtist.id)) ? String(currentArtist.name || currentArtist.id) : '';
+            if (!name) {
+                showMessage('Aucun artiste sélectionné.', true);
+                return;
+            }
+            showMessage(`Suivi: ${name}`);
+        }
+
         function toggleAlbumFields() {
             const type = document.getElementById('uploadType').value;
             const albumGroup = document.getElementById('albumNameGroup');
@@ -1456,7 +1703,7 @@
             document.getElementById('artistPage').style.display = 'block';
             
             const key = String(artistId || '').trim();
-            const artist = artists.find(a => a.id === key) || artists.find(a => a.name === key);
+            const artist = artists.find(a => a.id === key) || artists.find(a => a.name === key) || null;
             
             if (artist) {
                 currentArtist = artist;
@@ -1481,7 +1728,21 @@
                 renderArtistAlbums(artistAlbums);
                 renderArtistSingles(singles);
             } else {
-                showMessage('Artiste introuvable.', true);
+                const tracks = getAllTracks().filter(t => t && String(t.artist || '').trim() === key);
+                if (tracks.length === 0) {
+                    showMessage('Artiste introuvable.', true);
+                    return;
+                }
+
+                currentArtist = { id: key, name: key, tracks, albums: [], plays: 0 };
+                document.getElementById('artistName').textContent = key;
+                document.getElementById('artistTracks').textContent = tracks.length;
+                document.getElementById('artistAlbums').textContent = 0;
+                document.getElementById('artistPlays').textContent = 0;
+                document.getElementById('artistAvatarImg').style.display = 'none';
+                document.getElementById('artistAvatarPlaceholder').style.display = 'flex';
+                renderArtistAlbums([]);
+                renderArtistSingles(tracks.slice(0, 24));
             }
         }
 
@@ -1503,20 +1764,69 @@
         }
 
         // ==================== RECHERCHE ====================
+        let searchTimeout;
         function handleSearch() {
+            clearTimeout(searchTimeout);
             const query = document.getElementById('searchInput').value.toLowerCase();
             
             if (query.length < 2) {
                 renderDiscover();
                 return;
             }
-            
-            const results = musicLibrary.filter(track => 
-                track.title.toLowerCase().includes(query) ||
-                track.artist.toLowerCase().includes(query)
-            );
-            
-            renderSearchResults(results);
+
+            searchTimeout = setTimeout(async () => {
+                const results = getAllTracks().filter(track => 
+                    track.title.toLowerCase().includes(query) ||
+                    track.artist.toLowerCase().includes(query)
+                );
+                
+                renderSearchResults(results);
+
+                try {
+                    let audiusResults = [];
+                    if (musicProxyBase) {
+                        const res = await musicProxyRequest(`/aether/v1/catalog/search?query=${encodeURIComponent(query)}&limit=25`, { method: 'GET' });
+                        const rows = res && Array.isArray(res.rows) ? res.rows : [];
+                        audiusResults = rows.map(normalizeCatalogTrack).filter(t => t && t.id && t.title && t.audioUrl);
+                    } else {
+                        const res = await fetch(`https://discoveryprovider.audius.co/v1/tracks/search?query=${encodeURIComponent(query)}&app_name=spotaether`);
+                        const json = await res.json();
+                        const audiusData = Array.isArray(json.data) ? json.data : [];
+                        audiusResults = audiusData.filter(t => t && t.id && t.title).map(t => ({
+                            id: 'audius:' + t.id,
+                            source: 'audius',
+                            owner: t.user?.name || 'Audius Artist',
+                            title: t.title,
+                            artist: t.user?.name || 'Unknown Artist',
+                            genre: t.genre || 'Various',
+                            description: t.description || '',
+                            type: 'single',
+                            album: null,
+                            trackNumber: null,
+                            audioUrl: `https://discoveryprovider.audius.co/v1/tracks/${encodeURIComponent(String(t.id))}/stream?app_name=spotaether`,
+                            coverUrl: t.artwork ? (t.artwork['480x480'] || t.artwork['150x150']) : '',
+                            date: t.created_at ? new Date(t.created_at).toLocaleDateString() : '',
+                            plays: t.play_count || 0,
+                            likes: t.favorite_count || 0
+                        }));
+                    }
+                    
+                    const existingIds = new Set(results.map(r => String(r.id)));
+                    let changed = false;
+                    for (let tr of audiusResults) {
+                        if (!existingIds.has(String(tr.id))) {
+                            results.push(tr);
+                            changed = true;
+                            if (!catalogTracks.find(c => c.id === tr.id)) {
+                                catalogTracks.push(tr);
+                            }
+                        }
+                    }
+                    if(changed) renderSearchResults(results);
+                } catch(e) {
+                    console.error("Audius search error:", e);
+                }
+            }, 500);
         }
 
         // ==================== UPLOAD ====================
@@ -1525,6 +1835,7 @@
             initCloud();
             const title = document.getElementById('title').value;
             const artist = document.getElementById('artist').value;
+            const genre = document.getElementById('genre').value;
             const description = document.getElementById('description').value;
             const type = document.getElementById('uploadType').value;
             const albumName = document.getElementById('albumName').value;
@@ -1559,22 +1870,23 @@
                 if (coverFile) {
                     const coverReader = new FileReader();
                     coverReader.onload = function(ce) {
-                        publishTrackToCloud(title, artist, description, type, albumName, trackNumber, e.target.result, ce.target.result);
+                        publishTrackToCloud(title, artist, genre, description, type, albumName, trackNumber, e.target.result, ce.target.result);
                     };
                     coverReader.readAsDataURL(coverFile);
                 } else {
-                    publishTrackToCloud(title, artist, description, type, albumName, trackNumber, e.target.result, null);
+                    publishTrackToCloud(title, artist, genre, description, type, albumName, trackNumber, e.target.result, null);
                 }
             };
             audioReader.readAsDataURL(audioFile);
         }
 
-        async function publishTrackToCloud(title, artist, description, type, album, trackNumber, audioData, coverData) {
+        async function publishTrackToCloud(title, artist, genre, description, type, album, trackNumber, audioData, coverData) {
             try {
                 const row = {
                     owner: currentUser.name || 'Visiteur',
                     title: title,
                     artist: artist,
+                    genre: String(genre || '').trim(),
                     description: description || '',
                     type: type,
                     album: type === 'album' ? (album || null) : null,
@@ -1611,6 +1923,7 @@
                 // Reset form
                 document.getElementById('title').value = '';
                 document.getElementById('artist').value = currentUser.name || '';
+                document.getElementById('genre').value = '';
                 document.getElementById('description').value = '';
                 document.getElementById('audioFile').value = '';
                 document.getElementById('coverImage').value = '';
@@ -1626,42 +1939,7 @@
                 return;
             }
 
-            const track = {
-                id: Date.now(),
-                title: title,
-                artist: artist,
-                description: description || '',
-                type: type,
-                album: type === 'album' ? album : null,
-                trackNumber: type === 'album' ? trackNumber : null,
-                audioUrl: audioData,
-                coverUrl: coverData,
-                date: new Date().toLocaleDateString(),
-                plays: 0,
-                likes: 0
-            };
 
-            musicLibrary.unshift(track);
-            
-            try {
-                persistLibraryCache();
-            } catch (e) {
-                // Si trop gros, sauvegarder sans les données audio
-                persistLibraryCache();
-            }
-
-            organizeData();
-
-            // Reset form
-            document.getElementById('title').value = '';
-            document.getElementById('artist').value = '';
-            document.getElementById('description').value = '';
-            document.getElementById('audioFile').value = '';
-            document.getElementById('coverImage').value = '';
-            
-            document.getElementById('uploadSection').classList.remove('show');
-            renderDiscover();
-            showMessage('✅ Track publié avec succès !');
         }
 
         // ==================== RENDU ====================
@@ -1678,11 +1956,25 @@
               </div>
             ` : '';
 
-            const popular = [...musicLibrary].sort((a, b) => (b.plays || 0) - (a.plays || 0)).slice(0, 6);
-            const recent = [...musicLibrary].slice(0, 6);
+            const base = musicLibrary.length ? musicLibrary : catalogTracks;
+            const popular = [...base].sort((a, b) => (b.plays || 0) - (a.plays || 0)).slice(0, 6);
+            const recent = [...base].slice(0, 6);
             const albumList = albums.slice(0, 6);
+
+            const hasAny = (popular.length + recent.length + albumList.length) > 0;
+            const empty = !hasAny ? `
+              <div class="empty-state">
+                <div style="font-weight:800;color:var(--text-primary);margin-bottom:6px;">Aucun son</div>
+                <div>Ajoute un track (+ Upload) ou charge un catalogue via ton proxy Cloudflare.</div>
+                ${musicProxyBase ? `
+                  <div style="display:flex;gap:10px;flex-wrap:wrap;">
+                    <button type="button" onclick="refreshCatalog()">Charger des sons</button>
+                  </div>
+                ` : `<div style="margin-top:10px;">Proxy Cloudflare non configuré.</div>`}
+              </div>
+            ` : '';
             
-            document.getElementById('popularGrid').innerHTML = `${guestCard}${renderTracks(popular)}`;
+            document.getElementById('popularGrid').innerHTML = `${guestCard}${empty}${renderTracks(popular)}`;
             document.getElementById('newReleasesGrid').innerHTML = renderTracks(recent);
             document.getElementById('albumsGrid').innerHTML = renderAlbumsList(albumList);
         }
@@ -1705,7 +1997,7 @@
             if (!tracks.length) return '<div class="empty-state">Aucun track</div>';
             
             return tracks.map(track => `
-                <div class="music-card" onclick="playTrack(${track.id})">
+                <div class="music-card" onclick="playTrack(${JSON.stringify(String(track.id))})">
                     <div class="card-cover">
                         ${track.coverUrl ? 
                             `<img src="${track.coverUrl}" alt="cover">` : 
@@ -1718,6 +2010,7 @@
                     <div class="card-info">
                         <div class="card-title">${track.title}</div>
                         <div class="card-artist" onclick="event.stopPropagation(); showArtistPage('${track.artist}')">${track.artist}</div>
+                        ${track.genre ? `<div class="card-genre">${track.genre}</div>` : ''}
                         ${track.album ? `<div class="card-type">Album</div>` : ''}
                         <div class="card-meta">
                             <span>👂 ${track.plays || 0}</span>
@@ -1781,9 +2074,112 @@
             document.getElementById('artistSinglesGrid').innerHTML = renderTracks(singles);
         }
 
+
+        // ==================== LIKES & COMMENTS ====================
+        function toggleLikeCurrent() {
+            if (!currentTrack) return;
+            const btn = document.getElementById('likeTrackBtn');
+            const trackId = String(currentTrack.id);
+            if(likedTracks.has(trackId)) {
+                likedTracks.delete(trackId);
+                btn.classList.remove('liked');
+                btn.textContent = '🤍';
+            } else {
+                likedTracks.add(trackId);
+                btn.classList.add('liked');
+                btn.textContent = '❤️';
+            }
+        }
+        
+        function updateLikeUI(trackId) {
+            const btn = document.getElementById('likeTrackBtn');
+            if(currentTrack && String(currentTrack.id) === String(trackId)) {
+                if(likedTracks.has(String(trackId))) {
+                    btn.classList.add('liked');
+                    btn.textContent = '❤️';
+                } else {
+                    btn.classList.remove('liked');
+                    btn.textContent = '🤍';
+                }
+            }
+        }
+
+        function toggleCommentsPanel() {
+            const panel = document.getElementById('commentsPanel');
+            if (!panel) return;
+            panel.classList.toggle('open');
+            if (panel.classList.contains('open')) {
+                renderComments();
+            }
+        }
+        
+        function renderComments() {
+            const list = document.getElementById('commentsList');
+            if (!list) return;
+
+            const escapeHtml = (value) => String(value || '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/\"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+
+            if (!currentTrack) {
+                list.innerHTML = `<div style="text-align:center; color: var(--text-secondary); margin-top: auto; margin-bottom: auto;">Lancez une musique pour voir les commentaires.</div>`;
+                return;
+            }
+
+            const tid = String(currentTrack.id);
+            const comments = Array.isArray(trackComments[tid]) ? trackComments[tid] : [];
+
+            if (comments.length === 0) {
+                list.innerHTML = `<div style="text-align:center; color: var(--text-secondary); margin-top: auto; margin-bottom: auto;">Aucun commentaire. Soyez le premier !</div>`;
+                return;
+            }
+
+            list.innerHTML = comments.map(c => {
+                const user = escapeHtml(c && c.user ? c.user : 'Visiteur');
+                const date = escapeHtml(c && c.date ? c.date : '');
+                const text = escapeHtml(c && c.text ? c.text : '');
+                return `
+                    <div class="comment-item">
+                        <div class="comment-item-header">
+                            <span style="font-weight:bold; color:var(--text-primary)">${user}</span>
+                            <span>${date}</span>
+                        </div>
+                        <div class="comment-text">${text}</div>
+                    </div>
+                `;
+            }).join('');
+
+            list.scrollTop = list.scrollHeight;
+        }
+        
+        function submitComment() {
+            const input = document.getElementById('commentInput');
+            const text = input.value.trim();
+            if(!text) return;
+            if(!currentTrack) {
+                showMessage("Jouez une musique d'abord !", true);
+                return;
+            }
+            
+            const tid = String(currentTrack.id);
+            if(!trackComments[tid]) trackComments[tid] = [];
+            
+            trackComments[tid].push({
+                user: currentUser.name || 'Visiteur',
+                text: text,
+                date: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
+            });
+            input.value = '';
+            
+            renderComments();
+        }
+
         // ==================== LECTURE ====================
         function playTrack(id) {
-            const track = musicLibrary.find(t => t.id === id);
+            const track = findTrackById(id);
             if (!track || !track.audioUrl || track.audioUrl === 'stored') {
                 showMessage('Fichier audio non disponible', true);
                 return;
@@ -1804,6 +2200,9 @@
                 document.getElementById('playerCoverImg').src = track.coverUrl;
                 document.getElementById('playerCoverImg').style.display = 'block';
                 document.getElementById('playerCoverPlaceholder').style.display = 'none';
+            } else {
+                document.getElementById('playerCoverImg').style.display = 'none';
+                document.getElementById('playerCoverPlaceholder').style.display = 'flex';
             }
             
             document.getElementById('playerBar').classList.add('show');
@@ -1813,13 +2212,21 @@
                 document.getElementById('duration').textContent = formatTime(currentAudio.duration);
             });
             
+            if (track.source === 'itunes') showMessage('Lecture: preview iTunes (30s).');
+            if (track.source === 'audius') showMessage('Lecture via Audius Internet Archive.');
+
+            updateLikeUI(track.id);
+            renderComments();
+
+
             currentAudio.play();
             isPlaying = true;
             document.querySelector('.control-btn:first-child').textContent = '⏸';
             
             // Incrémenter les écoutes
             track.plays = (track.plays || 0) + 1;
-            if (cloudReady && track.id !== undefined && track.id !== null) {
+            const isCloudTrack = (track.source === 'cloud' || (typeof track.id === 'number') || (/^\\d+$/.test(String(track.id || '')) && !String(track.id).includes(':')));
+            if (cloudReady && isCloudTrack && track.id !== undefined && track.id !== null) {
                 if (musicProxyBase) {
                     musicProxyRequest('/aether/v1/music/tracks/plays', { method: 'POST', body: { id: track.id, plays: track.plays } }).catch(() => {});
                 } else {
@@ -1886,21 +2293,6 @@
         // ==================== INIT ====================
         document.addEventListener('DOMContentLoaded', () => {
             bootApp();
-            return;
-            
-            // Simuler un message API pour test
-            setTimeout(() => {
-                window.dispatchEvent(new MessageEvent('message', {
-                    data: {
-                        type: 'funnyweb_user_sync',
-                        userName: 'Mélanie',
-                        sessionID: '123456',
-                        profilePic: null,
-                        theme: 'dark',
-                        uiPreferences: {}
-                    }
-                }));
-            }, 1000);
         });
     </script>
 </body>
