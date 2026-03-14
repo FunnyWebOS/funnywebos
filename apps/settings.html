@@ -495,17 +495,17 @@ body{
         <div class="row">
           <div class="row-ico ic-blue"><i class="fas fa-user" style="color:#fff;font-size:13px;"></i></div>
           <div class="row-info"><div class="row-label">Nom d'utilisateur</div></div>
-          <div class="row-ctrl"><input class="inp" id="pref-username" placeholder="nom_utilisateur" oninput="markUnsaved()"></div>
+          <div class="row-ctrl"><input class="inp" id="pref-username" placeholder="nom_utilisateur" oninput="updateProfileDraft('userName',this.value)"></div>
         </div>
         <div class="row">
           <div class="row-ico ic-teal"><i class="fas fa-envelope" style="color:#fff;font-size:13px;"></i></div>
           <div class="row-info"><div class="row-label">Email</div></div>
-          <div class="row-ctrl"><input class="inp" id="pref-email" type="email" placeholder="email@example.com" oninput="markUnsaved()"></div>
+          <div class="row-ctrl"><input class="inp" id="pref-email" type="email" placeholder="email@example.com" oninput="updateProfileDraft('email',this.value)"></div>
         </div>
         <div class="row">
           <div class="row-ico ic-orange"><i class="fas fa-circle-dot" style="color:#fff;font-size:13px;"></i></div>
           <div class="row-info"><div class="row-label">Statut</div></div>
-          <div class="row-ctrl"><input class="inp" id="pref-status" placeholder="En ligne…" oninput="markUnsaved()"></div>
+          <div class="row-ctrl"><input class="inp" id="pref-status" placeholder="En ligne…" oninput="updateProfileDraft('status',this.value)"></div>
         </div>
       </div>
       <div class="card">
@@ -513,12 +513,12 @@ body{
         <div class="row">
           <div class="row-ico ic-red"><i class="fas fa-lock" style="color:#fff;font-size:13px;"></i></div>
           <div class="row-info"><div class="row-label">Mot de passe</div><div class="row-sub">Modifié il y a 30 jours</div></div>
-          <div class="row-ctrl"><button class="btn" onclick="toast('Bientôt disponible')">Modifier</button></div>
+          <div class="row-ctrl"><button class="btn" onclick="changePin()">Modifier</button></div>
         </div>
         <div class="row">
           <div class="row-ico ic-green"><i class="fas fa-shield-halved" style="color:#fff;font-size:13px;"></i></div>
           <div class="row-info"><div class="row-label">Authentification 2 facteurs</div><div class="row-sub">Protection renforcée</div></div>
-          <div class="row-ctrl"><button class="tog" id="tog-2fa" onclick="this.classList.toggle('on');markUnsaved()"></button></div>
+          <div class="row-ctrl"><button class="tog" id="tog-2fa" onclick="toggleTwoFactor()"></button></div>
         </div>
         <div class="row">
           <div class="row-ico ic-purple"><i class="fas fa-key" style="color:#fff;font-size:13px;"></i></div>
@@ -559,7 +559,7 @@ body{
         <div class="row">
           <div class="row-ico ic-teal"><i class="fas fa-link" style="color:#fff;font-size:13px;"></i></div>
           <div class="row-info"><div class="row-label">URL personnalisée</div></div>
-          <div class="row-ctrl"><input class="inp" id="wp-url" placeholder="https://…" oninput="markUnsaved()"></div>
+          <div class="row-ctrl"><input class="inp" id="wp-url" placeholder="https://…" oninput="setCustomWallpaperUrl(this.value)"></div>
         </div>
       </div>
 
@@ -574,7 +574,7 @@ body{
         <div class="row">
           <div class="row-ico ic-cyan" style="background:linear-gradient(135deg,#0891b2,#22d3ee)"><i class="fas fa-sparkles" style="color:#fff;font-size:13px;"></i></div>
           <div class="row-info"><div class="row-label">Effets de transparence</div></div>
-          <div class="row-ctrl"><button class="tog on" id="tog-blur" onclick="this.classList.toggle('on');markUnsaved()"></button></div>
+          <div class="row-ctrl"><button class="tog on" id="tog-blur" onclick="toggleBlurEffects()"></button></div>
         </div>
         <div class="row">
           <div class="row-ico ic-green"><i class="fas fa-film" style="color:#fff;font-size:13px;"></i></div>
@@ -653,8 +653,10 @@ body{
           <div class="row-ico ic-purple"><i class="fas fa-text-width" style="color:#fff;font-size:13px;"></i></div>
           <div class="row-info"><div class="row-label">Espacement des lettres</div></div>
           <div class="row-ctrl">
-            <select class="sel" onchange="markUnsaved()">
-              <option>Normal</option><option>Large</option><option>Serré</option>
+            <select class="sel" id="letter-spacing" onchange="setLetterSpacing(this.value)">
+              <option value="normal">Normal</option>
+              <option value="wide">Large</option>
+              <option value="tight">Serré</option>
             </select>
           </div>
         </div>
@@ -682,12 +684,12 @@ body{
         <div class="row">
           <div class="row-ico ic-red"><i class="fas fa-shield" style="color:#fff;font-size:13px;"></i></div>
           <div class="row-info"><div class="row-label">Firewall applicatif</div><div class="row-sub">Filtrer les connexions réseau</div></div>
-          <div class="row-ctrl"><button class="tog" id="tog-firewall" onclick="this.classList.toggle('on');markUnsaved()"></button></div>
+          <div class="row-ctrl"><button class="tog" id="tog-firewall" onclick="toggleFirewall()"></button></div>
         </div>
         <div class="row">
           <div class="row-ico ic-purple"><i class="fas fa-bug" style="color:#fff;font-size:13px;"></i></div>
           <div class="row-info"><div class="row-label">Mode développeur</div><div class="row-sub">Accès aux outils avancés</div></div>
-          <div class="row-ctrl"><button class="tog" id="tog-devmode" onclick="this.classList.toggle('on');markUnsaved()"></button></div>
+          <div class="row-ctrl"><button class="tog" id="tog-devmode" onclick="toggleDeveloperMode()"></button></div>
         </div>
       </div>
     </div>
@@ -712,7 +714,7 @@ body{
         <div class="row">
           <div class="row-ico ic-blue"><i class="fas fa-cloud" style="color:#fff;font-size:13px;"></i></div>
           <div class="row-info"><div class="row-label">Sync automatique</div></div>
-          <div class="row-ctrl"><button class="tog on" id="tog-sync" onclick="this.classList.toggle('on');markUnsaved()"></button></div>
+          <div class="row-ctrl"><button class="tog on" id="tog-sync" onclick="toggleSyncAuto()"></button></div>
         </div>
         <div class="row">
           <div class="row-ico ic-green"><i class="fas fa-rotate" style="color:#fff;font-size:13px;"></i></div>
@@ -741,7 +743,7 @@ body{
           <div class="row-ico ic-purple"><i class="fas fa-circle-half-stroke" style="color:#fff;font-size:13px;"></i></div>
           <div class="row-info"><div class="row-label">Taille du texte</div></div>
           <div class="row-ctrl">
-            <select class="sel" onchange="setFontSize(this.value)">
+            <select class="sel" id="sel-font-size" onchange="setFontSize(this.value)">
               <option value="small">Petit</option>
               <option value="normal" selected>Normal</option>
               <option value="large">Grand</option>
@@ -753,8 +755,11 @@ body{
           <div class="row-ico ic-red"><i class="fas fa-droplet-slash" style="color:#fff;font-size:13px;"></i></div>
           <div class="row-info"><div class="row-label">Daltonisme</div></div>
           <div class="row-ctrl">
-            <select class="sel" onchange="markUnsaved()">
-              <option>Désactivé</option><option>Protanopie</option><option>Deutéranopie</option><option>Tritanopie</option>
+            <select class="sel" id="sel-colorblind" onchange="setColorBlindMode(this.value)">
+              <option value="off">Désactivé</option>
+              <option value="protanopia">Protanopie</option>
+              <option value="deuteranopia">Deutéranopie</option>
+              <option value="tritanopia">Tritanopie</option>
             </select>
           </div>
         </div>
@@ -769,12 +774,12 @@ body{
         <div class="row">
           <div class="row-ico ic-teal"><i class="fas fa-keyboard" style="color:#fff;font-size:13px;"></i></div>
           <div class="row-info"><div class="row-label">Touches rémanentes</div></div>
-          <div class="row-ctrl"><button class="tog" id="tog-sticky" onclick="this.classList.toggle('on');markUnsaved()"></button></div>
+          <div class="row-ctrl"><button class="tog" id="tog-sticky" onclick="toggleStickyKeys()"></button></div>
         </div>
         <div class="row">
           <div class="row-ico ic-indigo"><i class="fas fa-computer-mouse" style="color:#fff;font-size:13px;"></i></div>
           <div class="row-info"><div class="row-label">Vitesse du pointeur</div></div>
-          <div class="row-ctrl"><input type="range" class="slider" min="1" max="10" value="5" oninput="markUnsaved()" style="--v:44%"></div>
+          <div class="row-ctrl"><input type="range" class="slider" id="ptr-speed" min="1" max="10" value="5" oninput="setPointerSpeed(this.value)" style="--v:44%"></div>
         </div>
       </div>
       <div class="card">
@@ -782,12 +787,12 @@ body{
         <div class="row">
           <div class="row-ico ic-orange"><i class="fas fa-volume-high" style="color:#fff;font-size:13px;"></i></div>
           <div class="row-info"><div class="row-label">Lecture d'écran</div><div class="row-sub">Lit le contenu à voix haute</div></div>
-          <div class="row-ctrl"><button class="tog" id="tog-screen-reader" onclick="this.classList.toggle('on');markUnsaved()"></button></div>
+          <div class="row-ctrl"><button class="tog" id="tog-screen-reader" onclick="toggleScreenReader()"></button></div>
         </div>
         <div class="row">
           <div class="row-ico ic-green"><i class="fas fa-closed-captioning" style="color:#fff;font-size:13px;"></i></div>
           <div class="row-info"><div class="row-label">Sous-titres automatiques</div></div>
-          <div class="row-ctrl"><button class="tog" id="tog-captions" onclick="this.classList.toggle('on');markUnsaved()"></button></div>
+          <div class="row-ctrl"><button class="tog" id="tog-captions" onclick="toggleCaptions()"></button></div>
         </div>
       </div>
     </div>
@@ -813,12 +818,12 @@ body{
         <div class="row">
           <div class="row-ico ic-purple"><i class="fas fa-bell-slash" style="color:#fff;font-size:13px;"></i></div>
           <div class="row-info"><div class="row-label">Ne pas déranger</div></div>
-          <div class="row-ctrl"><button class="tog" id="tog-dnd" onclick="this.classList.toggle('on');markUnsaved()"></button></div>
+          <div class="row-ctrl"><button class="tog" id="tog-dnd" onclick="toggleDnd()"></button></div>
         </div>
         <div class="row">
           <div class="row-ico ic-green"><i class="fas fa-music" style="color:#fff;font-size:13px;"></i></div>
           <div class="row-info"><div class="row-label">Son des notifications</div></div>
-          <div class="row-ctrl"><button class="tog on" id="tog-notif-sound" onclick="this.classList.toggle('on');markUnsaved()"></button></div>
+          <div class="row-ctrl"><button class="tog on" id="tog-notif-sound" onclick="toggleNotificationSound()"></button></div>
         </div>
       </div>
       <div class="card" id="notif-types-card">
@@ -844,8 +849,13 @@ body{
           <div class="row-ico ic-blue"><i class="fas fa-globe" style="color:#fff;font-size:13px;"></i></div>
           <div class="row-info"><div class="row-label">Langue</div></div>
           <div class="row-ctrl">
-            <select class="sel" onchange="markUnsaved()">
-              <option selected>Français</option><option>English</option><option>Español</option><option>Deutsch</option><option>日本語</option><option>中文</option>
+            <select class="sel" id="sys-language" onchange="setSystemLanguage(this.value)">
+              <option value="fr-FR">Français</option>
+              <option value="en-US">English</option>
+              <option value="es-ES">Español</option>
+              <option value="de-DE">Deutsch</option>
+              <option value="ja-JP">日本語</option>
+              <option value="zh-CN">中文</option>
             </select>
           </div>
         </div>
@@ -853,8 +863,12 @@ body{
           <div class="row-ico ic-green"><i class="fas fa-location-dot" style="color:#fff;font-size:13px;"></i></div>
           <div class="row-info"><div class="row-label">Région</div></div>
           <div class="row-ctrl">
-            <select class="sel" onchange="markUnsaved()">
-              <option selected>France</option><option>Belgique</option><option>Suisse</option><option>Canada</option><option>États-Unis</option>
+            <select class="sel" id="sys-region" onchange="setSystemRegion(this.value)">
+              <option value="FR">France</option>
+              <option value="BE">Belgique</option>
+              <option value="CH">Suisse</option>
+              <option value="CA">Canada</option>
+              <option value="US">États-Unis</option>
             </select>
           </div>
         </div>
@@ -862,8 +876,11 @@ body{
           <div class="row-ico ic-orange"><i class="fas fa-clock" style="color:#fff;font-size:13px;"></i></div>
           <div class="row-info"><div class="row-label">Fuseau horaire</div></div>
           <div class="row-ctrl">
-            <select class="sel" onchange="markUnsaved()">
-              <option selected>Europe/Paris (UTC+1)</option><option>Europe/London (UTC+0)</option><option>America/New_York (UTC-5)</option><option>Asia/Tokyo (UTC+9)</option>
+            <select class="sel" id="sys-timezone" onchange="setSystemTimeZone(this.value)">
+              <option value="Europe/Paris">Europe/Paris (UTC+1)</option>
+              <option value="Europe/London">Europe/London (UTC+0)</option>
+              <option value="America/New_York">America/New_York (UTC-5)</option>
+              <option value="Asia/Tokyo">Asia/Tokyo (UTC+9)</option>
             </select>
           </div>
         </div>
@@ -871,8 +888,10 @@ body{
           <div class="row-ico ic-purple"><i class="fas fa-calendar" style="color:#fff;font-size:13px;"></i></div>
           <div class="row-info"><div class="row-label">Format de date</div></div>
           <div class="row-ctrl">
-            <select class="sel" onchange="markUnsaved()">
-              <option selected>JJ/MM/AAAA</option><option>MM/DD/YYYY</option><option>AAAA-MM-JJ</option>
+            <select class="sel" id="sys-dateformat" onchange="setSystemDateFormat(this.value)">
+              <option value="DMY">JJ/MM/AAAA</option>
+              <option value="MDY">MM/DD/YYYY</option>
+              <option value="YMD">AAAA-MM-JJ</option>
             </select>
           </div>
         </div>
@@ -882,26 +901,30 @@ body{
         <div class="row">
           <div class="row-ico ic-blue"><i class="fas fa-rocket" style="color:#fff;font-size:13px;"></i></div>
           <div class="row-info"><div class="row-label">Démarrage automatique</div><div class="row-sub">Restaure les apps ouvertes</div></div>
-          <div class="row-ctrl"><button class="tog on" id="tog-autostart" onclick="this.classList.toggle('on');markUnsaved()"></button></div>
+          <div class="row-ctrl"><button class="tog on" id="tog-autostart" onclick="toggleAutostart()"></button></div>
         </div>
         <div class="row">
           <div class="row-ico ic-red"><i class="fas fa-hourglass" style="color:#fff;font-size:13px;"></i></div>
           <div class="row-info"><div class="row-label">Mise en veille</div></div>
           <div class="row-ctrl">
-            <select class="sel" onchange="markUnsaved()">
-              <option>Jamais</option><option>2 min</option><option selected>5 min</option><option>10 min</option><option>30 min</option>
+            <select class="sel" id="sys-sleep" onchange="setSleepMinutes(this.value)">
+              <option value="0">Jamais</option>
+              <option value="2">2 min</option>
+              <option value="5" selected>5 min</option>
+              <option value="10">10 min</option>
+              <option value="30">30 min</option>
             </select>
           </div>
         </div>
         <div class="row">
           <div class="row-ico ic-gray"><i class="fas fa-trash" style="color:#fff;font-size:13px;"></i></div>
           <div class="row-info"><div class="row-label">Vider corbeille auto</div><div class="row-sub">Après 30 jours</div></div>
-          <div class="row-ctrl"><button class="tog" id="tog-trash" onclick="this.classList.toggle('on');markUnsaved()"></button></div>
+          <div class="row-ctrl"><button class="tog" id="tog-trash" onclick="toggleAutoEmptyTrash()"></button></div>
         </div>
         <div class="row">
           <div class="row-ico ic-orange"><i class="fas fa-bolt" style="color:#fff;font-size:13px;"></i></div>
           <div class="row-info"><div class="row-label">Mode performance</div><div class="row-sub">Priorise la réactivité</div></div>
-          <div class="row-ctrl"><button class="tog" id="tog-perf" onclick="this.classList.toggle('on');markUnsaved()"></button></div>
+          <div class="row-ctrl"><button class="tog" id="tog-perf" onclick="togglePerformanceMode()"></button></div>
         </div>
       </div>
       <div class="card">
@@ -1029,7 +1052,7 @@ body{
         <div class="row">
           <div class="row-ico ic-blue"><i class="fas fa-bell" style="color:#fff;font-size:13px;"></i></div>
           <div class="row-info"><div class="row-label">Mises à jour automatiques</div></div>
-          <div class="row-ctrl"><button class="tog on" id="tog-autoupdate" onclick="this.classList.toggle('on');markUnsaved()"></button></div>
+          <div class="row-ctrl"><button class="tog on" id="tog-autoupdate" onclick="toggleAutoUpdate()"></button></div>
         </div>
       </div>
       <div class="card">
@@ -1069,16 +1092,32 @@ function loadSettings() {
   const def = {
     theme: runtimeTheme,
     accentColor: '#0078d4',
-    personalization: { wallpaper: 'default', uiScale: 100, animations: true, fontFamily: 'Geist' },
-    security: { level: 'normal', verifiedApps: [], warnings: true },
-    accessibility: { highContrast: false, largeText: false, reducedMotion: false, fontSize: 'normal', fontPx: 14 },
+    profile: { userName: '', email: '', status: '', twoFactor: false },
+    personalization: { wallpaper: 'default', customWallpaper: '', uiScale: 100, animations: true, blurEffects: true, letterSpacing: 'normal', fontFamily: 'Geist' },
+    system: {
+      language: (wm && wm.locale) ? String(wm.locale) : ((navigator && navigator.language) ? String(navigator.language) : 'fr-FR'),
+      region: 'FR',
+      timeZone: (wm && wm.timeZone) ? String(wm.timeZone) : (Intl.DateTimeFormat().resolvedOptions().timeZone || 'Europe/Paris'),
+      dateFormat: 'DMY',
+      timeFormat: (wm && wm.timeFormat) ? String(wm.timeFormat) : '24h',
+      autostart: true,
+      sleepMinutes: 5,
+      autoEmptyTrash: false,
+      performanceMode: false,
+      autoUpdate: true
+    },
+    security: { level: 'normal', verifiedApps: [], warnings: true, firewall: false, developerMode: false },
+    accessibility: { highContrast: false, largeText: false, reducedMotion: false, fontSize: 'normal', fontPx: 14, colorBlind: 'off', stickyKeys: false, pointerSpeed: 5, screenReader: false, captions: false },
     accounts: {
       onedrive: { connected: false, email: '', driveUrl: 'https://onedrive.live.com' },
-      googledrive: { connected: false, email: '', driveUrl: 'https://drive.google.com', clientId: '', accessToken: '', expiresAt: 0 }
+      googledrive: { connected: false, email: '', driveUrl: 'https://drive.google.com', clientId: '', accessToken: '', expiresAt: 0 },
+      syncAuto: true
     },
     taskbar: { position: 'left', style: 'floating', size: 'normal' },
     notifications: {
       enabled: true, durationMs: 5000,
+      dnd: false,
+      sound: true,
       types: { system:true, settings_change:true, security:true, accounts:true, store:true, install:true, dock:true, immersive:true, file:true }
     }
   };
@@ -1088,6 +1127,8 @@ function loadSettings() {
   const wmNotif = (wmPrefs && typeof wmPrefs.notifications === 'object' && wmPrefs.notifications) ? wmPrefs.notifications : {};
   return {
     ...def, ...parsed,
+    profile: { ...def.profile, ...((parsed.profile)||{}) },
+    system: { ...def.system, ...((parsed.system)||{}) },
     accounts: {
       ...def.accounts, ...(parsed.accounts||{}),
       onedrive: { ...def.accounts.onedrive, ...((parsed.accounts && parsed.accounts.onedrive)||{}) },
@@ -1110,6 +1151,7 @@ function saveSettings() {
   localStorage.setItem('aether_settings', JSON.stringify(settings));
   applyTheme();
   applyPersonalization();
+  applySystem();
   applyNotifications();
   try { window.parent && window.parent.postMessage({ type: 'AETHER_SETTINGS_UPDATED', settings: settings }, '*'); } catch(e) {}
   clearUnsaved();
@@ -1133,6 +1175,10 @@ function applyPersonalization() {
   if (wm && wm.setUIScale && settings.personalization.uiScale) wm.setUIScale(settings.personalization.uiScale);
   if (wm && wm.setFontFamily && settings.personalization.fontFamily) wm.setFontFamily(settings.personalization.fontFamily);
   if (wm && wm.setBaseFontSizePx && settings.accessibility && settings.accessibility.fontPx) wm.setBaseFontSizePx(settings.accessibility.fontPx);
+  try{
+    if (wm && wm.setTransparencyEffectsEnabled && typeof settings.personalization.blurEffects === 'boolean') wm.setTransparencyEffectsEnabled(settings.personalization.blurEffects);
+    if (wm && wm.setLetterSpacing && settings.personalization.letterSpacing) wm.setLetterSpacing(settings.personalization.letterSpacing);
+  }catch(e){}
   if (wm) {
     wm.uiPreferences = wm.sanitizeUIPreferences ? wm.sanitizeUIPreferences({
       ...(wm.uiPreferences||{}),
@@ -1143,6 +1189,279 @@ function applyPersonalization() {
     if (wm.applyUIPreferences) wm.applyUIPreferences();
     if (wm.saveUserData) wm.saveUserData();
   }
+}
+
+function applySystem() {
+  if (!settings.system) settings.system = { language: 'fr-FR', region: 'FR', timeZone: 'Europe/Paris', dateFormat: 'DMY', timeFormat: '24h' };
+  try {
+    if (wm && wm.setLocale && settings.system.language) wm.setLocale(settings.system.language);
+    if (wm && wm.setTimeZone && settings.system.timeZone) wm.setTimeZone(settings.system.timeZone);
+    if (wm) {
+      // Keep legacy fields in sync when present.
+      if (settings.system.timeZone) wm.timeZone = settings.system.timeZone;
+      if (settings.system.timeFormat) wm.timeFormat = (settings.system.timeFormat === '12h') ? '12h' : '24h';
+      if (typeof settings.system.sleepMinutes === 'number' && wm.setSleepMinutes) wm.setSleepMinutes(settings.system.sleepMinutes);
+      if (typeof settings.system.performanceMode === 'boolean' && wm.setPerformanceMode) wm.setPerformanceMode(settings.system.performanceMode);
+      if (typeof settings.system.autostart === 'boolean' && wm.setAutostartEnabled) wm.setAutostartEnabled(settings.system.autostart);
+    }
+  } catch(e) {}
+}
+
+let _saveDebounceT=null;
+function scheduleSaveSettings() {
+  clearTimeout(_saveDebounceT);
+  _saveDebounceT=setTimeout(()=>{ try{saveSettings();}catch(e){} }, 250);
+}
+
+function setSystemLanguage(v) {
+  settings.system = settings.system || {};
+  settings.system.language = String(v||'fr-FR');
+  scheduleSaveSettings();
+}
+function setSystemRegion(v) {
+  settings.system = settings.system || {};
+  settings.system.region = String(v||'FR');
+  scheduleSaveSettings();
+}
+function setSystemTimeZone(v) {
+  settings.system = settings.system || {};
+  settings.system.timeZone = String(v||'Europe/Paris');
+  scheduleSaveSettings();
+}
+function setSystemDateFormat(v) {
+  settings.system = settings.system || {};
+  settings.system.dateFormat = String(v||'DMY');
+  scheduleSaveSettings();
+}
+
+function _setToggle(id,on){
+  const el=document.getElementById(id);
+  if(!el) return;
+  el.classList.toggle('on',!!on);
+}
+function _isToggleOn(id){
+  const el=document.getElementById(id);
+  return !!(el && el.classList.contains('on'));
+}
+
+// ── PROFILE ──
+function updateProfileDraft(field, value){
+  settings.profile = settings.profile || {};
+  const v=String(value||'');
+  if(field==='userName') settings.profile.userName=v;
+  if(field==='email') settings.profile.email=v;
+  if(field==='status') settings.profile.status=v;
+  markUnsaved();
+  // Live UI feedback
+  try{
+    if(field==='userName'){
+      document.getElementById('profile-name-disp').textContent=v||'Admin';
+      document.getElementById('profile-av').textContent=((v||'A')[0]||'A').toUpperCase();
+      if(wm){ wm.userName=v||'Admin'; if(wm.saveUserData) wm.saveUserData(); }
+    }
+  }catch(e){}
+  scheduleSaveSettings();
+}
+function toggleTwoFactor(){
+  const next=!_isToggleOn('tog-2fa');
+  _setToggle('tog-2fa',next);
+  settings.profile = settings.profile || {};
+  settings.profile.twoFactor=!!next;
+  markUnsaved();
+  scheduleSaveSettings();
+  toast(next?'2FA activée':'2FA désactivée');
+}
+function changePin(){
+  const next=String(prompt('Nouveau PIN (4 chiffres):')||'').trim();
+  if(!/^[0-9]{4}$/.test(next)){ toast('PIN invalide'); return; }
+  const confirmPin=String(prompt('Confirmer le PIN:')||'').trim();
+  if(next!==confirmPin){ toast('PIN non identique'); return; }
+  try{
+    if(wm){
+      wm.pin=next;
+      if(wm.currentAccount && wm.accounts && wm.accounts[wm.currentAccount]){
+        wm.accounts[wm.currentAccount].pin=next;
+        if(wm.saveAccounts) wm.saveAccounts();
+        if(wm.saveUserData) wm.saveUserData();
+      }
+    }
+  }catch(e){}
+  toast('PIN mis à jour');
+}
+
+// ── PERSONALIZATION ──
+function setCustomWallpaperUrl(v){
+  const raw=String(v||'').trim();
+  settings.personalization = settings.personalization || {};
+  settings.personalization.customWallpaper = raw;
+  if(raw){
+    settings.personalization.wallpaper = 'custom';
+    if(wm && wm.setWallpaper) wm.setWallpaper(raw);
+  }
+  markUnsaved();
+  scheduleSaveSettings();
+}
+function toggleBlurEffects(){
+  const next=!_isToggleOn('tog-blur');
+  _setToggle('tog-blur',next);
+  settings.personalization = settings.personalization || {};
+  settings.personalization.blurEffects=!!next;
+  if(wm && wm.setTransparencyEffectsEnabled) wm.setTransparencyEffectsEnabled(!!next);
+  markUnsaved();
+  scheduleSaveSettings();
+}
+function setLetterSpacing(mode){
+  const m=String(mode||'normal');
+  settings.personalization = settings.personalization || {};
+  settings.personalization.letterSpacing=m;
+  try{
+    const css = (m==='wide')?'0.04em':(m==='tight')?'-0.02em':'normal';
+    document.documentElement.style.letterSpacing = css;
+  }catch(e){}
+  if(wm && wm.setLetterSpacing) wm.setLetterSpacing(m);
+  markUnsaved();
+  scheduleSaveSettings();
+}
+
+// ── SECURITY ──
+function toggleFirewall(){
+  const next=!_isToggleOn('tog-firewall');
+  _setToggle('tog-firewall',next);
+  settings.security = settings.security || {};
+  settings.security.firewall=!!next;
+  if(wm && wm.setFirewallEnabled) wm.setFirewallEnabled(!!next);
+  markUnsaved();
+  scheduleSaveSettings();
+  toast(next?'Firewall activé':'Firewall désactivé');
+}
+function toggleDeveloperMode(){
+  const next=!_isToggleOn('tog-devmode');
+  _setToggle('tog-devmode',next);
+  settings.security = settings.security || {};
+  settings.security.developerMode=!!next;
+  if(wm && wm.setDeveloperMode) wm.setDeveloperMode(!!next);
+  markUnsaved();
+  scheduleSaveSettings();
+  toast(next?'Mode développeur activé':'Mode développeur désactivé');
+}
+
+// ── ACCOUNTS ──
+function toggleSyncAuto(){
+  const next=!_isToggleOn('tog-sync');
+  _setToggle('tog-sync',next);
+  settings.accounts = settings.accounts || {};
+  settings.accounts.syncAuto=!!next;
+  markUnsaved();
+  scheduleSaveSettings();
+}
+
+// ── ACCESSIBILITY ──
+function setColorBlindMode(v){
+  const m=String(v||'off');
+  settings.accessibility = settings.accessibility || {};
+  settings.accessibility.colorBlind=m;
+  markUnsaved();
+  scheduleSaveSettings();
+}
+function toggleStickyKeys(){
+  const next=!_isToggleOn('tog-sticky');
+  _setToggle('tog-sticky',next);
+  settings.accessibility = settings.accessibility || {};
+  settings.accessibility.stickyKeys=!!next;
+  markUnsaved();
+  scheduleSaveSettings();
+  toast(next?'Touches rémanentes activées':'Touches rémanentes désactivées');
+}
+function setPointerSpeed(v){
+  const n=parseInt(v)||5;
+  settings.accessibility = settings.accessibility || {};
+  settings.accessibility.pointerSpeed=Math.max(1,Math.min(10,n));
+  try{
+    const pct=((settings.accessibility.pointerSpeed-1)/(10-1)*100).toFixed(0);
+    document.getElementById('ptr-speed')?.style.setProperty('--v',pct+'%');
+  }catch(e){}
+  markUnsaved();
+  scheduleSaveSettings();
+}
+function toggleScreenReader(){
+  const next=!_isToggleOn('tog-screen-reader');
+  _setToggle('tog-screen-reader',next);
+  settings.accessibility = settings.accessibility || {};
+  settings.accessibility.screenReader=!!next;
+  try{ if (wm && wm.setScreenReaderEnabled) wm.setScreenReaderEnabled(next,{announce:true}); }catch(e){}
+  markUnsaved();
+  scheduleSaveSettings();
+  toast(next?'Lecture d’écran activée':'Lecture d’écran désactivée');
+}
+function toggleCaptions(){
+  const next=!_isToggleOn('tog-captions');
+  _setToggle('tog-captions',next);
+  settings.accessibility = settings.accessibility || {};
+  settings.accessibility.captions=!!next;
+  markUnsaved();
+  scheduleSaveSettings();
+  toast(next?'Sous-titres auto activés':'Sous-titres auto désactivés');
+}
+
+// ── NOTIFICATIONS ──
+function toggleDnd(){
+  const next=!_isToggleOn('tog-dnd');
+  _setToggle('tog-dnd',next);
+  settings.notifications = settings.notifications || {};
+  settings.notifications.dnd=!!next;
+  markUnsaved();
+  scheduleSaveSettings();
+  syncNotifUI();
+}
+function toggleNotificationSound(){
+  const next=!_isToggleOn('tog-notif-sound');
+  _setToggle('tog-notif-sound',next);
+  settings.notifications = settings.notifications || {};
+  settings.notifications.sound=!!next;
+  markUnsaved();
+  scheduleSaveSettings();
+}
+
+// ── SYSTEM ──
+function toggleAutostart(){
+  const next=!_isToggleOn('tog-autostart');
+  _setToggle('tog-autostart',next);
+  settings.system = settings.system || {};
+  settings.system.autostart=!!next;
+  markUnsaved();
+  scheduleSaveSettings();
+}
+function setSleepMinutes(v){
+  const n=parseInt(v)||0;
+  settings.system = settings.system || {};
+  settings.system.sleepMinutes=Math.max(0,Math.min(60,n));
+  markUnsaved();
+  scheduleSaveSettings();
+}
+function toggleAutoEmptyTrash(){
+  const next=!_isToggleOn('tog-trash');
+  _setToggle('tog-trash',next);
+  settings.system = settings.system || {};
+  settings.system.autoEmptyTrash=!!next;
+  markUnsaved();
+  scheduleSaveSettings();
+}
+function togglePerformanceMode(){
+  const next=!_isToggleOn('tog-perf');
+  _setToggle('tog-perf',next);
+  settings.system = settings.system || {};
+  settings.system.performanceMode=!!next;
+  markUnsaved();
+  scheduleSaveSettings();
+  toast(next?'Mode performance activé':'Mode performance désactivé');
+}
+function toggleAutoUpdate(){
+  const next=!_isToggleOn('tog-autoupdate');
+  _setToggle('tog-autoupdate',next);
+  settings.system = settings.system || {};
+  settings.system.autoUpdate=!!next;
+  markUnsaved();
+  scheduleSaveSettings();
 }
 
 function applyNotifications() {
@@ -1269,13 +1588,21 @@ function toggleHighContrast() {
   if (wm && wm.notify) wm.notify('Accessibilité', settings.accessibility.highContrast ? 'Contraste élevé activé' : 'Contraste élevé désactivé', 'settings_change');
 }
 function toggleLargeText() {
-  settings.accessibility.largeText = !settings.accessibility.largeText;
-  settings.accessibility.fontPx = settings.accessibility.largeText ? 18 : (settings.accessibility.fontPx || 14);
-  saveSettings();
-  document.getElementById('tog-largetext')?.classList.toggle('on', settings.accessibility.largeText);
-  document.documentElement.style.fontSize = settings.accessibility.largeText ? '18px' : '';
-  if (wm && wm.setBaseFontSizePx) wm.setBaseFontSizePx(settings.accessibility.largeText ? 18 : (settings.accessibility.fontPx || 14));
-  if (wm && wm.accessibility) { wm.accessibility.fontSize = settings.accessibility.largeText ? '18px' : '14px'; if (wm.applyAccessibilitySettings) wm.applyAccessibilitySettings(); }
+  settings.accessibility = settings.accessibility || {};
+  const next = !settings.accessibility.largeText;
+  settings.accessibility.largeText = next;
+
+  if (next) {
+    // Remember the previous size so disabling restores it.
+    settings.accessibility._prevFontPx = parseInt(settings.accessibility.fontPx) || 14;
+    changeFontSize(18);
+  } else {
+    const prev = parseInt(settings.accessibility._prevFontPx) || 14;
+    try { delete settings.accessibility._prevFontPx; } catch (e) { settings.accessibility._prevFontPx = null; }
+    changeFontSize(prev);
+  }
+
+  document.getElementById('tog-largetext')?.classList.toggle('on', next);
 }
 function toggleReducedMotion() {
   settings.accessibility.reducedMotion = !settings.accessibility.reducedMotion;
@@ -1293,10 +1620,11 @@ function toggleReducedMotion() {
   }
 }
 function setFontSize(size) {
+  settings.accessibility = settings.accessibility || {};
   settings.accessibility.fontSize = size;
-  saveSettings();
-  const map = { small:'12px', normal:'14px', large:'16px', 'extra-large':'18px' };
-  document.documentElement.style.fontSize = map[size];
+  const map = { small: 12, normal: 14, large: 16, 'extra-large': 18 };
+  const px = map[size] || (parseInt(settings.accessibility.fontPx) || 14);
+  changeFontSize(px);
 }
 
 // ── Taskbar ──
@@ -1483,6 +1811,7 @@ function applyAccent(hex, fromPicker=false) {
   settings.accentColor = hex;
   markUnsaved();
   if (wm && wm.setAccentColor) wm.setAccentColor(hex);
+  scheduleSaveSettings();
 }
 
 // ── WALLPAPERS ──
@@ -1506,7 +1835,13 @@ const WALLPAPERS = [
   {id:'w17', style:'linear-gradient(135deg,#0f0c29,#302b63,#24243e)'},
   {id:'w18', style:'linear-gradient(135deg,#191724,#c4a7e7)'},
 ];
-let selWp = 'w1';
+ let selWp = (() => {
+   try {
+     const current = settings && settings.personalization ? settings.personalization.wallpaper : '';
+     const found = WALLPAPERS.find(w => w && w.style === current);
+     return found ? found.id : 'w1';
+   } catch { return 'w1'; }
+ })();
 
 function buildWpGrid() {
   const grid = document.getElementById('wp-grid');
@@ -1522,6 +1857,7 @@ function buildWpGrid() {
       settings.personalization.wallpaper = w.style;
       if (wm && wm.setWallpaper) wm.setWallpaper(w.style);
       markUnsaved();
+      scheduleSaveSettings();
       toast('Fond d\'écran appliqué');
     };
     grid.appendChild(el);
@@ -1557,20 +1893,40 @@ function buildFontList() {
       settings.personalization.fontFamily = f.name;
       if (wm && wm.setFontFamily) wm.setFontFamily(f.name);
       markUnsaved();
+      scheduleSaveSettings();
       toast('Police «'+f.label+'» appliquée');
     };
     list.appendChild(el);
   });
 }
 
-function changeFontSize(v) {
-  document.getElementById('fs-label').textContent = v+'px';
-  document.documentElement.style.fontSize = v+'px';
-  settings.accessibility.fontPx = parseInt(v) || 14;
-  if (wm && wm.setBaseFontSizePx) wm.setBaseFontSizePx(settings.accessibility.fontPx);
-  const pct = ((v-11)/(20-11)*100).toFixed(0);
-  document.getElementById('fs-slider').style.setProperty('--v', pct+'%');
-  markUnsaved();
+function changeFontSize(v, persist=true) {
+  const px = Math.max(11, Math.min(20, parseInt(v) || 14));
+  settings.accessibility = settings.accessibility || {};
+  settings.accessibility.fontPx = px;
+
+  document.getElementById('fs-label').textContent = px+'px';
+  document.documentElement.style.fontSize = px+'px';
+
+  // Keep the preset selector and quick toggle coherent.
+  try {
+    const bucket = (px >= 18) ? 'extra-large' : (px >= 16) ? 'large' : (px <= 12) ? 'small' : 'normal';
+    settings.accessibility.fontSize = bucket;
+    const sel = document.getElementById('sel-font-size');
+    if (sel) sel.value = bucket;
+    const isLarge = px >= 18;
+    settings.accessibility.largeText = !!isLarge;
+    document.getElementById('tog-largetext')?.classList.toggle('on', isLarge);
+  } catch (e) {}
+
+  if (wm && wm.setBaseFontSizePx) wm.setBaseFontSizePx(px);
+  const pct = ((px-11)/(20-11)*100).toFixed(0);
+  document.getElementById('fs-slider')?.style.setProperty('--v', pct+'%');
+
+  if (persist) {
+    markUnsaved();
+    scheduleSaveSettings();
+  }
 }
 
 // ── DARK MODE ──
@@ -1589,7 +1945,11 @@ function toggleAnims() {
   const on = btn.classList.contains('on');
   if (!on) document.documentElement.style.setProperty('--dur','0s');
   else document.documentElement.style.removeProperty('--dur');
+  settings.personalization = settings.personalization || {};
+  settings.personalization.animations = !!on;
+  try{ if (wm && wm.setReducedMotion) wm.setReducedMotion(!on); }catch(e){}
   markUnsaved();
+  scheduleSaveSettings();
 }
 
 // ── SECURITY LEVELS ──
@@ -1792,9 +2152,23 @@ function saveCustomTheme() {
 
 // ── PROFILE ──
 function saveProfile() {
-  const name=document.getElementById('pref-username').value||'Admin';
+  const name=String(document.getElementById('pref-username')?.value||'').trim()||'Admin';
+  const email=String(document.getElementById('pref-email')?.value||'').trim();
+  const status=String(document.getElementById('pref-status')?.value||'').trim();
+  settings.profile = settings.profile || {};
+  settings.profile.userName=name;
+  settings.profile.email=email;
+  settings.profile.status=status;
   document.getElementById('profile-name-disp').textContent=name;
   document.getElementById('profile-av').textContent=(name[0]||'A').toUpperCase();
+  try{
+    if(wm){
+      wm.userName=name;
+      wm.profileEmail=email;
+      wm.profileStatus=status;
+      if(wm.saveUserData) wm.saveUserData();
+    }
+  }catch(e){}
   markUnsaved();
   saveSettings();
   toast('Profil mis à jour ✅');
@@ -1836,7 +2210,7 @@ function resetAll() {
 // ── UNSAVED ──
 function markUnsaved() { document.getElementById('save-badge').classList.add('show'); }
 function clearUnsaved() { document.getElementById('save-badge').classList.remove('show'); }
-document.addEventListener('change',()=>{clearUnsaved();});
+// NOTE: We only clear the "unsaved" badge on successful save.
 
 // ── TOAST ──
 function toast(msg) {
@@ -1864,6 +2238,7 @@ function colorMatch(cssColor,hex) {
 document.addEventListener('DOMContentLoaded',()=>{
   applyTheme();
   applyPersonalization();
+  applySystem();
   applyNotifications();
 
   // Sync toggles
@@ -1871,11 +2246,45 @@ document.addEventListener('DOMContentLoaded',()=>{
   document.getElementById('tog-contrast')?.classList.toggle('on', settings.accessibility.highContrast);
   document.getElementById('tog-largetext')?.classList.toggle('on', settings.accessibility.largeText);
   document.getElementById('tog-reduced')?.classList.toggle('on', settings.accessibility.reducedMotion);
+  document.getElementById('tog-sticky')?.classList.toggle('on', !!settings.accessibility.stickyKeys);
+  document.getElementById('tog-screen-reader')?.classList.toggle('on', !!settings.accessibility.screenReader);
+  document.getElementById('tog-captions')?.classList.toggle('on', !!settings.accessibility.captions);
   document.getElementById('tog-notif-enabled')?.classList.toggle('on', settings.notifications.enabled);
   document.getElementById('tog-sec-warn')?.classList.toggle('on', settings.security.warnings);
+  document.getElementById('tog-blur')?.classList.toggle('on', settings.personalization.blurEffects!==false);
+  document.getElementById('tog-anims')?.classList.toggle('on', settings.personalization.animations!==false);
+  document.getElementById('tog-firewall')?.classList.toggle('on', !!settings.security.firewall);
+  document.getElementById('tog-devmode')?.classList.toggle('on', !!settings.security.developerMode);
+  document.getElementById('tog-sync')?.classList.toggle('on', settings.accounts && settings.accounts.syncAuto!==false);
+  document.getElementById('tog-dnd')?.classList.toggle('on', !!settings.notifications.dnd);
+  document.getElementById('tog-notif-sound')?.classList.toggle('on', settings.notifications.sound!==false);
+  document.getElementById('tog-autostart')?.classList.toggle('on', settings.system && settings.system.autostart!==false);
+  document.getElementById('tog-trash')?.classList.toggle('on', !!(settings.system && settings.system.autoEmptyTrash));
+  document.getElementById('tog-perf')?.classList.toggle('on', !!(settings.system && settings.system.performanceMode));
+  document.getElementById('tog-autoupdate')?.classList.toggle('on', settings.system && settings.system.autoUpdate!==false);
 
   // Sync selects for taskbar
   ['left','right','bottom','top'].forEach(v=>{ const o=document.querySelector(`#panel-personalization select option[value="${v}"]`);if(o&&settings.taskbar.position===v)o.selected=true; });
+
+  // Sync system selects (language/region/timezone/date format)
+  try {
+    const langEl=document.getElementById('sys-language');
+    const regEl=document.getElementById('sys-region');
+    const tzEl=document.getElementById('sys-timezone');
+    const dfEl=document.getElementById('sys-dateformat');
+    if (langEl && settings.system && settings.system.language) langEl.value = settings.system.language;
+    if (regEl && settings.system && settings.system.region) regEl.value = settings.system.region;
+    if (tzEl && settings.system && settings.system.timeZone) tzEl.value = settings.system.timeZone;
+    if (dfEl && settings.system && settings.system.dateFormat) dfEl.value = settings.system.dateFormat;
+    const sleepEl=document.getElementById('sys-sleep');
+    if (sleepEl && settings.system && typeof settings.system.sleepMinutes === 'number') sleepEl.value = String(settings.system.sleepMinutes);
+    const lsEl=document.getElementById('letter-spacing');
+    if (lsEl && settings.personalization && settings.personalization.letterSpacing) lsEl.value = settings.personalization.letterSpacing;
+    const cbEl=document.getElementById('sel-colorblind');
+    if (cbEl && settings.accessibility && settings.accessibility.colorBlind) cbEl.value = settings.accessibility.colorBlind;
+    const ps=document.getElementById('ptr-speed');
+    if (ps && settings.accessibility && typeof settings.accessibility.pointerSpeed === 'number') ps.value = String(settings.accessibility.pointerSpeed);
+  } catch(e) {}
 
   // Build all components
   buildNav();
@@ -1892,7 +2301,7 @@ document.addEventListener('DOMContentLoaded',()=>{
     const px = parseInt(settings.accessibility && settings.accessibility.fontPx) || 14;
     const fs = document.getElementById('fs-slider');
     if (fs) fs.value = String(px);
-    changeFontSize(px);
+    changeFontSize(px,false);
   } catch(e) {}
 
   buildSecLevels();
@@ -1902,9 +2311,15 @@ document.addEventListener('DOMContentLoaded',()=>{
 
   // Restore profile
   try {
-    const raw=JSON.parse(localStorage.getItem('aether_settings')||'{}');
-    if(raw['pref-username']){document.getElementById('pref-username').value=raw['pref-username'];document.getElementById('profile-name-disp').textContent=raw['pref-username'];document.getElementById('profile-av').textContent=(raw['pref-username'][0]||'A').toUpperCase();}
-    if(raw['pref-email']) document.getElementById('pref-email').value=raw['pref-email'];
+    const p=settings.profile||{};
+    if(p.userName){
+      document.getElementById('pref-username').value=p.userName;
+      document.getElementById('profile-name-disp').textContent=p.userName;
+      document.getElementById('profile-av').textContent=(p.userName[0]||'A').toUpperCase();
+    }
+    if(p.email) document.getElementById('pref-email').value=p.email;
+    if(p.status) document.getElementById('pref-status').value=p.status;
+    document.getElementById('tog-2fa')?.classList.toggle('on', !!p.twoFactor);
   }catch{}
 
   // Try loading username from WM
@@ -1920,6 +2335,9 @@ document.addEventListener('DOMContentLoaded',()=>{
   // Accent custom input sync
   document.getElementById('accent-custom').value=settings.accentColor||'#0078d4';
   document.getElementById('accent-hex').textContent=settings.accentColor||'#0078d4';
+
+  // Wallpaper URL sync
+  try{ document.getElementById('wp-url').value = (settings.personalization && settings.personalization.customWallpaper) ? settings.personalization.customWallpaper : ''; }catch(e){}
 
   showPanel('profil');
   syncNotifUI();

@@ -1,3 +1,5 @@
 ﻿.env
 env.js
 env.local.js
+secrets.json
+proxy/secrets.json

@@ -52,3 +52,20 @@ Your `index.html` already loads `env.js` before `main.js`.
 - `POST /openai/v1/chat/completions` (OpenAI-compatible)
   - Forwarded to `https://api.groq.com/openai/v1/chat/completions`
 
+## Supabase Config (Optional)
+
+If you don't want to ship Supabase config in `env.js`, this Worker can also serve it to the frontend.
+
+- `GET /aether/v1/supabase-config`
+  - Returns JSON: `{ url, anonKey, table, usernameColumn, passwordColumn }`
+  - Set Worker vars/secrets (Cloudflare dashboard recommended):
+    - `SUPABASE_URL`
+    - `SUPABASE_ANON_KEY`
+    - `SUPABASE_TABLE`
+    - `SUPABASE_USERNAME_COLUMN`
+    - `SUPABASE_PASSWORD_COLUMN`
+
+Then in the frontend set either:
+
+- `AETHER_SUPABASE_CONFIG_URL` (recommended), or
+- `AETHER_AI_PROXY_URL` (fallback: the OS will try `${AETHER_AI_PROXY_URL}/aether/v1/supabase-config`).

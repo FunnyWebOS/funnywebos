@@ -24,6 +24,9 @@ class WindowManager {
                 return 'dark';
             }
         })();
+        this.locale = (() => {
+            try { return (navigator.languages && navigator.languages[0]) || navigator.language || 'fr-FR'; } catch (err) { return 'fr-FR'; }
+        })();
         this.timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
         this.timeFormat = "24h";
         this.accessibility = this.getDefaultAccessibility();
@@ -36,6 +39,25 @@ class WindowManager {
         this.pathPickerState = null;
         this.launchpadOpenTimer = null;
         this.webWrapApps = {};
+
+        // Apps that manage their own theme and should NOT be forced by the OS theme.
+        this.themeSyncExclusions = new Set(['word', 'excel', 'powerpoint', 'docs', 'sheets', 'slides']);
+
+        // Cached copy of Settings-app preferences (aether_settings) for fast checks.
+        this.aetherSettings = null;
+
+        // Preferences driven by Settings app (blur/spacing/perf/autostart/sleep).
+        this.transparencyEffectsEnabled = true;
+        this.letterSpacing = 'normal';
+        this.performanceMode = false;
+        this.autostartEnabled = true;
+        this.firewallEnabled = false;
+        this.developerMode = false;
+        this.sleepMinutes = 0;
+        this._idleLastActivity = Date.now();
+        this._idleTimer = null;
+        this._idleBound = false;
+        this._autostartRestored = false;
 
         this.sysVersion = "AetherOS v3.0 - Singularity";
         this.releaseVersion = "3.0.0";
@@ -234,8 +256,9 @@ class WindowManager {
             month: 'long'
         };
 
-        timeEl.textContent = now.toLocaleTimeString('fr-FR', timeOptions);
-        dateEl.textContent = now.toLocaleDateString('fr-FR', dateOptions);
+        const locale = this.locale || 'fr-FR';
+        timeEl.textContent = now.toLocaleTimeString(locale, timeOptions);
+        dateEl.textContent = now.toLocaleDateString(locale, dateOptions);
     }
 
     startLockscreenClock() {
@@ -534,7 +557,20 @@ class WindowManager {
     }
 
     getDefaultAccessibility() {
-        return { fontSize: "14px", highContrast: false, reducedMotion: false, narrator: false, magnifier: false };
+        return {
+            fontSize: "14px",
+            fontPx: 14,
+            highContrast: false,
+            reducedMotion: false,
+            // Optional accessibility extensions used by the Settings app.
+            colorBlind: 'off',
+            stickyKeys: false,
+            pointerSpeed: 5,
+            screenReader: false,
+            captions: false,
+            narrator: false,
+            magnifier: false
+        };
     }
 
     getDefaultUIPreferences() {
@@ -550,6 +586,8 @@ class WindowManager {
     getDefaultNotificationPreferences() {
         return {
             enabled: true,
+            dnd: false,
+            sound: true,
             durationMs: 5000,
             types: {
                 system: true,
@@ -589,6 +627,8 @@ class WindowManager {
             clockSeconds: !!raw.clockSeconds,
             notifications: {
                 enabled: typeof rawNotif.enabled === 'boolean' ? rawNotif.enabled : notifDefaults.enabled,
+                dnd: typeof rawNotif.dnd === 'boolean' ? rawNotif.dnd : notifDefaults.dnd,
+                sound: typeof rawNotif.sound === 'boolean' ? rawNotif.sound : notifDefaults.sound,
                 durationMs,
                 types: sanitizedTypes
             }
@@ -667,6 +707,93 @@ class WindowManager {
         return parsed;
     }
 
+    getSupabaseConfigRemoteUrl() {
+        const runtimeEnv = (typeof window !== 'undefined' && window.AETHER_RUNTIME_ENV)
+            ? window.AETHER_RUNTIME_ENV
+            : {};
+
+        const sanitizeUrl = (value) => {
+            const raw = String(value || '').trim();
+            if (!raw) return '';
+            try {
+                const parsed = new URL(raw);
+                if (!['http:', 'https:'].includes(parsed.protocol)) return '';
+                return parsed.href.replace(/\/+$/, '');
+            } catch (err) {
+                return '';
+            }
+        };
+
+        const explicit = sanitizeUrl(runtimeEnv.AETHER_SUPABASE_CONFIG_URL);
+        if (explicit) return explicit;
+
+        // Convenience fallback: if you already deployed the AI proxy Worker, it can also serve config.
+        const proxy = sanitizeUrl(runtimeEnv.AETHER_AI_PROXY_URL);
+        if (proxy) return `${proxy}/aether/v1/supabase-config`;
+
+        return '';
+    }
+
+    coerceWorkerSupabaseConfig(payload) {
+        const obj = (payload && typeof payload === 'object') ? payload : {};
+        const cfg = (obj.config && typeof obj.config === 'object') ? obj.config : obj;
+
+        const pick = (key) => {
+            try {
+                const v = cfg[key];
+                return (typeof v === 'string') ? v.trim() : '';
+            } catch (err) {
+                return '';
+            }
+        };
+
+        const url = pick('url') || pick('supabaseUrl') || pick('supabaseURL') || pick('AETHER_SUPABASE_URL');
+        const anonKey = pick('anonKey') || pick('anon_key') || pick('anon') || pick('AETHER_SUPABASE_ANON_KEY');
+        const serviceKey = pick('serviceKey') || pick('service_key') || pick('AETHER_SUPABASE_SERVICE_ROLE_KEY');
+        const table = pick('table') || pick('AETHER_SUPABASE_TABLE');
+        const usernameColumn = pick('usernameColumn') || pick('username_column') || pick('AETHER_SUPABASE_USERNAME_COLUMN');
+        const passwordColumn = pick('passwordColumn') || pick('password_column') || pick('AETHER_SUPABASE_PASSWORD_COLUMN');
+
+        const clean = { url, anonKey, serviceKey, table, usernameColumn, passwordColumn };
+
+        // Never accept a service-role key in the browser. Keep it server-side and proxy privileged ops.
+        if (clean.serviceKey) {
+            console.warn('[AetherOS] Ignoring Supabase serviceRole key from remote config (client-side).');
+            clean.serviceKey = '';
+        }
+
+        return clean;
+    }
+
+    async loadSupabaseConfigFromWorker() {
+        const endpoint = this.getSupabaseConfigRemoteUrl();
+        if (!endpoint) return null;
+
+        const controller = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+        const timeoutMs = 3500;
+        const t = setTimeout(() => {
+            try { controller && controller.abort(); } catch (err) { }
+        }, timeoutMs);
+
+        try {
+            const resp = await fetch(endpoint, {
+                method: 'GET',
+                cache: 'no-store',
+                signal: controller ? controller.signal : undefined
+            });
+            if (!resp.ok) return null;
+            const data = await resp.json();
+            const remote = this.coerceWorkerSupabaseConfig(data);
+            const sanitized = this.sanitizeSupabaseConfig(remote);
+            if (!this.isSupabaseReady(sanitized)) return null;
+            return sanitized;
+        } catch (err) {
+            return null;
+        } finally {
+            clearTimeout(t);
+        }
+    }
+
     getStoredGroqApiKey() {
         try {
             const value = localStorage.getItem('aether_groq_api_key');
@@ -693,8 +820,20 @@ class WindowManager {
         const candidates = ['.env', './.env', '/.env', 'env', './env', '/env', 'config/.env'];
         const base = this.sanitizeSupabaseConfig(this.supabaseConfig || this.loadSupabaseConfig());
         let resolved = base;
+        const runtimeEnv = (typeof window !== 'undefined' && window.AETHER_RUNTIME_ENV)
+            ? window.AETHER_RUNTIME_ENV
+            : {};
+        const hasExplicitRemote = typeof runtimeEnv.AETHER_SUPABASE_CONFIG_URL === 'string' && runtimeEnv.AETHER_SUPABASE_CONFIG_URL.trim();
 
-        for (const path of candidates) {
+        // Optional: load from a Cloudflare Worker endpoint so you don't ship keys in env.js.
+        try {
+            const fromWorker = await this.loadSupabaseConfigFromWorker();
+            if (fromWorker) resolved = this.sanitizeSupabaseConfig({ ...resolved, ...fromWorker });
+        } catch (err) { }
+
+        // If a remote config URL is explicitly configured, don't probe local .env files.
+        // (Static hosting: those files should not exist; probing can also add startup latency.)
+        for (const path of (hasExplicitRemote ? [] : candidates)) {
             try {
                 const response = await fetch(path, { cache: 'no-store' });
                 if (!response.ok) continue;
@@ -716,9 +855,6 @@ class WindowManager {
             } catch (err) { }
         }
 
-        const runtimeEnv = (typeof window !== 'undefined' && window.AETHER_RUNTIME_ENV)
-            ? window.AETHER_RUNTIME_ENV
-            : {};
         resolved = this.sanitizeSupabaseConfig({
             ...resolved,
             url: runtimeEnv.AETHER_SUPABASE_URL || resolved.url,
@@ -1610,7 +1746,7 @@ class WindowManager {
             return `Colonnes manquantes sur public.${table}. Execute supabase_setup.sql pour corriger la table.`;
         }
         if (lower.includes('permission denied') || lower.includes('new row violates row-level security') || lower.includes('42501')) {
-            return `Permissions Supabase manquantes (RLS/policies) sur ${table}. Execute supabase_setup.sql ou renseigne AETHER_SUPABASE_SERVICE_ROLE_KEY.`;
+            return `Permissions Supabase manquantes (RLS/policies) sur ${table}. Execute supabase_setup.sql, ou utilise un proxy serveur (Worker) pour les operations privilegiees (ne jamais exposer une service-role key dans le navigateur).`;
         }
         if (lower.includes('duplicate key value') || lower.includes('23505')) {
             return `Ce compte existe deja dans Supabase.`;
@@ -1841,6 +1977,14 @@ class WindowManager {
 
             (Array.isArray(this.pinnedApps) ? this.pinnedApps : []).forEach(id => this.pinApp(id, null, true));
 
+            // Autostart: restore previously open app windows.
+            if (this.autostartEnabled && !this._autostartRestored) {
+                this._autostartRestored = true;
+                setTimeout(() => {
+                    try { this.restoreSessionWindows(); } catch (err) { }
+                }, 120);
+            }
+
             const avatar = document.getElementById('start-avatar');
             const nameDisp = document.getElementById('start-username');
             if (avatar) {
@@ -1985,6 +2129,7 @@ class WindowManager {
             : this.getDefaultNotificationPreferences();
         if (!options.force) {
             if (!prefs.enabled) return;
+            if (prefs.dnd && type !== 'security') return;
             if (prefs.types && Object.prototype.hasOwnProperty.call(prefs.types, type) && prefs.types[type] === false) return;
         }
 
@@ -2001,6 +2146,36 @@ class WindowManager {
         }
         const duration = Number.isFinite(Number(options.durationMs)) ? Number(options.durationMs) : prefs.durationMs;
         setTimeout(() => n.remove(), Math.min(60000, Math.max(800, duration)));
+
+        if (!options.force) {
+            if (prefs.sound && !prefs.dnd) {
+                try { this.playNotificationSound(); } catch (err) { }
+            }
+        }
+    }
+
+    playNotificationSound() {
+        // Lightweight beep. Browsers may block audio until user interaction.
+        try {
+            const Ctx = window.AudioContext || window.webkitAudioContext;
+            if (!Ctx) return;
+            if (!this._notifAudioCtx) this._notifAudioCtx = new Ctx();
+            const ctx = this._notifAudioCtx;
+            if (ctx.state === 'suspended') ctx.resume().catch(() => { });
+            const o = ctx.createOscillator();
+            const g = ctx.createGain();
+            o.type = 'sine';
+            o.frequency.value = 880;
+            g.gain.value = 0.0001;
+            o.connect(g);
+            g.connect(ctx.destination);
+            const now = ctx.currentTime;
+            g.gain.setValueAtTime(0.0001, now);
+            g.gain.exponentialRampToValueAtTime(0.04, now + 0.02);
+            g.gain.exponentialRampToValueAtTime(0.0001, now + 0.18);
+            o.start(now);
+            o.stop(now + 0.20);
+        } catch (err) { }
     }
 
     getDefaultWindowRect(index = this.windows.size) {
@@ -2158,6 +2333,7 @@ class WindowManager {
 
         this.fitWindowsToViewport();
         this.initAppLogic(id);
+        this.persistSessionWindows();
     }
 
     openWebWrap(url, name = '', icon = '🌐') {
@@ -2173,6 +2349,14 @@ class WindowManager {
             return;
         }
 
+        // Security warning for external websites (Store web games, unknown domains, etc.).
+        if (!this.maybeOpenExternalUrlWithSecurityPrompt(safeUrl, { name, icon })) return;
+        return this.openWebWrapUnsafe(safeUrl, name, icon);
+    }
+
+    openWebWrapUnsafe(url, name = '', icon = '') {
+        const safeUrl = String(url || '').trim();
+        if (!safeUrl) return;
         const safeName = String(name || '').trim();
         const safeIcon = String(icon || '').trim();
         const id = `webwrap_${Date.now()}_${Math.random().toString(16).slice(2, 6)}`;
@@ -2186,6 +2370,119 @@ class WindowManager {
         if (safeIcon) title = `${safeIcon} ${title}`;
         this.createWindow(id, title, true);
         return id;
+    }
+
+    getSecuritySettings() {
+        const s = this.aetherSettings || this.loadAetherSettingsFromStorage() || {};
+        const sec = (s.security && typeof s.security === 'object') ? s.security : {};
+        const warnings = (typeof sec.warnings === 'boolean') ? sec.warnings : true;
+        const level = String(sec.level || 'normal').trim() || 'normal';
+        const firewall = (typeof sec.firewall === 'boolean') ? sec.firewall : false;
+        const developerMode = (typeof sec.developerMode === 'boolean') ? sec.developerMode : false;
+        const verifiedApps = Array.isArray(sec.verifiedApps) ? sec.verifiedApps.map(String) : [];
+        return { warnings, level, firewall, developerMode, verifiedApps, raw: s };
+    }
+
+    isDomainTrusted(host) {
+        const h = String(host || '').trim().toLowerCase();
+        if (!h) return false;
+        const { verifiedApps } = this.getSecuritySettings();
+        return verifiedApps.includes(`domain:${h}`) || verifiedApps.includes(h);
+    }
+
+    trustDomain(host) {
+        const h = String(host || '').trim().toLowerCase();
+        if (!h) return;
+        const s = this.loadAetherSettingsFromStorage() || {};
+        if (!s.security || typeof s.security !== 'object') s.security = { level: 'normal', verifiedApps: [], warnings: true };
+        if (!Array.isArray(s.security.verifiedApps)) s.security.verifiedApps = [];
+        const token = `domain:${h}`;
+        if (!s.security.verifiedApps.includes(token)) s.security.verifiedApps.push(token);
+        try { localStorage.setItem('aether_settings', JSON.stringify(s)); } catch (err) { }
+        this.applyAetherSettings(s, { persist: false });
+    }
+
+    maybeOpenExternalUrlWithSecurityPrompt(url, { name = '', icon = '' } = {}) {
+        const { warnings, level, firewall } = this.getSecuritySettings();
+        if (!warnings) return true;
+
+        let host = '';
+        try { host = new URL(String(url)).hostname || ''; } catch (err) { host = ''; }
+        const hostLower = String(host || '').toLowerCase();
+        if (!hostLower) return true;
+
+        // Always allow local dev hosts without nagging.
+        if (hostLower === 'localhost' || hostLower === '127.0.0.1') return true;
+
+        if (this.isDomainTrusted(hostLower)) return true;
+
+        const mode = (firewall || level === 'high' || level === 'strict') ? 'warn_strict' : 'warn';
+        this.showSecurityPrompt({ url, host: hostLower, title: String(name || hostLower), mode }, (decision) => {
+            if (!decision || !decision.open) return;
+            if (decision.trust) this.trustDomain(hostLower);
+            // Open after confirmation (no recursion).
+            this.openWebWrapUnsafe(url, name, icon);
+        });
+
+        return false;
+    }
+
+    showSecurityPrompt(payload, onDone) {
+        const overlay = document.getElementById('security-prompt-modal');
+        if (!overlay) {
+            const ok = confirm(`Ouvrir un site externe non vérifié ?\n${payload && payload.url ? payload.url : ''}`);
+            if (ok && typeof onDone === 'function') onDone({ open: true, trust: false });
+            return;
+        }
+        const titleEl = document.getElementById('sec-prompt-title');
+        const urlEl = document.getElementById('sec-prompt-url');
+        const hostEl = document.getElementById('sec-prompt-host');
+        const subEl = document.getElementById('sec-prompt-sub');
+        const trustEl = document.getElementById('sec-prompt-trust');
+        const openBtn = document.getElementById('sec-prompt-open');
+        const cancelBtn = document.getElementById('sec-prompt-cancel');
+
+        const url = String(payload && payload.url || '').trim();
+        const host = String(payload && payload.host || '').trim();
+        const title = String(payload && payload.title || host || 'Site externe').trim();
+        const mode = String(payload && payload.mode || 'warn');
+
+        if (titleEl) titleEl.textContent = title || 'Site externe';
+        if (urlEl) urlEl.textContent = url;
+        if (hostEl) hostEl.textContent = host ? `Domaine: ${host}` : '';
+        if (subEl) subEl.textContent = (mode === 'warn_strict')
+            ? 'Niveau de sécurité élevé: vérifiez bien l’URL avant d’ouvrir. Si vous lui faites confiance, cochez la case pour ne plus voir cet avertissement.'
+            : 'Ce site n’est pas vérifié. Il peut afficher des publicités, demander des permissions ou rediriger vers d’autres pages.';
+        if (trustEl) trustEl.checked = false;
+
+        if (openBtn) openBtn.textContent = 'Ouvrir quand même';
+
+        const cleanup = () => {
+            try { overlay.classList.remove('active'); overlay.setAttribute('aria-hidden', 'true'); } catch (err) { }
+            setTimeout(() => { try { overlay.style.display = 'none'; } catch (err) { } }, 150);
+            try {
+                openBtn && openBtn.removeEventListener('click', onOpen);
+                cancelBtn && cancelBtn.removeEventListener('click', onCancel);
+                overlay && overlay.removeEventListener('click', onOverlay);
+            } catch (err) { }
+        };
+        const done = (result) => {
+            cleanup();
+            if (typeof onDone === 'function') onDone(result);
+        };
+
+        const onOpen = (e) => { e && e.preventDefault(); done({ open: true, trust: !!(trustEl && trustEl.checked) }); };
+        const onCancel = (e) => { e && e.preventDefault(); done({ open: false, trust: false }); };
+        const onOverlay = (e) => { if (e && e.target === overlay) onCancel(e); };
+
+        try { overlay.style.display = 'flex'; overlay.setAttribute('aria-hidden', 'false'); } catch (err) { }
+        requestAnimationFrame(() => { try { overlay.classList.add('active'); } catch (err) { } });
+
+        try {
+            openBtn && openBtn.addEventListener('click', onOpen);
+            cancelBtn && cancelBtn.addEventListener('click', onCancel);
+            overlay && overlay.addEventListener('click', onOverlay);
+        } catch (err) { }
     }
 
     getAppContent(id) {
@@ -2336,6 +2633,7 @@ class WindowManager {
             accentColor: this.getComputedAccentColor ? this.getComputedAccentColor() : '',
             fontFamily: this.fontFamily || '',
             baseFontSizePx: Number(this.baseFontSizePx) || 14,
+            locale: this.locale,
             timeZone: this.timeZone,
             timeFormat: this.timeFormat,
             accessibility: this.accessibility,
@@ -2539,8 +2837,11 @@ class WindowManager {
         const iframe = document.getElementById(`iframe-${id}`);
         if (!iframe || !iframe.contentWindow) return;
         const normalized = this.theme === 'light' ? 'light' : 'dark';
+        const excludeTheme = !!(this.themeSyncExclusions && this.themeSyncExclusions.has(String(id || '')));
 
-        try { iframe.contentWindow.postMessage({ type: 'funnyweb_theme_change', theme: normalized }, '*'); } catch (err) { }
+        if (!excludeTheme) {
+            try { iframe.contentWindow.postMessage({ type: 'funnyweb_theme_change', theme: normalized }, '*'); } catch (err) { }
+        }
         this.syncStyleToIframe(id);
     }
 
@@ -2587,6 +2888,7 @@ class WindowManager {
         const root = document.documentElement;
         if (root) root.style.fontSize = `${v}px`;
         this.baseFontSizePx = v;
+        this.applyAccessibilitySettings();
         this.syncStyleToIframes();
         this.saveUserData();
     }
@@ -2629,8 +2931,295 @@ class WindowManager {
     applyAccessibilitySettings() {
         const root = document.body;
         if (!root) return;
-        root.style.fontSize = this.accessibility.fontSize || '14px';
+        // Keep one source of truth: base font size in px (Settings slider).
+        const base = Number(this.baseFontSizePx) || 14;
+        root.style.fontSize = `${base}px`;
         root.classList.toggle('high-contrast', !!this.accessibility.highContrast);
+
+        // Color-blindness simulation (approximation).
+        try {
+            const cb = String(this.accessibility && this.accessibility.colorBlind || 'off');
+            const cbFilter = (cb === 'protanopia')
+                ? 'grayscale(0.05) saturate(0.85) hue-rotate(-18deg)'
+                : (cb === 'deuteranopia')
+                    ? 'grayscale(0.05) saturate(0.85) hue-rotate(12deg)'
+                    : (cb === 'tritanopia')
+                        ? 'grayscale(0.05) saturate(0.85) hue-rotate(40deg)'
+                        : '';
+            const parts = [];
+            if (this.accessibility.highContrast) parts.push('contrast(1.25)');
+            if (cbFilter) parts.push(cbFilter);
+            const filter = parts.length ? parts.join(' ') : '';
+            const docEl = document.documentElement;
+            if (docEl) {
+                if (filter) docEl.style.filter = filter;
+                else docEl.style.removeProperty('filter');
+                docEl.dataset.colorblind = cb;
+            }
+        } catch (err) { }
+    }
+
+    speak(text, { interrupt = true } = {}) {
+        const msg = String(text || '').replace(/\s+/g, ' ').trim();
+        if (!msg) return;
+        if (!('speechSynthesis' in window)) return;
+
+        const now = Date.now();
+        if (!this._lastSpoken) this._lastSpoken = { text: '', at: 0 };
+        if (this._lastSpoken.text === msg && (now - this._lastSpoken.at) < 700) return;
+        this._lastSpoken = { text: msg, at: now };
+
+        try {
+            if (interrupt) window.speechSynthesis.cancel();
+            const u = new SpeechSynthesisUtterance(msg);
+            u.lang = this.locale || 'fr-FR';
+            u.rate = 1;
+            u.pitch = 1;
+            window.speechSynthesis.speak(u);
+        } catch (err) { }
+    }
+
+    getSpeakableTextFromElement(el, doc) {
+        try {
+            if (!el || el.nodeType !== 1) return '';
+            const e = el;
+            const getAttr = (k) => {
+                try { return String(e.getAttribute(k) || '').trim(); } catch (err) { return ''; }
+            };
+
+            // Prefer explicit accessible names.
+            let label = getAttr('aria-label') || getAttr('title') || getAttr('alt');
+
+            // Try associated <label for="..."> for form fields.
+            if (!label && e.id && doc && doc.querySelector) {
+                try {
+                    const cssEscape = (window.CSS && typeof window.CSS.escape === 'function') ? window.CSS.escape : null;
+                    const q = cssEscape ? `label[for="${cssEscape(e.id)}"]` : `label[for="${e.id.replace(/\"/g, '')}"]`;
+                    const l = doc.querySelector(q);
+                    if (l && l.textContent) label = String(l.textContent).trim();
+                } catch (err) { }
+            }
+
+            const tag = String(e.tagName || '').toLowerCase();
+            if (!label && (tag === 'input' || tag === 'textarea')) {
+                label = getAttr('placeholder') || String(e.value || '').trim() || getAttr('name');
+            }
+            if (!label && tag === 'select') {
+                try {
+                    const opt = e.selectedOptions && e.selectedOptions[0];
+                    label = (opt && opt.textContent) ? String(opt.textContent).trim() : '';
+                } catch (err) { }
+            }
+
+            if (!label) {
+                const txt = String(e.textContent || '').replace(/\s+/g, ' ').trim();
+                label = txt;
+            }
+
+            if (!label) return '';
+            if (label.length > 140) label = label.slice(0, 140) + '…';
+            return label;
+        } catch (err) {
+            return '';
+        }
+    }
+
+    setScreenReaderEnabled(enabled, { announce = true } = {}) {
+        if (!this.accessibility) this.accessibility = this.getDefaultAccessibility();
+        const next = !!enabled;
+        const prev = !!this.accessibility.screenReader;
+        this.accessibility.screenReader = next;
+
+        if (prev !== next) {
+            if (announce) this.speak(next ? 'Lecture d’écran activée' : 'Lecture d’écran désactivée');
+            try { if (!next && 'speechSynthesis' in window) window.speechSynthesis.cancel(); } catch (err) { }
+        }
+
+        // Shell listeners (start menu, spotlight, etc.)
+        if (!this._srShellHandlers) this._srShellHandlers = null;
+        if (next && !this._srShellHandlers) {
+            const onFocus = (e) => {
+                const t = this.getSpeakableTextFromElement(e && e.target, document);
+                if (t) this.speak(t, { interrupt: true });
+            };
+            const onClick = (e) => {
+                const t = this.getSpeakableTextFromElement(e && e.target, document);
+                if (t) this.speak(t, { interrupt: true });
+            };
+            this._srShellHandlers = { onFocus, onClick };
+            try {
+                document.addEventListener('focusin', onFocus, true);
+                document.addEventListener('click', onClick, true);
+            } catch (err) { }
+        } else if (!next && this._srShellHandlers) {
+            try {
+                document.removeEventListener('focusin', this._srShellHandlers.onFocus, true);
+                document.removeEventListener('click', this._srShellHandlers.onClick, true);
+            } catch (err) { }
+            this._srShellHandlers = null;
+        }
+
+        // Apply to all open apps (same-origin).
+        try { this.syncStyleToIframes(); } catch (err) { }
+    }
+
+    syncScreenReaderToDocument(doc) {
+        try {
+            const win = doc && doc.defaultView;
+            if (!win || !doc || !doc.addEventListener) return;
+            const enabled = !!(this.accessibility && this.accessibility.screenReader);
+
+            if (!enabled) {
+                const h = win.__aether_sr_handlers;
+                if (h) {
+                    try { doc.removeEventListener('focusin', h.onFocus, true); } catch (err) { }
+                    try { doc.removeEventListener('click', h.onClick, true); } catch (err) { }
+                    try { delete win.__aether_sr_handlers; } catch (err) { win.__aether_sr_handlers = null; }
+                }
+                return;
+            }
+
+            if (win.__aether_sr_handlers) return;
+
+            const onFocus = (e) => {
+                const t = this.getSpeakableTextFromElement(e && e.target, doc);
+                if (t) this.speak(t, { interrupt: true });
+            };
+            const onClick = (e) => {
+                const t = this.getSpeakableTextFromElement(e && e.target, doc);
+                if (t) this.speak(t, { interrupt: true });
+            };
+            win.__aether_sr_handlers = { onFocus, onClick };
+            doc.addEventListener('focusin', onFocus, true);
+            doc.addEventListener('click', onClick, true);
+        } catch (err) { }
+    }
+
+    setLocale(locale = 'fr-FR') {
+        const raw = String(locale || '').trim();
+        if (!raw) return;
+        this.locale = raw;
+        this.saveUserData();
+        try { updateClock(); } catch (err) { }
+    }
+
+    setTimeZone(timeZone = '') {
+        const tz = String(timeZone || '').trim();
+        if (!tz) return;
+        this.timeZone = tz;
+        this.saveUserData();
+        try { updateClock(); } catch (err) { }
+        this.syncStyleToIframes();
+    }
+
+    setTransparencyEffectsEnabled(enabled) {
+        const on = !!enabled;
+        this.transparencyEffectsEnabled = on;
+        try {
+            if (document.body) document.body.classList.toggle('no-blur', !on);
+        } catch (err) { }
+        this.syncStyleToIframes();
+        this.saveUserData();
+    }
+
+    setLetterSpacing(mode = 'normal') {
+        const m = String(mode || 'normal').trim();
+        this.letterSpacing = (m === 'wide' || m === 'tight') ? m : 'normal';
+        const css = (this.letterSpacing === 'wide') ? '0.04em' : (this.letterSpacing === 'tight') ? '-0.02em' : 'normal';
+        try {
+            const root = document.documentElement;
+            if (root) root.style.letterSpacing = css;
+        } catch (err) { }
+        this.syncStyleToIframes();
+        this.saveUserData();
+    }
+
+    setPerformanceMode(enabled) {
+        const on = !!enabled;
+        this.performanceMode = on;
+        try {
+            if (document.body) document.body.classList.toggle('performance-mode', on);
+        } catch (err) { }
+        // Actual behavior is applied by applyAetherSettings (reduced motion, blur, etc.).
+        this.syncStyleToIframes();
+        this.saveUserData();
+    }
+
+    setAutostartEnabled(enabled) {
+        this.autostartEnabled = !!enabled;
+        this.saveUserData();
+    }
+
+    setSleepMinutes(minutes = 0) {
+        const m = Math.max(0, Math.min(60, Math.round(Number(minutes) || 0)));
+        this.sleepMinutes = m;
+        this.configureIdleSleepTimer();
+        this.saveUserData();
+    }
+
+    setFirewallEnabled(enabled) {
+        this.firewallEnabled = !!enabled;
+        this.saveUserData();
+    }
+
+    setDeveloperMode(enabled) {
+        this.developerMode = !!enabled;
+        try {
+            if (document.body) document.body.classList.toggle('developer-mode', this.developerMode);
+        } catch (err) { }
+        this.saveUserData();
+    }
+
+    bindIdleActivityListeners() {
+        if (this._idleBound) return;
+        this._idleBound = true;
+        const bump = () => { this._idleLastActivity = Date.now(); };
+        ['mousemove', 'mousedown', 'keydown', 'touchstart', 'pointerdown', 'wheel'].forEach((ev) => {
+            try { window.addEventListener(ev, bump, { passive: true }); } catch (err) { }
+        });
+    }
+
+    configureIdleSleepTimer() {
+        this.bindIdleActivityListeners();
+        if (this._idleTimer) {
+            clearInterval(this._idleTimer);
+            this._idleTimer = null;
+        }
+        if (!this.sleepMinutes || this.sleepMinutes <= 0) return;
+        this._idleTimer = setInterval(() => {
+            try {
+                const idleMs = Date.now() - (this._idleLastActivity || Date.now());
+                if (idleMs >= (this.sleepMinutes * 60 * 1000)) {
+                    this._idleLastActivity = Date.now();
+                    this.lockSession();
+                }
+            } catch (err) { }
+        }, 5000);
+    }
+
+    persistSessionWindows() {
+        try {
+            const ids = Array.from(this.windows.keys()).filter((id) => {
+                const s = String(id || '');
+                if (!s) return false;
+                if (s.startsWith('webwrap_')) return false;
+                return true;
+            });
+            localStorage.setItem('aether_last_windows_v1', JSON.stringify({ ids, at: Date.now() }));
+        } catch (err) { }
+    }
+
+    restoreSessionWindows() {
+        try {
+            const raw = localStorage.getItem('aether_last_windows_v1');
+            if (!raw) return;
+            const parsed = JSON.parse(raw);
+            const ids = (parsed && Array.isArray(parsed.ids)) ? parsed.ids.map(String) : [];
+            ids.forEach((id) => {
+                if (!id || this.windows.has(id)) return;
+                this.createWindow(id, id, true);
+            });
+        } catch (err) { }
     }
 
     getComputedAccentColor() {
@@ -2662,16 +3251,22 @@ class WindowManager {
         const fontStack = this.getComputedFontStack();
         const baseFontPx = Number(this.baseFontSizePx) || 14;
         const accessibility = this.accessibility || this.getDefaultAccessibility();
+        const excludeTheme = !!(this.themeSyncExclusions && this.themeSyncExclusions.has(String(id || '')));
+        const letterSpacingMode = (this.letterSpacing === 'wide' || this.letterSpacing === 'tight') ? this.letterSpacing : 'normal';
+        const letterSpacingCss = (letterSpacingMode === 'wide') ? '0.04em' : (letterSpacingMode === 'tight') ? '-0.02em' : 'normal';
+        const baselineFontPx = 14;
+        const textScale = Math.max(0.78, Math.min(1.57, baseFontPx / baselineFontPx));
 
         // Notify apps that support postMessage-based sync.
         try {
             iframe.contentWindow.postMessage({
                 type: 'funnyweb_style_sync',
-                theme: normalized,
-                accentColor: accent,
+                theme: excludeTheme ? null : normalized,
+                accentColor: excludeTheme ? null : accent,
                 fontFamily: this.fontFamily || '',
                 fontStack: fontStack || '',
                 baseFontSizePx: baseFontPx,
+                letterSpacing: letterSpacingMode,
                 accessibility
             }, '*');
         } catch (err) { }
@@ -2680,14 +3275,46 @@ class WindowManager {
         try {
             const doc = iframe.contentDocument;
             if (!doc || !doc.documentElement) return;
-            doc.documentElement.setAttribute('data-theme', normalized);
-            if (doc.body) doc.body.dataset.theme = normalized;
+            if (!excludeTheme) {
+                doc.documentElement.setAttribute('data-theme', normalized);
+                if (doc.body) doc.body.dataset.theme = normalized;
+            } else {
+                // Let the app decide its own theme.
+                try { doc.documentElement.removeAttribute('data-theme'); } catch (err) { }
+                try { if (doc.body) delete doc.body.dataset.theme; } catch (err) { }
+            }
 
             // Set variables that many apps use.
-            doc.documentElement.style.setProperty('--accent', accent);
-            doc.documentElement.style.setProperty('--primary', accent);
+            if (!excludeTheme) {
+                doc.documentElement.style.setProperty('--accent', accent);
+                doc.documentElement.style.setProperty('--primary', accent);
+            } else {
+                try { doc.documentElement.style.removeProperty('--accent'); } catch (err) { }
+                try { doc.documentElement.style.removeProperty('--primary'); } catch (err) { }
+            }
+            // Helpful derived accent vars for apps that support them (Explorer, Settings, etc.).
+            try {
+                const hex = String(accent || '').trim();
+                const m = /^#?([0-9a-f]{6})$/i.exec(hex);
+                if (m) {
+                    const n = parseInt(m[1], 16);
+                    const r = (n >> 16) & 255;
+                    const g = (n >> 8) & 255;
+                    const b = n & 255;
+                    doc.documentElement.style.setProperty('--accent-rgb', `${r},${g},${b}`);
+                    doc.documentElement.style.setProperty('--accent-bg', `rgba(${r},${g},${b},0.15)`);
+                    doc.documentElement.style.setProperty('--accent-hover', `rgba(${r},${g},${b},0.10)`);
+                }
+            } catch (err) { }
             if (fontStack) doc.documentElement.style.setProperty('--font-main', fontStack);
-            doc.documentElement.style.fontSize = `${baseFontPx}px`;
+            // Force a stable baseline and scale the whole UI so even px-based apps respond to "Taille du texte".
+            doc.documentElement.style.fontSize = `${baselineFontPx}px`;
+            doc.documentElement.style.letterSpacing = letterSpacingCss;
+            doc.documentElement.style.setProperty('--aether-text-scale', String(textScale));
+            if (doc.body) {
+                if (Math.abs(textScale - 1) < 0.01) doc.body.style.removeProperty('zoom');
+                else doc.body.style.zoom = `${Math.round(textScale * 100)}%`;
+            }
 
             let styleEl = doc.getElementById('aether-os-injected-style');
             if (!styleEl) {
@@ -2697,12 +3324,27 @@ class WindowManager {
             }
             const reduce = !!accessibility.reducedMotion;
             const contrast = !!accessibility.highContrast;
+            const cb = String(accessibility.colorBlind || 'off');
+            const cbFilter = (cb === 'protanopia')
+                ? 'grayscale(0.05) saturate(0.85) hue-rotate(-18deg)'
+                : (cb === 'deuteranopia')
+                    ? 'grayscale(0.05) saturate(0.85) hue-rotate(12deg)'
+                    : (cb === 'tritanopia')
+                        ? 'grayscale(0.05) saturate(0.85) hue-rotate(40deg)'
+                        : '';
+            const filterParts = [];
+            if (contrast) filterParts.push('contrast(1.25)');
+            if (cbFilter) filterParts.push(cbFilter);
+            const filterCss = filterParts.length ? `html{filter:${filterParts.join(' ')} !important;}` : '';
             styleEl.textContent = `
-                :root{ --accent:${accent}; --primary:${accent}; ${fontStack ? `--font-main:${fontStack};` : ''} }
-                html,body{ ${fontStack ? `font-family:var(--font-main) !important;` : ''} font-size:${baseFontPx}px !important; }
-                ${contrast ? 'html{filter:contrast(1.25) !important;}' : ''}
+                :root{ ${excludeTheme ? '' : `--accent:${accent}; --primary:${accent};`} ${fontStack ? `--font-main:${fontStack};` : ''} }
+                html,body{ ${fontStack ? `font-family:var(--font-main) !important;` : ''} font-size:${baselineFontPx}px !important; letter-spacing:${letterSpacingCss} !important; }
+                ${filterCss}
                 ${reduce ? '*{animation-duration:0s !important;animation-delay:0s !important;transition-duration:0s !important;scroll-behavior:auto !important;}' : ''}
             `;
+
+            // Screen reader hooks (same-origin only).
+            this.syncScreenReaderToDocument(doc);
         } catch (err) { }
     }
 
@@ -2874,6 +3516,27 @@ class WindowManager {
     applyAetherSettings(settings, { persist = false } = {}) {
         if (!settings || typeof settings !== 'object') return;
 
+        // Cache for fast checks (security warnings, locale, etc.).
+        this.aetherSettings = settings;
+        const isFirstApply = !this._aetherSettingsAppliedOnce;
+        this._aetherSettingsAppliedOnce = true;
+
+        let animationsEnabled = true;
+        let blurEffectsEnabled = true;
+        let perfMode = false;
+        let reducedMotionPref = null;
+        let screenReaderPref = null;
+
+        // Profile (username/email/status)
+        try {
+            if (settings.profile && typeof settings.profile === 'object') {
+                const p = settings.profile;
+                if (typeof p.userName === 'string' && p.userName.trim()) this.userName = p.userName.trim();
+                if (typeof p.email === 'string') this.profileEmail = String(p.email || '');
+                if (typeof p.status === 'string') this.profileStatus = String(p.status || '');
+            }
+        } catch (err) { }
+
         if (settings.theme === 'light' || settings.theme === 'dark') this.setTheme(settings.theme);
         if (typeof settings.accentColor === 'string' && settings.accentColor.trim()) this.setAccentColor(settings.accentColor.trim());
 
@@ -2883,20 +3546,62 @@ class WindowManager {
             if (typeof p.wallpaper === 'string' && p.wallpaper.trim()) this.setWallpaper(p.wallpaper.trim());
             if (Number.isFinite(Number(p.uiScale))) this.setUIScale(Number(p.uiScale));
             if (typeof p.fontFamily === 'string' && p.fontFamily.trim()) this.setFontFamily(p.fontFamily.trim());
+            if (typeof p.animations === 'boolean') animationsEnabled = p.animations;
+            if (typeof p.blurEffects === 'boolean') blurEffectsEnabled = p.blurEffects;
+            if (typeof p.letterSpacing === 'string' && p.letterSpacing.trim()) this.setLetterSpacing(p.letterSpacing.trim());
+        }
+
+        // System (locale/time zone)
+        if (settings.system && typeof settings.system === 'object') {
+            const sys = settings.system;
+            if (typeof sys.language === 'string' && sys.language.trim()) this.setLocale(sys.language.trim());
+            if (typeof sys.timeZone === 'string' && sys.timeZone.trim()) this.setTimeZone(sys.timeZone.trim());
+            if (typeof sys.timeFormat === 'string' && sys.timeFormat.trim()) {
+                this.timeFormat = (sys.timeFormat.trim() === '12h') ? '12h' : '24h';
+                try { updateClock(); } catch (err) { }
+            }
+            if (typeof sys.performanceMode === 'boolean') {
+                perfMode = !!sys.performanceMode;
+                this.setPerformanceMode(perfMode);
+            }
+            if (typeof sys.autostart === 'boolean') this.setAutostartEnabled(!!sys.autostart);
+            if (Number.isFinite(Number(sys.sleepMinutes))) this.setSleepMinutes(Number(sys.sleepMinutes));
+        }
+
+        // Security
+        if (settings.security && typeof settings.security === 'object') {
+            const sec = settings.security;
+            if (typeof sec.firewall === 'boolean') this.setFirewallEnabled(sec.firewall);
+            if (typeof sec.developerMode === 'boolean') this.setDeveloperMode(sec.developerMode);
         }
 
         // Accessibility
         if (settings.accessibility && typeof settings.accessibility === 'object') {
             const a = settings.accessibility;
             if (typeof a.highContrast === 'boolean') this.setHighContrast(a.highContrast);
-            if (typeof a.reducedMotion === 'boolean') this.setReducedMotion(a.reducedMotion);
+            if (typeof a.reducedMotion === 'boolean') reducedMotionPref = a.reducedMotion;
             if (Number.isFinite(Number(a.fontPx))) this.setBaseFontSizePx(Number(a.fontPx));
             if (typeof a.fontSize === 'string' && a.fontSize.trim()) {
                 if (!this.accessibility) this.accessibility = this.getDefaultAccessibility();
                 this.accessibility.fontSize = a.fontSize.trim();
                 this.applyAccessibilitySettings();
             }
+            if (!this.accessibility) this.accessibility = this.getDefaultAccessibility();
+            if (typeof a.colorBlind === 'string') this.accessibility.colorBlind = String(a.colorBlind || 'off');
+            if (typeof a.stickyKeys === 'boolean') this.accessibility.stickyKeys = !!a.stickyKeys;
+            if (Number.isFinite(Number(a.pointerSpeed))) this.accessibility.pointerSpeed = Math.max(1, Math.min(10, Math.round(Number(a.pointerSpeed))));
+            if (typeof a.screenReader === 'boolean') screenReaderPref = !!a.screenReader;
+            if (typeof a.captions === 'boolean') this.accessibility.captions = !!a.captions;
+            this.applyAccessibilitySettings();
+            // Attach/detach SR hooks (shell + same-origin apps). Avoid speaking on boot.
+            if (screenReaderPref !== null) this.setScreenReaderEnabled(screenReaderPref, { announce: !isFirstApply });
         }
+
+        // Effective derived prefs (perf/animations/blur).
+        const effectiveReducedMotion = !!reducedMotionPref || !animationsEnabled || !!perfMode;
+        const effectiveBlur = !!blurEffectsEnabled && !perfMode;
+        this.setReducedMotion(effectiveReducedMotion);
+        this.setTransparencyEffectsEnabled(effectiveBlur);
 
         // Dock/taskbar + notifications
         try {
@@ -3059,9 +3764,22 @@ class WindowManager {
             // Content based on type
             if (w.type === 'clock') {
                 const date = new Date();
+                const locale = this.locale || 'fr-FR';
+                const timeLabel = (() => {
+                    try {
+                        return new Intl.DateTimeFormat(locale, {
+                            timeZone: this.timeZone,
+                            hour: '2-digit',
+                            minute: '2-digit',
+                            hour12: this.timeFormat === '12h'
+                        }).format(date);
+                    } catch (err) {
+                        return `${date.getHours()}:${date.getMinutes().toString().padStart(2, '0')}`;
+                    }
+                })();
                 el.innerHTML = `
-                    <div style="font-size:42px; font-weight:800; line-height:1;">${date.getHours()}:${date.getMinutes().toString().padStart(2, '0')}</div>
-                    <div style="opacity:0.7; font-size:14px; margin-top:5px;">${date.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}</div>
+                    <div style="font-size:42px; font-weight:800; line-height:1;">${timeLabel}</div>
+                    <div style="opacity:0.7; font-size:14px; margin-top:5px;">${date.toLocaleDateString(locale, { timeZone: this.timeZone, weekday: 'long', day: 'numeric', month: 'long' })}</div>
                 `;
             } else if (w.type === 'system') {
                 el.innerHTML = `
@@ -3713,7 +4431,7 @@ removeWidget(id) {
         if (mode !== 'local') {
             if (!password) return this.showSetupError("Mot de passe requis.");
             if (!this.isSupabaseReady(supabaseConfig)) {
-                return this.showSetupError("Supabase non configure. Choisis « Compte local » ou renseigne .env (AETHER_SUPABASE_URL, AETHER_SUPABASE_ANON_KEY ou AETHER_SUPABASE_SERVICE_ROLE_KEY, AETHER_SUPABASE_TABLE).");
+                return this.showSetupError("Supabase non configure. Choisis « Compte local » ou configure soit une URL distante (AETHER_SUPABASE_CONFIG_URL via Worker Cloudflare), soit .env/env.js (AETHER_SUPABASE_URL, AETHER_SUPABASE_ANON_KEY, AETHER_SUPABASE_TABLE).");
             }
         }
 
@@ -3824,6 +4542,8 @@ removeWidget(id) {
                 if (this.webWrapApps && Object.prototype.hasOwnProperty.call(this.webWrapApps, id)) {
                     delete this.webWrapApps[id];
                 }
+
+                this.persistSessionWindows();
             }, 300);
         }
     }
@@ -4333,7 +5053,8 @@ function updateClock() {
             ...(showSeconds ? { second: '2-digit' } : {}),
             hour12: windowManager.timeFormat === '12h'
         };
-        el.textContent = new Date().toLocaleTimeString('fr-FR', options);
+        const locale = windowManager.locale || 'fr-FR';
+        el.textContent = new Date().toLocaleTimeString(locale, options);
     }
 }
 

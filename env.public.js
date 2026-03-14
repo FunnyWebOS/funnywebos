@@ -6,6 +6,10 @@ window.AETHER_RUNTIME_ENV = window.AETHER_RUNTIME_ENV || {};
 // Example: "https://aetheros-ai-proxy.aetheros.workers.dev"https://funn
 window.AETHER_RUNTIME_ENV.AETHER_AI_PROXY_URL = window.AETHER_RUNTIME_ENV.AETHER_AI_PROXY_URL || "https://aetheros-ai-proxy.aetheros.workers.dev";
 
+// Optional: Fetch Supabase config from your Cloudflare Worker (so you don't ship keys in env.js).
+// If not set, the OS will try `${AETHER_AI_PROXY_URL}/aether/v1/supabase-config` as a fallback.
+window.AETHER_RUNTIME_ENV.AETHER_SUPABASE_CONFIG_URL = window.AETHER_RUNTIME_ENV.AETHER_SUPABASE_CONFIG_URL || "";
+
 // Optional: Ultraviolet proxy config for `newbrowser/` (le nouveau navigateur).
 // Set `AETHER_UV_ORIGIN` to your deployed UV site origin (no trailing slash), e.g. "https://uv.example.com".
 // If `AETHER_UV_ORIGIN` is set and `AETHER_BROWSER_PROXY_PROVIDER` is not, the browser auto-selects UV.

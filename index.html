@@ -156,6 +156,30 @@
         </div>
     </div>
 
+    <div id="security-prompt-modal" class="sec-prompt-modal" style="display: none;" aria-hidden="true">
+        <div class="sec-prompt-card glass" role="dialog" aria-modal="true" aria-labelledby="sec-prompt-title">
+            <div class="sec-prompt-head">
+                <div>
+                    <p class="sec-prompt-kicker">SÃ‰CURITÃ‰</p>
+                    <h2 id="sec-prompt-title">Site externe</h2>
+                </div>
+                <button class="sec-prompt-close" id="sec-prompt-cancel" aria-label="Fermer">Ã—</button>
+            </div>
+            <p class="sec-prompt-sub" id="sec-prompt-sub"></p>
+            <div class="sec-prompt-meta">
+                <div class="sec-prompt-host" id="sec-prompt-host"></div>
+                <div class="sec-prompt-url" id="sec-prompt-url"></div>
+            </div>
+            <label class="sec-prompt-toggle">
+                <input type="checkbox" id="sec-prompt-trust">
+                <span>Faire confiance Ã  ce domaine (ne plus avertir)</span>
+            </label>
+            <div class="sec-prompt-actions">
+                <button class="setup-btn" id="sec-prompt-open">Ouvrir quand mÃªme</button>
+            </div>
+        </div>
+    </div>
+
     <div id="desktop" style="display: none; opacity: 0; filter: blur(20px); transition: all 1.5s ease;">
         <div id="desktop-icons"></div>
         <input type="file" id="wallpaper-upload" style="display:none" accept="image/*"

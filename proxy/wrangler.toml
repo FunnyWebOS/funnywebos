@@ -9,4 +9,11 @@ compatibility_date = "2026-03-11"
 # IMPORTANT: Origin headers never include a trailing slash.
 # Use comma-separated values if you need multiple origins.
 ALLOWED_ORIGINS = "https://funnywebos.github.io"
-"z²²& 
+
+# Optional: Supabase config endpoint values (/aether/v1/supabase-config).
+# Recommendation: set them as Worker vars/secrets in Cloudflare (do not commit real keys).
+# SUPABASE_URL = "https://<project-ref>.supabase.co"
+# SUPABASE_ANON_KEY = "<anon-key>"
+# SUPABASE_TABLE = "aether_users"
+# SUPABASE_USERNAME_COLUMN = "username"
+# SUPABASE_PASSWORD_COLUMN = "password"

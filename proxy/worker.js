@@ -7,7 +7,7 @@ const json = (value, init = {}) => {
 const withCors = (response, origin) => {
   const next = new Response(response.body, response);
   next.headers.set("access-control-allow-origin", origin || "*");
-  next.headers.set("access-control-allow-methods", "POST, OPTIONS");
+  next.headers.set("access-control-allow-methods", "GET, POST, OPTIONS");
   next.headers.set("access-control-allow-headers", "content-type");
   next.headers.set("access-control-max-age", "86400");
   next.headers.set("vary", "Origin");
@@ -41,11 +41,30 @@ export default {
       return withCors(json({ error: "Origin not allowed" }, { status: 403 }), origin || "*");
     }
 
-    if (request.method !== "POST") {
-      return withCors(json({ error: "Method not allowed" }, { status: 405 }), origin || "*");
+    // AetherOS: deliver Supabase config without shipping keys in env.js.
+    // Note: This endpoint must never return a service-role key to the browser.
+    if (url.pathname === "/aether/v1/supabase-config") {
+      if (request.method !== "GET") {
+        return withCors(json({ error: "Method not allowed" }, { status: 405 }), origin || "*");
+      }
+
+      return withCors(
+        json({
+          url: (env.SUPABASE_URL || "").trim(),
+          anonKey: (env.SUPABASE_ANON_KEY || "").trim(),
+          table: (env.SUPABASE_TABLE || "").trim(),
+          usernameColumn: (env.SUPABASE_USERNAME_COLUMN || "").trim(),
+          passwordColumn: (env.SUPABASE_PASSWORD_COLUMN || "").trim(),
+        }),
+        origin || "*"
+      );
     }
 
     if (url.pathname === "/openai/v1/chat/completions") {
+      if (request.method !== "POST") {
+        return withCors(json({ error: "Method not allowed" }, { status: 405 }), origin || "*");
+      }
+
       const apiKey = (env.GROQ_API_KEY || "").trim();
       if (!apiKey) {
         return withCors(json({ error: "Missing GROQ_API_KEY" }, { status: 500 }), origin);
@@ -71,4 +90,3 @@ export default {
     return withCors(json({ error: "Not found" }, { status: 404 }), origin || "*");
   },
 };
-

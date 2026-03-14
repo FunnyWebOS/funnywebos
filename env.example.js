@@ -12,6 +12,10 @@ Object.assign(window.AETHER_RUNTIME_ENV, {
 
   // Supabase (optionnel): anon key is public; NEVER put service_role keys in the browser.
   // Sans Supabase, tu peux quand meme creer des comptes locaux (stockes dans localStorage).
+  // Option recommandee: mettre la config Supabase dans ton Worker Cloudflare (GET /aether/v1/supabase-config)
+  // puis renseigner uniquement cette URL ici (pas de cle dans le repo):
+  // Example: "https://<your-worker>.workers.dev/aether/v1/supabase-config"
+  AETHER_SUPABASE_CONFIG_URL: "",
   AETHER_SUPABASE_URL: "",
   AETHER_SUPABASE_ANON_KEY: "",
   AETHER_SUPABASE_TABLE: ""

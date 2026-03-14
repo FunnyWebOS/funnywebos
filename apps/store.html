@@ -1109,8 +1109,8 @@ const STORE_SETTINGS_LS_KEY='aether_store_settings_v1';
 const storeSettingsDefault={
   webGames:{
     libraries:{
-      gamepix:{enabled:true,openMode:'play',sid:'1',limit:60,pages:3},
-      famobi:{enabled:false,openMode:'play'}
+      gamepix:{enabled:true,openMode:'play',netMode:'auto',sid:'1',limit:60,pages:3},
+      famobi:{enabled:false,openMode:'play',netMode:'proxy'}
     },
     custom:[]
   }
@@ -1130,17 +1130,25 @@ function loadStoreSettings(){
     base.webGames.libraries=Object.assign({},base.webGames.libraries,(s.webGames&&s.webGames.libraries&&typeof s.webGames.libraries==='object')?s.webGames.libraries:{});
     base.webGames.custom=Array.isArray(s.webGames&&s.webGames.custom)?s.webGames.custom.filter(Boolean):[];
 
+    const normalizeNetMode=(v,fallback='auto')=>{
+      const m=String(v||'').trim();
+      if(m==='direct'||m==='proxy'||m==='auto')return m;
+      return fallback;
+    };
+
     const lib=base.webGames.libraries;
-    lib.gamepix=Object.assign({enabled:true,openMode:'play',sid:'1',limit:60,pages:3},lib.gamepix||{});
+    lib.gamepix=Object.assign({enabled:true,openMode:'play',netMode:'auto',sid:'1',limit:60,pages:3},lib.gamepix||{});
     lib.gamepix.enabled=!!lib.gamepix.enabled;
     lib.gamepix.openMode=(lib.gamepix.openMode==='embed')?'embed':'play';
+    lib.gamepix.netMode=normalizeNetMode(lib.gamepix.netMode,'auto');
     lib.gamepix.sid=String(lib.gamepix.sid||'1').trim()||'1';
     lib.gamepix.limit=clamp(lib.gamepix.limit||60,20,120);
     lib.gamepix.pages=clamp(lib.gamepix.pages||3,1,6);
 
-    lib.famobi=Object.assign({enabled:false,openMode:'play'},lib.famobi||{});
+    lib.famobi=Object.assign({enabled:false,openMode:'play',netMode:'proxy'},lib.famobi||{});
     lib.famobi.enabled=!!lib.famobi.enabled;
     lib.famobi.openMode=(lib.famobi.openMode==='embed')?'embed':'play';
+    lib.famobi.netMode=normalizeNetMode(lib.famobi.netMode,'proxy');
 
     base.webGames.custom=base.webGames.custom.map((c)=>{
       const id=String(c.id||'').trim();
@@ -1148,8 +1156,9 @@ function loadStoreSettings(){
       const url=sanitizeUrl(c.url||'');
       const enabled=!!c.enabled;
       const openMode=(c.openMode==='embed')?'embed':'play';
+      const netMode=normalizeNetMode(c.netMode,'auto');
       if(!id||!url)return null;
-      return{ id,name,url,enabled,openMode };
+      return{ id,name,url,enabled,openMode,netMode };
     }).filter(Boolean);
 
     return base;
@@ -1253,9 +1262,21 @@ function proxyUrls(u){
   if(!raw)return[];
   return WEBGAMES_PROXY_BUILDERS.map(fn=>{try{return fn(raw);}catch{return'';}}).filter(Boolean);
 }
-async function fetchJsonSmart(directUrl,{allowDirect=true,timeoutMs=18000}={}){
+function normalizeNetMode(v,fallback='auto'){
+  const m=String(v||'').trim();
+  if(m==='direct'||m==='proxy'||m==='auto')return m;
+  return fallback;
+}
+function urlsForNetMode(directUrl, netMode='auto'){
   const direct=String(directUrl||'').trim();
-  const urls=(allowDirect?[direct]:[]).concat(proxyUrls(direct));
+  if(!direct)return[];
+  const m=normalizeNetMode(netMode,'auto');
+  if(m==='direct')return [direct];
+  if(m==='proxy')return proxyUrls(direct);
+  return [direct].concat(proxyUrls(direct));
+}
+async function fetchJsonSmart(directUrl,{netMode='auto',timeoutMs=18000}={}){
+  const urls=urlsForNetMode(directUrl,netMode);
   return await fetchAnyJson(urls,timeoutMs);
 }
 
@@ -1269,11 +1290,12 @@ async function fetchWebGamesList(){
     const sid=encodeURIComponent(String(cfg.sid||GAMEPIX_SID).trim()||GAMEPIX_SID);
     const limit=clamp(cfg.limit||60,20,120);
     const pages=clamp(cfg.pages||3,1,6);
+    const netMode=normalizeNetMode(cfg.netMode,'auto');
     for(let p=0;p<pages;p++){
       const offset=p*limit;
       const directUrl=`${WEB_GAMES_API_BASE}?sid=${sid}&limit=${limit}&offset=${offset}`;
       try{
-        const data=await fetchJsonSmart(directUrl,{allowDirect:true,timeoutMs:(p===0?20000:14000)});
+        const data=await fetchJsonSmart(directUrl,{netMode,timeoutMs:(p===0?20000:14000)});
         if(!data||typeof data!=='object')throw new Error('Réponse API invalide');
         const list=Array.isArray(data.data)?data.data:[];
         list.forEach(x=>{if(x&&typeof x==='object')x.__provider='gamepix';});
@@ -1290,7 +1312,8 @@ async function fetchWebGamesList(){
   if(storeSettings.webGames.libraries.famobi.enabled){
     try{
       const famobiUrl='https://api.famobi.com/feed';
-      const data=await fetchAnyJson(proxyUrls(famobiUrl),20000);
+      const netMode=normalizeNetMode(storeSettings.webGames.libraries.famobi.netMode,'proxy');
+      const data=await fetchAnyJson(urlsForNetMode(famobiUrl,netMode),20000);
       const list=(data&&typeof data==='object'&&Array.isArray(data.games))?data.games:[];
       list.forEach(x=>{if(x&&typeof x==='object')x.__provider='famobi';});
       all.push(...list);
@@ -1305,7 +1328,8 @@ async function fetchWebGamesList(){
     try{
       const url=sanitizeUrl(c.url||'');
       if(!url)continue;
-      const data=await fetchAnyJson([url].concat(proxyUrls(url)),20000);
+      const netMode=normalizeNetMode(c.netMode,'auto');
+      const data=await fetchAnyJson(urlsForNetMode(url,netMode),20000);
       let list=[];
       if(Array.isArray(data))list=data;
       else if(data&&typeof data==='object'){
@@ -2313,6 +2337,21 @@ function setWebGamesOpenMode(libId, mode){
   saveStoreSettings(storeSettings);
 }
 
+function setWebGamesNetMode(libId, mode){
+  storeSettings=loadStoreSettings();
+  const id=String(libId||'').trim();
+  const m=normalizeNetMode(mode,'auto');
+  if(id==='gamepix'){
+    storeSettings.webGames.libraries.gamepix.netMode=m;
+  }else if(id==='famobi'){
+    storeSettings.webGames.libraries.famobi.netMode=normalizeNetMode(m,'proxy');
+  }else{
+    const c=(storeSettings.webGames.custom||[]).find(x=>x&&String(x.id)===id);
+    if(c)c.netMode=m;
+  }
+  saveStoreSettings(storeSettings);
+}
+
 function setGamePixCfg(field, value){
   storeSettings=loadStoreSettings();
   const cfg=storeSettings.webGames.libraries.gamepix;
@@ -2331,7 +2370,7 @@ function addCustomLibrary(){
   if(!url){toast('URL invalide','error');return;}
   const id=`custom_${Date.now()}_${Math.random().toString(16).slice(2,6)}`;
   storeSettings.webGames.custom=Array.isArray(storeSettings.webGames.custom)?storeSettings.webGames.custom:[];
-  storeSettings.webGames.custom.push({id,name,url,enabled:true,openMode:'play'});
+  storeSettings.webGames.custom.push({id,name,url,enabled:true,openMode:'play',netMode:'auto'});
   saveStoreSettings(storeSettings);
   try{if(nameEl)nameEl.value='';if(urlEl)urlEl.value='';}catch(e){}
   toast('Bibliothèque ajoutée','success');
@@ -2373,6 +2412,7 @@ function renderSettings(){
     const badges=(opts.badges||[]).map(b=>`<span class="lib-badge">${esc(b)}</span>`).join('');
     const enabled=!!opts.enabled;
     const openMode=String(opts.openMode||'play')==='embed'?'embed':'play';
+    const netMode=normalizeNetMode(opts.netMode||'auto',(opts.id==='famobi'?'proxy':'auto'));
     return `
       <div class="lib-row">
         <div class="lib-meta">
@@ -2380,6 +2420,11 @@ function renderSettings(){
           <div class="lib-desc">${desc}</div>
           <div class="lib-badges">${badges}</div>
         </div>
+        <select class="mini-select" title="Réseau (direct/proxy)" onchange="setWebGamesNetMode('${idJs}',this.value);refreshWebGames({clearCache:true});">
+          <option value="auto" ${netMode==='auto'?'selected':''}>Auto</option>
+          <option value="direct" ${netMode==='direct'?'selected':''}>Direct</option>
+          <option value="proxy" ${netMode==='proxy'?'selected':''}>Proxy</option>
+        </select>
         <select class="mini-select" onchange="setWebGamesOpenMode('${idJs}',this.value);refreshWebGames({clearCache:true});">
           <option value="play" ${openMode==='play'?'selected':''}>URL du jeu</option>
           <option value="embed" ${openMode==='embed'?'selected':''}>Embed</option>
@@ -2404,14 +2449,14 @@ function renderSettings(){
 
     <div class="ss-card">
       <h3>Bibliothèques De Jeux Web</h3>
-      ${row({id:'gamepix',icon:'🧩',name:'GamePix',desc:'Catalogue HTML5. Souvent accessible sans proxy.',badges:['API','CORS OK'],enabled:lib.gamepix.enabled,openMode:lib.gamepix.openMode})}
+      ${row({id:'gamepix',icon:'🧩',name:'GamePix',desc:'Catalogue HTML5. Souvent accessible sans proxy.',badges:['API','CORS OK'],enabled:lib.gamepix.enabled,openMode:lib.gamepix.openMode,netMode:lib.gamepix.netMode})}
       <div style="padding:0 10px 12px 10px;display:flex;gap:10px;flex-wrap:wrap;">
         <input class="ss-input" style="min-width:160px;" value="${esc(lib.gamepix.sid)}" oninput="setGamePixCfg('sid',this.value)" placeholder="SID GamePix">
         <input class="ss-input" style="min-width:160px;" type="number" min="1" max="6" value="${Number(lib.gamepix.pages)||3}" oninput="setGamePixCfg('pages',this.value)" placeholder="Pages">
         <input class="ss-input" style="min-width:160px;" type="number" min="20" max="120" value="${Number(lib.gamepix.limit)||60}" oninput="setGamePixCfg('limit',this.value)" placeholder="Limit">
       </div>
-      ${row({id:'famobi',icon:'🕹️',name:'Famobi',desc:'Catalogue HTML5 via proxy (utile si réseau bloque).',badges:['API','Proxy'],enabled:lib.famobi.enabled,openMode:lib.famobi.openMode})}
-      ${customs.map(c=>row({id:c.id,icon:'🧷',name:c.name||'Bibliothèque',desc:c.url||'',badges:['JSON','Custom'],enabled:!!c.enabled,openMode:c.openMode||'play'})).join('')}
+      ${row({id:'famobi',icon:'🕹️',name:'Famobi',desc:'Catalogue HTML5 via proxy (utile si réseau bloque).',badges:['API','Proxy'],enabled:lib.famobi.enabled,openMode:lib.famobi.openMode,netMode:lib.famobi.netMode})}
+      ${customs.map(c=>row({id:c.id,icon:'🧷',name:c.name||'Bibliothèque',desc:c.url||'',badges:['JSON','Custom'],enabled:!!c.enabled,openMode:c.openMode||'play',netMode:c.netMode||'auto'})).join('')}
       ${!customs.length?`<div class="ss-help">Aucune bibliothèque custom ajoutée.</div>`:''}
     </div>
 

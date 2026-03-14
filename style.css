@@ -263,6 +263,19 @@ html {
     box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
 }
 
+/* Optional: disable blur/transparency effects (Settings > Apparence) */
+body.no-blur .glass,
+body.no-blur .window,
+body.no-blur #top-bar {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+}
+body.no-blur .glass,
+body.no-blur .window,
+body.no-blur #top-bar {
+    background: rgba(10, 25, 45, 0.88) !important;
+}
+
 .apple-logo {
     font-size: 16px;
     cursor: pointer;
@@ -2134,6 +2147,107 @@ body.high-contrast .window {
 #whats-new-modal.active {
     opacity: 1;
     pointer-events: auto;
+}
+
+.sec-prompt-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 12500;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: clamp(10px, 2vw, 30px);
+    background: rgba(3, 8, 22, 0.72);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+}
+
+.sec-prompt-modal.active {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.sec-prompt-card {
+    width: min(720px, 100%);
+    max-height: min(84vh, 620px);
+    overflow: auto;
+    border-radius: 22px;
+    padding: clamp(16px, 2vw, 26px);
+    border: 1px solid rgba(255, 255, 255, 0.19);
+    background: linear-gradient(145deg, rgba(8, 18, 34, 0.90), rgba(7, 14, 26, 0.82));
+}
+
+.sec-prompt-head {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    align-items: start;
+}
+
+.sec-prompt-kicker {
+    margin: 0;
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    opacity: 0.66;
+    font-size: 11px;
+}
+
+.sec-prompt-close {
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.04);
+    color: white;
+    width: 36px;
+    height: 36px;
+    font-size: 22px;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.sec-prompt-sub {
+    margin-top: 10px;
+    opacity: 0.86;
+    line-height: 1.55;
+}
+
+.sec-prompt-meta {
+    margin-top: 14px;
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    background: rgba(255, 255, 255, 0.03);
+    padding: 12px;
+    font-size: 13px;
+    overflow: hidden;
+}
+
+.sec-prompt-host {
+    font-weight: 700;
+    margin-bottom: 8px;
+}
+
+.sec-prompt-url {
+    opacity: 0.85;
+    word-break: break-all;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+    font-size: 12px;
+}
+
+.sec-prompt-toggle {
+    margin-top: 14px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    opacity: 0.90;
+}
+
+.sec-prompt-actions {
+    margin-top: 14px;
+    display: flex;
+    justify-content: flex-end;
 }
 
 .whats-new-card {
