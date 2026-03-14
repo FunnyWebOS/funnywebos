@@ -6,6 +6,26 @@
 <title>GridStore — AetherOS</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<script>
+(() => {
+  const applyTheme = (raw) => {
+    const theme = raw === 'light' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', theme);
+    if (document.body) document.body.dataset.theme = theme;
+  };
+
+  try {
+    const parentTheme = window.parent?.document?.documentElement?.getAttribute('data-theme') || '';
+    if (parentTheme) applyTheme(parentTheme);
+  } catch (e) {}
+
+  window.addEventListener('message', (e) => {
+    const data = e.data || {};
+    if (data.type === 'funnyweb_theme_change') applyTheme(data.theme);
+    if (data.type === 'funnyweb_user_sync' && data.theme) applyTheme(data.theme);
+  });
+})();
+</script>
 <style>
 /* ═══════════════ RESET & BASE ═══════════════ */
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
@@ -38,6 +58,46 @@
   --shadow-lg:0 12px 40px rgba(0,0,0,0.14),0 4px 12px rgba(0,0,0,0.06);
   --font:'SF Pro Display',-apple-system,BlinkMacSystemFont,'Helvetica Neue',sans-serif;
 }
+
+:root[data-theme="light"]{ color-scheme: light; }
+:root[data-theme="dark"]{
+  color-scheme: dark;
+  --bg:#0b1020;
+  --bg2:#0f172a;
+  --sidebar-bg:rgba(15,23,42,0.72);
+  --surface:#0f172a;
+  --surface2:rgba(255,255,255,0.06);
+  --surface3:rgba(255,255,255,0.10);
+  --border:rgba(255,255,255,0.10);
+  --border2:rgba(255,255,255,0.18);
+  --text:#e5e7eb;
+  --text2:rgba(229,231,235,0.72);
+  --text3:rgba(229,231,235,0.45);
+  --shadow-sm:0 1px 4px rgba(0,0,0,0.42),0 6px 18px rgba(0,0,0,0.22);
+  --shadow-md:0 6px 22px rgba(0,0,0,0.55),0 14px 44px rgba(0,0,0,0.35);
+  --shadow-lg:0 20px 64px rgba(0,0,0,0.62),0 10px 20px rgba(0,0,0,0.35);
+}
+
+:root[data-theme="dark"] .topbar{
+  background:rgba(15,23,42,0.82);
+  border-bottom:1px solid var(--border);
+}
+:root[data-theme="dark"] .tn-btn{
+  background:rgba(255,255,255,0.06);
+  border:1px solid rgba(255,255,255,0.10);
+  color:var(--text2);
+}
+:root[data-theme="dark"] .tn-btn:hover{background:rgba(255,255,255,0.09);color:var(--text);}
+:root[data-theme="dark"] .search-input{
+  background:rgba(255,255,255,0.06);
+  border-color:rgba(255,255,255,0.10);
+  color:var(--text);
+}
+:root[data-theme="dark"] .search-input:focus{
+  background:rgba(255,255,255,0.08);
+  border-color:var(--accent);
+}
+:root[data-theme="dark"] .sb-item:hover{background:rgba(255,255,255,0.06);color:var(--text);}
 
 body{
   font-family:var(--font);
@@ -312,6 +372,153 @@ body{
   background:rgba(52,199,89,0.1);color:var(--green);
 }
 .get-btn.open:hover{background:var(--green);color:#fff;box-shadow:0 2px 8px rgba(52,199,89,0.35);}
+
+/* ═══════════════ WEB GAMES (GamePix) ═══════════════ */
+.webgames-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(220px,1fr));
+  gap:14px;
+}
+.webgame-card{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:var(--radius-xl);
+  overflow:hidden;
+  cursor:pointer;
+  box-shadow:var(--shadow-sm);
+  transition:transform .22s cubic-bezier(.2,0,0,1),box-shadow .22s;
+  display:flex;
+  flex-direction:column;
+  min-height:220px;
+}
+.webgame-card:hover{transform:translateY(-2px);box-shadow:var(--shadow-md);}
+.webgame-thumb{height:120px;background:var(--surface2);overflow:hidden;}
+.webgame-thumb img{width:100%;height:100%;object-fit:cover;display:block;}
+.webgame-body{padding:12px 12px 14px;display:flex;flex-direction:column;gap:8px;flex:1;min-height:0;}
+.webgame-title{font-size:13px;font-weight:800;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:-0.01em;}
+.webgame-desc{
+  font-size:12px;color:var(--text3);line-height:1.4;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
+  min-height:34px;
+}
+.webgame-meta{display:flex;gap:8px;flex-wrap:wrap;margin-top:auto;}
+.webgame-tag{
+  font-size:10px;color:var(--text2);
+  background:var(--surface2);
+  border:1px solid var(--border);
+  border-radius:999px;padding:3px 8px;font-weight:600;
+  text-transform:uppercase;letter-spacing:0.06em;white-space:nowrap;
+}
+.webgame-actions{display:flex;align-items:center;justify-content:flex-end;margin-top:10px;}
+.webgame-play{min-width:100px;}
+
+/* ═══════════════ STORE SETTINGS ═══════════════ */
+.store-settings{
+  max-width:980px;
+  margin:0 auto;
+  padding:22px 24px 36px;
+}
+.ss-head{
+  display:flex;
+  align-items:flex-end;
+  justify-content:space-between;
+  gap:14px;
+  margin-bottom:14px;
+}
+.ss-title{
+  font-size:20px;
+  font-weight:800;
+  color:var(--text);
+  letter-spacing:-0.02em;
+}
+.ss-sub{
+  font-size:12px;
+  color:var(--text2);
+  margin-top:4px;
+}
+.ss-actions{display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end;}
+.ss-card{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:var(--radius-xl);
+  padding:14px;
+  box-shadow:var(--shadow-sm);
+  margin-top:14px;
+}
+.ss-card h3{
+  font-size:13px;
+  letter-spacing:0.06em;
+  text-transform:uppercase;
+  color:var(--text2);
+  margin-bottom:10px;
+}
+.lib-row{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  padding:10px 10px;
+  border-radius:var(--radius-lg);
+}
+.lib-row:hover{background:var(--surface2);}
+.lib-meta{flex:1;min-width:0;}
+.lib-name{font-weight:800;font-size:14px;color:var(--text);display:flex;gap:8px;align-items:center;}
+.lib-desc{font-size:12px;color:var(--text2);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:760px;}
+.lib-badges{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;}
+.lib-badge{
+  font-size:10px;color:var(--text2);
+  background:var(--surface2);
+  border:1px solid var(--border);
+  border-radius:999px;padding:3px 8px;font-weight:700;
+  text-transform:uppercase;letter-spacing:0.06em;white-space:nowrap;
+}
+.toggle{
+  width:46px;height:26px;border-radius:999px;
+  border:1px solid var(--border2);
+  background:var(--surface2);
+  position:relative;flex-shrink:0;
+  cursor:pointer;
+  transition:background .18s,border-color .18s;
+}
+.toggle::after{
+  content:'';
+  position:absolute;top:3px;left:3px;
+  width:20px;height:20px;border-radius:50%;
+  background:var(--surface);
+  box-shadow:0 2px 10px rgba(0,0,0,0.12);
+  transition:transform .18s;
+}
+.toggle.on{background:rgba(0,113,227,0.2);border-color:rgba(0,113,227,0.45);}
+.toggle.on::after{transform:translateX(20px);background:#fff;}
+.mini-select{
+  background:var(--surface2);
+  border:1px solid var(--border);
+  border-radius:999px;
+  padding:6px 10px;
+  font-size:12px;
+  color:var(--text);
+  outline:none;
+}
+.ss-form{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+  margin-top:10px;
+}
+.ss-input{
+  background:var(--surface2);
+  border:1px solid var(--border);
+  border-radius:var(--radius-md);
+  padding:9px 12px;
+  color:var(--text);
+  min-width:240px;
+  font-family:var(--font);
+}
+.ss-help{
+  font-size:12px;
+  color:var(--text2);
+  margin-top:10px;
+  line-height:1.5;
+}
 
 /* ═══════════════ EMPTY STATE ═══════════════ */
 .empty-state{
@@ -644,14 +851,17 @@ body{
       <div class="sb-item active" id="nav-discover" onclick="showView('discover',this)">
         <span class="sb-ico">🏠</span> Accueil
       </div>
-      <div class="sb-item" onclick="filterCatSB('productivity',this)">
+      <div class="sb-item" id="nav-cat-productivity" onclick="filterCatSB('productivity',this)">
         <span class="sb-ico">⚡</span> Productivité
       </div>
-      <div class="sb-item" onclick="filterCatSB('online',this)">
+      <div class="sb-item" id="nav-cat-online" onclick="filterCatSB('online',this)">
         <span class="sb-ico">🌐</span> En ligne
       </div>
-      <div class="sb-item" onclick="filterCatSB('games',this)">
+      <div class="sb-item" id="nav-cat-games" onclick="filterCatSB('games',this)">
         <span class="sb-ico">🎮</span> Jeux
+      </div>
+      <div class="sb-item" id="nav-settings" onclick="showView('settings',this)">
+        <span class="sb-ico">⚙️</span> Paramètres
       </div>
     </div>
 
@@ -693,6 +903,9 @@ body{
 
     <!-- DISCOVER -->
     <div class="content" id="view-discover"></div>
+
+    <!-- SETTINGS -->
+    <div class="content hidden" id="view-settings"></div>
 
     <!-- SUBMIT -->
     <div class="content hidden" id="view-submit">
@@ -890,6 +1103,539 @@ let navHistory=[{view:'discover',cat:'all',title:'Accueil'}];
 let navIdx=0;
 
 // ══════════════════════════════════════════
+// WEB GAMES (GamePix, direct embeddable URLs)
+// ══════════════════════════════════════════
+const STORE_SETTINGS_LS_KEY='aether_store_settings_v1';
+const storeSettingsDefault={
+  webGames:{
+    libraries:{
+      gamepix:{enabled:true,openMode:'play',sid:'1',limit:60,pages:3},
+      famobi:{enabled:false,openMode:'play'}
+    },
+    custom:[]
+  }
+};
+
+function clamp(n,min,max){n=Number(n);if(!Number.isFinite(n))return min;return Math.max(min,Math.min(max,n));}
+function deepClone(v){return JSON.parse(JSON.stringify(v||{}));}
+
+function loadStoreSettings(){
+  try{
+    const raw=localStorage.getItem(STORE_SETTINGS_LS_KEY);
+    const parsed=raw?JSON.parse(raw):null;
+    const base=deepClone(storeSettingsDefault);
+    const s=(parsed&&typeof parsed==='object')?parsed:{};
+
+    base.webGames=Object.assign({},base.webGames,(s.webGames&&typeof s.webGames==='object')?s.webGames:{});
+    base.webGames.libraries=Object.assign({},base.webGames.libraries,(s.webGames&&s.webGames.libraries&&typeof s.webGames.libraries==='object')?s.webGames.libraries:{});
+    base.webGames.custom=Array.isArray(s.webGames&&s.webGames.custom)?s.webGames.custom.filter(Boolean):[];
+
+    const lib=base.webGames.libraries;
+    lib.gamepix=Object.assign({enabled:true,openMode:'play',sid:'1',limit:60,pages:3},lib.gamepix||{});
+    lib.gamepix.enabled=!!lib.gamepix.enabled;
+    lib.gamepix.openMode=(lib.gamepix.openMode==='embed')?'embed':'play';
+    lib.gamepix.sid=String(lib.gamepix.sid||'1').trim()||'1';
+    lib.gamepix.limit=clamp(lib.gamepix.limit||60,20,120);
+    lib.gamepix.pages=clamp(lib.gamepix.pages||3,1,6);
+
+    lib.famobi=Object.assign({enabled:false,openMode:'play'},lib.famobi||{});
+    lib.famobi.enabled=!!lib.famobi.enabled;
+    lib.famobi.openMode=(lib.famobi.openMode==='embed')?'embed':'play';
+
+    base.webGames.custom=base.webGames.custom.map((c)=>{
+      const id=String(c.id||'').trim();
+      const name=String(c.name||'Bibliothèque').trim()||'Bibliothèque';
+      const url=sanitizeUrl(c.url||'');
+      const enabled=!!c.enabled;
+      const openMode=(c.openMode==='embed')?'embed':'play';
+      if(!id||!url)return null;
+      return{ id,name,url,enabled,openMode };
+    }).filter(Boolean);
+
+    return base;
+  }catch{
+    return deepClone(storeSettingsDefault);
+  }
+}
+
+function saveStoreSettings(s){
+  try{localStorage.setItem(STORE_SETTINGS_LS_KEY,JSON.stringify(s||storeSettingsDefault));}catch{}
+}
+
+let storeSettings=loadStoreSettings();
+
+const GAMEPIX_SID='1';
+const WEB_GAMES_API_BASE='https://games.gamepix.com/games';
+const WEB_GAMES_CACHE_TTL_MS=1000*60*60*6;
+const webGamesState={status:'idle',games:[],error:'',fetchedAt:0,promise:null};
+const webGamesById={};
+const WEB_GAMES_LS_KEY='aether_store_webgames_cache_v3';
+const WEB_GAMES_LS_MAX_AGE_MS=1000*60*60*24;
+const webGameLaunchCache={};
+
+function loadWebGamesCache(){
+  try{
+    const raw=localStorage.getItem(WEB_GAMES_LS_KEY);
+    if(!raw)return null;
+    const parsed=JSON.parse(raw);
+    if(!parsed||typeof parsed!=='object')return null;
+    if(!Array.isArray(parsed.games))return null;
+    const fetchedAt=Number(parsed.fetchedAt)||0;
+    if(!fetchedAt)return null;
+    if(Date.now()-fetchedAt>WEB_GAMES_LS_MAX_AGE_MS)return null;
+    // Guard: ignore legacy caches from other providers (e.g. FreeToGame).
+    const sample=parsed.games.find(Boolean);
+    if(sample){
+      const id=String(sample.id||'');
+      const url=String(sample.url||'');
+      if(id.startsWith('f2g_')||/freetogame\.com/i.test(url))return null;
+    }
+    return{fetchedAt, games:parsed.games};
+  }catch{return null;}
+}
+
+function saveWebGamesCache(games){
+  try{
+    localStorage.setItem(WEB_GAMES_LS_KEY,JSON.stringify({fetchedAt:Date.now(),games:Array.isArray(games)?games:[]}));
+  }catch{}
+}
+
+function clearWebGamesCaches(){
+  // Reserved: previously we stored per-provider caches; kept for forward compatibility.
+}
+
+async function fetchJsonWithTimeout(url,timeoutMs=20000){
+  const ctrl=new AbortController();
+  const t=setTimeout(()=>ctrl.abort(),timeoutMs);
+  try{
+    const res=await fetch(url,{cache:'no-store',signal:ctrl.signal});
+    if(!res.ok)throw new Error(`HTTP ${res.status}`);
+    // Some proxies might return HTML on error; keep message clean.
+    const ct=String(res.headers.get('content-type')||'').toLowerCase();
+    if(ct.includes('application/json'))return await res.json();
+    const text=await res.text();
+    try{return JSON.parse(text);}catch{throw new Error('Réponse non-JSON');}
+  }finally{
+    clearTimeout(t);
+  }
+}
+
+async function fetchAnyJson(urls, timeoutMs=20000){
+  const list=(Array.isArray(urls)?urls:[urls]).filter(Boolean);
+  if(!list.length)throw new Error('Failed to fetch');
+  if(list.length===1)return await fetchJsonWithTimeout(list[0],timeoutMs);
+
+  return await new Promise((resolve,reject)=>{
+    let settled=false;
+    let pending=list.length;
+    let lastErr=null;
+    list.forEach((url)=>{
+      fetchJsonWithTimeout(url,timeoutMs).then((data)=>{
+        if(settled)return;
+        settled=true;
+        resolve(data);
+      }).catch((err)=>{
+        lastErr=err;
+        pending--;
+        if(pending<=0&&!settled)reject(lastErr||new Error('Failed to fetch'));
+      });
+    });
+  });
+}
+
+const WEBGAMES_PROXY_BUILDERS=[
+  (u)=>`https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(u)}`,
+  (u)=>`https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
+  (u)=>`https://corsproxy.io/?${encodeURIComponent(u)}`
+];
+function proxyUrls(u){
+  const raw=String(u||'').trim();
+  if(!raw)return[];
+  return WEBGAMES_PROXY_BUILDERS.map(fn=>{try{return fn(raw);}catch{return'';}}).filter(Boolean);
+}
+async function fetchJsonSmart(directUrl,{allowDirect=true,timeoutMs=18000}={}){
+  const direct=String(directUrl||'').trim();
+  const urls=(allowDirect?[direct]:[]).concat(proxyUrls(direct));
+  return await fetchAnyJson(urls,timeoutMs);
+}
+
+async function fetchWebGamesList(){
+  storeSettings=loadStoreSettings();
+  const all=[];
+
+  // GamePix (CORS OK most of the time, with proxy fallback)
+  if(storeSettings.webGames.libraries.gamepix.enabled){
+    const cfg=storeSettings.webGames.libraries.gamepix;
+    const sid=encodeURIComponent(String(cfg.sid||GAMEPIX_SID).trim()||GAMEPIX_SID);
+    const limit=clamp(cfg.limit||60,20,120);
+    const pages=clamp(cfg.pages||3,1,6);
+    for(let p=0;p<pages;p++){
+      const offset=p*limit;
+      const directUrl=`${WEB_GAMES_API_BASE}?sid=${sid}&limit=${limit}&offset=${offset}`;
+      try{
+        const data=await fetchJsonSmart(directUrl,{allowDirect:true,timeoutMs:(p===0?20000:14000)});
+        if(!data||typeof data!=='object')throw new Error('Réponse API invalide');
+        const list=Array.isArray(data.data)?data.data:[];
+        list.forEach(x=>{if(x&&typeof x==='object')x.__provider='gamepix';});
+        all.push(...list);
+        if(list.length<limit)break;
+      }catch(err){
+        if(all.length>0)break;
+        throw err;
+      }
+    }
+  }
+
+  // Famobi (CORS blocked -> proxy required)
+  if(storeSettings.webGames.libraries.famobi.enabled){
+    try{
+      const famobiUrl='https://api.famobi.com/feed';
+      const data=await fetchAnyJson(proxyUrls(famobiUrl),20000);
+      const list=(data&&typeof data==='object'&&Array.isArray(data.games))?data.games:[];
+      list.forEach(x=>{if(x&&typeof x==='object')x.__provider='famobi';});
+      all.push(...list);
+    }catch(err){
+      if(all.length===0)throw err;
+    }
+  }
+
+  // Custom JSON libraries
+  const customs=(storeSettings.webGames.custom||[]).filter(c=>c&&c.enabled&&c.url);
+  for(const c of customs){
+    try{
+      const url=sanitizeUrl(c.url||'');
+      if(!url)continue;
+      const data=await fetchAnyJson([url].concat(proxyUrls(url)),20000);
+      let list=[];
+      if(Array.isArray(data))list=data;
+      else if(data&&typeof data==='object'){
+        if(Array.isArray(data.games))list=data.games;
+        else if(Array.isArray(data.data))list=data.data;
+        else if(Array.isArray(data.results))list=data.results;
+      }
+      list.forEach(x=>{
+        if(x&&typeof x==='object'){
+          x.__provider='custom';
+          x.__libId=String(c.id||'custom');
+          x.__libName=String(c.name||'Bibliothèque');
+        }
+      });
+      all.push(...list);
+    }catch(err){
+      if(all.length===0)throw err;
+    }
+  }
+
+  return all;
+}
+
+function normalizeWebGame(raw){
+  function hashStrHex(s){
+    const str=String(s||'');
+    let h1=0x811c9dc5;
+    for(let i=0;i<str.length;i++){
+      h1^=str.charCodeAt(i);
+      h1=(h1*0x01000193)>>>0;
+    }
+    return ('00000000'+h1.toString(16)).slice(-8);
+  }
+  function gamePixPlayUrlFrom(embedUrl){
+    const u=sanitizeUrl(embedUrl||'');
+    if(!u)return'';
+    try{
+      const parsed=new URL(u);
+      if(!/(^|\\.)play\\.gamepix\\.com$/i.test(parsed.hostname))return u;
+      const parts=parsed.pathname.split('/').filter(Boolean);
+      if(parts[parts.length-1]==='embed')parts.pop();
+      parsed.pathname='/'+parts.join('/');
+      return parsed.href;
+    }catch{
+      return u;
+    }
+  }
+
+  if(!raw||typeof raw!=='object')return null;
+  const provider=String(raw.__provider||'gamepix').trim()||'gamepix';
+
+  if(provider==='famobi'){
+    const title=String(raw.name||raw.title||'').trim();
+    const playUrl=sanitizeUrl(raw.link||raw.url||'');
+    if(!title||!playUrl)return null;
+    const thumbnail=resolveMediaUrl(raw.thumb||raw.thumbnail||raw.image||'');
+    const desc=String(raw.description||raw.desc||'').trim();
+    const genre=String(raw.genre||raw.category||'').trim();
+    const id=`fmb_${hashStrHex(playUrl)}`;
+    return{ id,title,url:playUrl,embedUrl:'',thumbnail,desc,genre,publisher:'Famobi',provider:'Famobi',providerId:'famobi',launchUrl:playUrl };
+  }
+
+  if(provider==='custom'){
+    const title=String(raw.title||raw.name||raw.game||'').trim();
+    const playUrl=sanitizeUrl(raw.url||raw.link||raw.playUrl||raw.href||'');
+    if(!title||!playUrl)return null;
+    const thumbnail=resolveMediaUrl(raw.thumbnail||raw.thumb||raw.image||raw.icon||'');
+    const desc=String(raw.description||raw.desc||raw.summary||'').trim();
+    const genre=String(raw.genre||raw.category||'').trim();
+    const libId=String(raw.__libId||'custom');
+    const libName=String(raw.__libName||'Bibliothèque');
+    const id=`cst_${libId}_${hashStrHex(playUrl)}`;
+    return{ id,title,url:playUrl,embedUrl:'',thumbnail,desc,genre,publisher:libName,provider:libName,providerId:libId,launchUrl:playUrl };
+  }
+
+  const rawId=raw.id;
+  if(rawId===undefined||rawId===null)return null;
+  const id=`gpx_${rawId}`;
+  const title=String(raw.title||`Game ${rawId}`).trim()||`Game ${rawId}`;
+  const embedUrl=sanitizeUrl(raw.url||'');
+  if(!embedUrl)return null;
+  const playUrl=gamePixPlayUrlFrom(embedUrl);
+  const thumbnail=resolveMediaUrl(raw.thumbnailUrl||raw.thumbnailUrl100||'');
+  const desc=String(raw.desc_fr||raw.description||raw.desc_en||'').trim();
+  const categories=Array.isArray(raw.categories)?raw.categories.filter(Boolean).map(String):[];
+  const genre=String(raw.category||categories[0]||'').trim();
+  const publisher=String(raw.author||'GamePix').trim();
+  return{ id,title,url:playUrl,embedUrl,thumbnail,desc,genre,publisher,categories,provider:'GamePix',providerId:'gamepix',launchUrl:playUrl };
+}
+
+function ensureWebGamesLoaded(force=false){
+  const now=Date.now();
+  if(!force&&webGamesState.status==='ready'&&(now-(webGamesState.fetchedAt||0))<WEB_GAMES_CACHE_TTL_MS){
+    return Promise.resolve(webGamesState.games);
+  }
+  if(webGamesState.promise)return webGamesState.promise;
+
+  // If we have a recent cache, show it immediately and refresh in background.
+  if(!force&&webGamesState.status!=='ready'){
+    const cached=loadWebGamesCache();
+    if(cached&&Array.isArray(cached.games)&&cached.games.length){
+      webGamesState.games=cached.games;
+      webGamesState.status='ready';
+      webGamesState.fetchedAt=cached.fetchedAt;
+      Object.keys(webGamesById).forEach(k=>delete webGamesById[k]);
+      cached.games.forEach(g=>{ if(g&&g.id) webGamesById[g.id]=g; });
+      // Background refresh
+      setTimeout(()=>ensureWebGamesLoaded(true).then(()=>{if(currentCat==='games')renderDiscover();}),50);
+      return Promise.resolve(webGamesState.games);
+    }
+  }
+
+  const hadGamesBeforeFetch=webGamesState.status==='ready'&&Array.isArray(webGamesState.games)&&webGamesState.games.length>0;
+  if(!hadGamesBeforeFetch) webGamesState.status='loading';
+  webGamesState.error='';
+
+  webGamesState.promise=fetchWebGamesList().then(list=>{
+    if(!Array.isArray(list))throw new Error('Réponse API invalide');
+    const normalized=list
+      .filter(g=>g&&typeof g==='object')
+      .map(normalizeWebGame)
+      .filter(Boolean);
+
+    webGamesState.games=normalized;
+    webGamesState.status='ready';
+    webGamesState.fetchedAt=Date.now();
+    saveWebGamesCache(normalized);
+
+    Object.keys(webGamesById).forEach(k=>delete webGamesById[k]);
+    normalized.forEach(g=>{webGamesById[g.id]=g;});
+    return normalized;
+  }).catch(err=>{
+    // If we already have a list displayed, keep it and just log the error.
+    if(hadGamesBeforeFetch){
+      webGamesState.status='ready';
+      webGamesState.error=String(err&&err.message?err.message:err);
+      return webGamesState.games;
+    }
+
+    webGamesState.status='error';
+    webGamesState.error=String(err&&err.message?err.message:err);
+
+    // If we still have cache, prefer showing it instead of blank.
+    const cached=loadWebGamesCache();
+    if(cached&&Array.isArray(cached.games)&&cached.games.length){
+      webGamesState.games=cached.games;
+      webGamesState.status='ready';
+      webGamesState.fetchedAt=cached.fetchedAt;
+      Object.keys(webGamesById).forEach(k=>delete webGamesById[k]);
+      cached.games.forEach(g=>{ if(g&&g.id) webGamesById[g.id]=g; });
+      return cached.games;
+    }
+
+    webGamesState.games=[];
+    Object.keys(webGamesById).forEach(k=>delete webGamesById[k]);
+    return [];
+  }).finally(()=>{
+    webGamesState.promise=null;
+  });
+
+  return webGamesState.promise;
+}
+
+function refreshWebGames(opts){
+  const o=opts&&typeof opts==='object'?opts:{};
+  if(o.clearCache){
+    try{localStorage.removeItem(WEB_GAMES_LS_KEY);}catch(e){}
+    try{clearWebGamesCaches();}catch(e){}
+  }
+  webGamesState.status='idle';
+  webGamesState.games=[];
+  webGamesState.error='';
+  webGamesState.fetchedAt=0;
+  webGamesState.promise=null;
+  ensureWebGamesLoaded(true).then(()=>{if(currentCat==='games')renderDiscover();});
+  renderDiscover();
+}
+
+function playWebGame(id){
+  const g=webGamesById[String(id||'')];
+  if(!g||!g.url)return;
+  storeSettings=loadStoreSettings();
+  const pid=String(g.providerId||'');
+  let mode='play';
+  if(pid==='gamepix')mode=storeSettings.webGames.libraries.gamepix.openMode;
+  else if(pid==='famobi')mode=storeSettings.webGames.libraries.famobi.openMode;
+  else{
+    const c=(storeSettings.webGames.custom||[]).find(x=>x&&String(x.id)===pid);
+    if(c)mode=(c.openMode==='embed')?'embed':'play';
+  }
+  const url=(mode==='embed'&&g.embedUrl)?g.embedUrl:g.url;
+  const wm=window.parent&&window.parent.windowManager;
+  const openInWrapper=(url)=>{
+    if(wm&&typeof wm.openWebWrap==='function'){wm.openWebWrap(url,g.title,'🎮');return true;}
+    return false;
+  };
+
+  if(openInWrapper(url))return;
+  try{window.open(url,'_blank','noopener,noreferrer');}catch(e){window.open(url,'_blank');}
+}
+
+function formatWebGamesError(msg){
+  const m=String(msg||'');
+  if(!m)return'Erreur inconnue';
+  if(/aborted/i.test(m)||/aborterror/i.test(m))return'Délai dépassé (connexion lente ou bloquée).';
+  if(/failed to fetch/i.test(m))return'Connexion bloquée ou indisponible.';
+  if(/réponse non-json/i.test(m)||/non-json/i.test(m))return'Le proxy a renvoyé une réponse invalide.';
+  return m;
+}
+
+function renderWebGamesDiscover(container,q){
+  if(!container)return;
+  storeSettings=loadStoreSettings();
+  const enabledLibNames=[];
+  if(storeSettings.webGames.libraries.gamepix.enabled)enabledLibNames.push('GamePix');
+  if(storeSettings.webGames.libraries.famobi.enabled)enabledLibNames.push('Famobi');
+  (storeSettings.webGames.custom||[]).filter(c=>c&&c.enabled).forEach(c=>enabledLibNames.push(String(c.name||'Bibliothèque')));
+  const enabledLabel=enabledLibNames.length?enabledLibNames.map(esc).join(', '):'';
+  let html='';
+  html+=`<div class="sec-head">
+    <div class="sec-title">Jeux</div>
+    <div class="sec-more" onclick="showView('settings',document.getElementById('nav-settings'))">Paramètres</div>
+    <div class="sec-more" onclick="refreshWebGames()">Actualiser</div>
+  </div>`;
+  html+=`<div style="font-size:12px;color:var(--text2);margin:-6px 0 16px;">
+    ${enabledLibNames.length?`Bibliothèques actives: ${enabledLabel}.`:`Aucune bibliothèque active.`}
+  </div>`;
+
+  if(!enabledLibNames.length){
+    html+=`<div class="empty-state">
+      <div class="es-icon">⚙️</div>
+      <div class="es-title">Aucun jeu</div>
+      <div class="es-sub">Active une bibliothèque dans Paramètres (GamePix, Famobi, ou un flux JSON).</div>
+      <button class="get-btn" onclick="showView('settings',document.getElementById('nav-settings'))">Ouvrir les paramètres</button>
+    </div>`;
+    container.innerHTML=html;
+    return;
+  }
+
+  if(webGamesState.status==='idle'){
+    ensureWebGamesLoaded(false).then(()=>{if(currentCat==='games')renderDiscover();});
+  } else if(webGamesState.status==='loading'&&webGamesState.promise){
+    webGamesState.promise.then(()=>{if(currentCat==='games')renderDiscover();});
+  }
+
+  if(webGamesState.status==='idle'||webGamesState.status==='loading'){
+    html+=`<div class="empty-state">
+      <div class="es-icon">⏳</div>
+      <div class="es-title">Chargement des jeux…</div>
+      <div class="es-sub">Récupération depuis ${enabledLabel}</div>
+    </div>`;
+    container.innerHTML=html;
+    return;
+  }
+
+  if(webGamesState.status==='error'){
+    html+=`<div class="empty-state">
+      <div class="es-icon">⚠️</div>
+      <div class="es-title">Impossible de charger les jeux</div>
+      <div class="es-sub">${esc(formatWebGamesError(webGamesState.error||''))}</div>
+      <button class="get-btn" onclick="refreshWebGames()">Réessayer</button>
+    </div>`;
+    container.innerHTML=html;
+    return;
+  }
+
+  const list=Array.isArray(webGamesState.games)?webGamesState.games:[];
+  const query=String(q||'').trim().toLowerCase();
+  let filtered=!query?list:list.filter(g=>{
+    const hay=[g.title,g.genre,g.publisher,g.provider,g.desc,(g.categories||[]).join(' ')].join(' ').toLowerCase();
+    return hay.includes(query);
+  });
+
+  // Sort: best match first, then alphabetically.
+  filtered=filtered.slice().sort((a,b)=>{
+    const ta=String(a.title||'').toLowerCase();
+    const tb=String(b.title||'').toLowerCase();
+    if(query){
+      const ia=ta.indexOf(query);
+      const ib=tb.indexOf(query);
+      const sa=(ia===-1?9999:ia);
+      const sb=(ib===-1?9999:ib);
+      if(sa!==sb)return sa-sb;
+    }
+    return ta.localeCompare(tb);
+  });
+
+  if(!filtered.length){
+    html+=`<div class="empty-state">
+      <div class="es-icon">🎮</div>
+      <div class="es-title">${query?'Aucun jeu trouvé':'Aucun jeu'}</div>
+      <div class="es-sub">${query?`Aucun jeu ne correspond à &quot;${esc(query)}&quot;`:''}</div>
+    </div>`;
+    container.innerHTML=html;
+    return;
+  }
+
+  const limited=filtered.slice(0,160);
+  html+=`<div class="webgames-grid">`;
+  html+=limited.map(g=>{
+    const thumb=g.thumbnail?`<img src="${g.thumbnail}" alt="" loading="lazy">`:'';
+    const tags=[
+      g.genre?`<span class="webgame-tag">${esc(g.genre)}</span>`:'',
+      g.publisher?`<span class="webgame-tag">${esc(g.publisher)}</span>`:''
+    ].filter(Boolean).join('');
+    return`
+      <div class="webgame-card" onclick="openWebGameDetail('${g.id}')">
+        <div class="webgame-thumb">${thumb}</div>
+        <div class="webgame-body">
+          <div class="webgame-title">${esc(g.title)}</div>
+          <div class="webgame-desc">${esc(g.desc||'')}</div>
+          <div class="webgame-meta">${tags}</div>
+          <div class="webgame-actions">
+            <button class="get-btn webgame-play" onclick="event.stopPropagation();playWebGame('${g.id}')">Jouer</button>
+          </div>
+        </div>
+      </div>`;
+  }).join('');
+  html+=`</div>`;
+
+  if(filtered.length>limited.length){
+    html+=`<div style="margin-top:14px;font-size:12px;color:var(--text2);text-align:center;">
+      Affichage des ${limited.length} premiers résultats (sur ${filtered.length}). Affine avec la barre de recherche.
+    </div>`;
+  }
+
+  container.innerHTML=html;
+}
+
+// ══════════════════════════════════════════
 // HELPERS (unchanged from original)
 // ══════════════════════════════════════════
 function hashHue(s){let h=0;for(let i=0;i<s.length;i++)h=((h<<5)-h)+s.charCodeAt(i);return Math.abs(h)%360;}
@@ -1024,6 +1770,7 @@ function applyNav(entry){
   _showViewRaw(entry.view);
   document.getElementById('topbar-title').textContent=entry.title;
   if(entry.view==='discover')renderDiscover();
+  if(entry.view==='settings')renderSettings();
   if(entry.view==='admin')renderAdmin();
 }
 function updateNavBtns(){
@@ -1035,21 +1782,31 @@ function updateNavBtns(){
 // VIEW MANAGEMENT
 // ══════════════════════════════════════════
 function _showViewRaw(name){
-  ['discover','submit','admin'].forEach(v=>{
+  ['discover','settings','submit','admin'].forEach(v=>{
     document.getElementById(`view-${v}`).classList.toggle('hidden',v!==name);
   });
   document.querySelectorAll('.sb-item').forEach(b=>b.classList.remove('active'));
-  const map={'discover':'nav-discover','submit':'nav-submit','admin':'admin-sb-btn'};
+  const map={'discover':'nav-discover','settings':'nav-settings','submit':'nav-submit','admin':'admin-sb-btn'};
   if(map[name]){const el=document.getElementById(map[name]);if(el)el.classList.add('active');}
+
+  // Search only applies to Discover.
+  const search=document.getElementById('search-input');
+  if(search){
+    const on=name==='discover';
+    search.disabled=!on;
+    search.placeholder=on?'Rechercher…':'Recherche désactivée ici';
+    search.style.opacity=on?'1':'0.55';
+  }
 }
 
 function showView(name,btn){
-  const titles={'discover':'Accueil','submit':'Soumettre une App','admin':'Modération'};
+  const titles={'discover':'Accueil','settings':'Paramètres','submit':'Soumettre une App','admin':'Modération'};
   currentCat='all';
   _showViewRaw(name);
   document.getElementById('topbar-title').textContent=titles[name]||name;
   pushNav(name,'all',titles[name]||name);
   if(name==='discover')renderDiscover();
+  if(name==='settings')renderSettings();
   if(name==='admin')renderAdmin();
   document.querySelectorAll('.sb-item').forEach(b=>b.classList.remove('active'));
   if(btn)btn.classList.add('active');
@@ -1059,15 +1816,189 @@ function showView(name,btn){
 // RENDER DISCOVER
 // ══════════════════════════════════════════
 function renderDiscover(){
-  const q=document.getElementById('search-input').value.toLowerCase();
+  const q=(document.getElementById('search-input').value||'').toLowerCase();
+  const container=document.getElementById('view-discover');
+
+  // "Jeux" category: web games only (direct playable embeds)
+  if(currentCat==='games'){
+    renderWebGamesDiscover(container,q);
+    return;
+  }
+
   const all=getAllApps().filter(a=>{
     const matchCat=currentCat==='all'||a.cat===currentCat;
     const matchQ=!q||(a.name||'').toLowerCase().includes(q)||(a.desc||'').toLowerCase().includes(q);
     return matchCat&&matchQ;
   });
-
-  const container=document.getElementById('view-discover');
   let html='';
+
+  // Also search in web games when the user types in the global search bar (home/other categories).
+  let webSearchHits=[];
+  let webSearchLoading=false;
+  let webSearchError='';
+  const qTrim=String(q||'').trim().toLowerCase();
+  if(qTrim){
+    storeSettings=loadStoreSettings();
+    const hasAnyLib=!!(storeSettings.webGames.libraries.gamepix.enabled||storeSettings.webGames.libraries.famobi.enabled||(storeSettings.webGames.custom||[]).some(c=>c&&c.enabled));
+    if(hasAnyLib){
+      if(webGamesState.status==='idle'){
+        ensureWebGamesLoaded(false).then(()=>{ if(currentCat!=='games') renderDiscover(); });
+        webSearchLoading=true;
+      }else if(webGamesState.status==='loading'){
+        webSearchLoading=true;
+      }else if(webGamesState.status==='error'){
+        webSearchError=String(webGamesState.error||'');
+      }else if(webGamesState.status==='ready'){
+        const list=Array.isArray(webGamesState.games)?webGamesState.games:[];
+        webSearchHits=list.filter(g=>{
+          const hay=[g.title,g.genre,g.publisher,g.provider,g.desc,(g.categories||[]).join(' ')].join(' ').toLowerCase();
+          return hay.includes(qTrim);
+        }).slice(0,24);
+      }
+    }
+  }
+
+  // Search results: mix apps + games in a single results list (no separate "Jeux" section).
+  if(qTrim){
+    const hasAnyGameLib=!!(storeSettings&&storeSettings.webGames&&storeSettings.webGames.libraries&&(
+      storeSettings.webGames.libraries.gamepix&&storeSettings.webGames.libraries.gamepix.enabled||
+      storeSettings.webGames.libraries.famobi&&storeSettings.webGames.libraries.famobi.enabled||
+      (storeSettings.webGames.custom||[]).some(c=>c&&c.enabled)
+    ));
+
+    const items=[];
+    (Array.isArray(all)?all:[]).forEach(app=>{
+      items.push({
+        kind:'app',
+        id:String(app.id),
+        title:String(app.name||app.id||''),
+        subtitle:String(app.dev||''),
+        desc:String(app.desc||''),
+        cat:String(app.cat||''),
+        icon:String(app.icon||'📦'),
+        coverStyle:getCoverStyle(app),
+        iconUrl:resolveMediaUrl(app.icon)
+      });
+    });
+    (Array.isArray(webSearchHits)?webSearchHits:[]).forEach(g=>{
+      items.push({
+        kind:'game',
+        id:String(g.id),
+        title:String(g.title||'Jeu'),
+        subtitle:String(g.provider||g.publisher||''),
+        desc:String(g.desc||''),
+        cat:String(g.genre||'JEU'),
+        thumb:String(g.thumbnail||'')
+      });
+    });
+
+    const scoreItem=(it)=>{
+      const qv=qTrim;
+      const t=String(it.title||'').toLowerCase();
+      const d=String(it.desc||'').toLowerCase();
+      const s=String(it.subtitle||'').toLowerCase();
+      const idxT=t.indexOf(qv);
+      const idxS=s.indexOf(qv);
+      const idxD=d.indexOf(qv);
+      let score=0;
+      score+= (idxT===-1?1000:idxT);
+      score+= (idxS===-1?2000:idxS+200);
+      score+= (idxD===-1?3000:idxD+400);
+      // Slightly prefer installed apps when equal.
+      if(it.kind==='app'&&isInstalled(it.id))score-=40;
+      return score;
+    };
+
+    const sorted=items
+      .slice()
+      .sort((a,b)=>{
+        const sa=scoreItem(a);
+        const sb=scoreItem(b);
+        if(sa!==sb)return sa-sb;
+        return String(a.title||'').localeCompare(String(b.title||''));
+      })
+      .slice(0,80);
+
+    if(!sorted.length && !webSearchLoading){
+      html+=`<div class="empty-state">
+        <div class="es-icon">🔍</div>
+        <div class="es-title">Aucun résultat</div>
+        <div class="es-sub">Aucun résultat pour "${esc(qTrim)}".</div>
+      </div>`;
+      container.innerHTML=html;
+      return;
+    }
+
+    html+=`<div class="sec-head"><div class="sec-title">Résultats</div></div>`;
+    html+=`<div class="app-list">`;
+    sorted.forEach(it=>{
+      if(it.kind==='app'){
+        const inst=isInstalled(it.id);
+        const style=it.coverStyle||'';
+        const iconCell=it.iconUrl?`<img src="${it.iconUrl}" alt="">`:(it.icon||'📦');
+        html+=`<div class="app-row" onclick="openDetail('${it.id}')">
+          <div class="ar-icon" style="${style}">${iconCell}</div>
+          <div class="ar-info">
+            <div class="ar-name">${esc(it.title)}</div>
+            <div class="ar-dev">${esc(it.subtitle)}</div>
+            <div class="ar-desc">${esc(it.desc)}</div>
+          </div>
+          <div class="ar-right">
+            <span class="ar-cat">${esc(it.cat||'APP')}</span>
+            <button class="get-btn${inst?' open':''}" onclick="event.stopPropagation();actionClick('${it.id}')">${inst?'Ouvrir':'Obtenir'}</button>
+          </div>
+        </div>`;
+      }else{
+        const style='';
+        const iconCell=it.thumb?`<img src="${esc(it.thumb)}" alt="" loading="lazy">`:'🎮';
+        html+=`<div class="app-row" onclick="openWebGameDetail('${it.id}')">
+          <div class="ar-icon" style="${style}">${iconCell}</div>
+          <div class="ar-info">
+            <div class="ar-name">${esc(it.title)}</div>
+            <div class="ar-dev">${esc(it.subtitle)}</div>
+            <div class="ar-desc">${esc(it.desc)}</div>
+          </div>
+          <div class="ar-right">
+            <span class="ar-cat">${esc(it.cat||'JEU')}</span>
+            <button class="get-btn" onclick="event.stopPropagation();playWebGame('${it.id}')">Jouer</button>
+          </div>
+        </div>`;
+      }
+    });
+
+    // If games are still loading, show a soft row hint without splitting sections.
+    if(hasAnyGameLib && webSearchLoading){
+      html+=`<div class="app-row" style="cursor:default;opacity:0.78;">
+        <div class="ar-icon">⏳</div>
+        <div class="ar-info">
+          <div class="ar-name">Chargement des jeux…</div>
+          <div class="ar-dev">GamePix et autres bibliothèques</div>
+          <div class="ar-desc">Les jeux vont apparaître dans les résultats dès que c’est prêt.</div>
+        </div>
+        <div class="ar-right">
+          <span class="ar-cat">JEU</span>
+          <button class="get-btn" onclick="event.stopPropagation();refreshWebGames({clearCache:true})">Rafraîchir</button>
+        </div>
+      </div>`;
+    } else if(hasAnyGameLib && webSearchError){
+      html+=`<div class="app-row" style="cursor:default;opacity:0.88;">
+        <div class="ar-icon">⚠️</div>
+        <div class="ar-info">
+          <div class="ar-name">Jeux indisponibles</div>
+          <div class="ar-dev">Erreur réseau</div>
+          <div class="ar-desc">${esc(formatWebGamesError(webSearchError))}</div>
+        </div>
+        <div class="ar-right">
+          <span class="ar-cat">JEU</span>
+          <button class="get-btn" onclick="event.stopPropagation();refreshWebGames({clearCache:true})">Réessayer</button>
+        </div>
+      </div>`;
+    }
+
+    html+=`</div>`;
+    container.innerHTML=html;
+    return;
+  }
 
   // Editorial hero
   if(currentCat==='all'&&!q&&all.length>0){
@@ -1093,7 +2024,7 @@ function renderDiscover(){
     // Featured row
     const featApps=all.filter(a=>a.id!==hero.id).slice(0,8);
     if(featApps.length){
-      html+=`<div class="sec-head"><div class="sec-title">Applications populaires</div><div class="sec-more" onclick="">Tout voir</div></div>`;
+      html+=`<div class="sec-head"><div class="sec-title">Applications populaires</div><div class="sec-more" onclick="filterCatSB('all',document.getElementById('nav-discover'))">Tout voir</div></div>`;
       html+=`<div class="hscroll">`;
       featApps.forEach(app=>{
         const c=getCoverUrl(app);const s=getCoverStyle(app);
@@ -1113,28 +2044,192 @@ function renderDiscover(){
       });
       html+=`</div>`;
 
-      // Games row if any
-      const games=all.filter(a=>a.cat==='games');
-      if(games.length>=2){
-        html+=`<div class="sec-head"><div class="sec-title">Jeux</div><div class="sec-more" onclick="filterCatTop('games');renderDiscover()">Tout voir</div></div>`;
-        html+=`<div class="hscroll">`;
-        games.forEach(app=>{
-          const c=getCoverUrl(app);const s=getCoverStyle(app);
-          html+=`<div class="small-card" onclick="openDetail('${app.id}')">
-            <div class="sc-cover" style="${s}">${c?`<img src="${c}" alt="" loading="lazy">`:''}  </div>
-            <div class="sc-body">
-              <div class="sc-name">${esc(app.name)}</div>
-              <div class="sc-cat">${app.cat||''}</div>
-            </div>
-          </div>`;
-        });
-        html+=`</div>`;
-      }
+      // (Games are now organized in dedicated rows further down the home screen.)
     }
   }
 
-  // App list
-  const listApps=currentCat==='all'&&!q?all.slice(4):all;
+  // Home: disperse by category like a real "Accueil"
+  if(currentCat==='all'&&!q){
+    const byCat={productivity:[],online:[],games:[]};
+    all.forEach(a=>{if(a&&byCat[a.cat])byCat[a.cat].push(a);});
+
+    const shuffleStable=(arr, seed)=>{
+      const a=(Array.isArray(arr)?arr:[]).slice();
+      let h=hashHue(String(seed||'seed'));
+      for(let i=a.length-1;i>0;i--){
+        h=(h*1664525+1013904223)>>>0;
+        const j=h%(i+1);
+        const tmp=a[i];a[i]=a[j];a[j]=tmp;
+      }
+      return a;
+    };
+
+    const smallCardApp=(app)=>{
+      const c=getCoverUrl(app);
+      const s=getCoverStyle(app);
+      const sub=esc(app.dev||'');
+      return `<div class="small-card" onclick="openDetail('${app.id}')">
+        <div class="sc-cover" style="${s}">${c?`<img src="${c}" alt="" loading="lazy">`:''}</div>
+        <div class="sc-body">
+          <div class="sc-name">${esc(app.name)}</div>
+          <div class="sc-cat">${sub}</div>
+        </div>
+      </div>`;
+    };
+
+    const renderCarouselRow=(title, items, onAllJs)=>{
+      const list=(Array.isArray(items)?items:[]).filter(Boolean);
+      if(!list.length)return'';
+      const limited=list.slice(0,12);
+      let s=`<div class="sec-head"><div class="sec-title">${esc(title)}</div>${onAllJs?`<div class="sec-more" onclick="${onAllJs}">Tout voir</div>`:''}</div>`;
+      s+=`<div class="hscroll">`;
+      s+=limited.map(smallCardApp).join('');
+      s+=`</div>`;
+      return s;
+    };
+
+    // Play Store / App Store style rows
+    const forYou=shuffleStable(all.filter(a=>a&&a.cat!=='games'), 'foryou').slice(0,12);
+    html+=renderCarouselRow('Pour vous', forYou, '');
+
+    const trending=shuffleStable(all, 'trending').slice(0,12);
+    html+=renderCarouselRow('Tendances', trending, '');
+
+    html+=renderCarouselRow('Productivité', shuffleStable(byCat.productivity,'prod'), "filterCatSB('productivity',document.getElementById('nav-cat-productivity'))");
+    html+=renderCarouselRow('En ligne', shuffleStable(byCat.online,'online'), "filterCatSB('online',document.getElementById('nav-cat-online'))");
+
+    storeSettings=loadStoreSettings();
+    const hasAnyLib=!!(storeSettings.webGames.libraries.gamepix.enabled||storeSettings.webGames.libraries.famobi.enabled||(storeSettings.webGames.custom||[]).some(c=>c&&c.enabled));
+    if(!hasAnyLib){
+      html+=`<div class="empty-state" style="padding:34px 20px;">
+        <div class="es-icon">⚙️</div>
+        <div class="es-title">Jeux désactivés</div>
+        <div class="es-sub">Active une bibliothèque dans Paramètres pour afficher les jeux.</div>
+        <button class="get-btn" onclick="showView('settings',document.getElementById('nav-settings'))">Paramètres</button>
+      </div>`;
+      container.innerHTML=html;
+      return;
+    }
+
+    if(webGamesState.status==='idle'){
+      ensureWebGamesLoaded(false).then(()=>{if(currentCat==='all')renderDiscover();});
+    }
+    if(webGamesState.status==='loading'||webGamesState.status==='idle'){
+      html+=`<div class="empty-state" style="padding:34px 20px;">
+        <div class="es-icon">⏳</div>
+        <div class="es-title">Chargement des jeux…</div>
+        <div class="es-sub">Préparation de la sélection</div>
+      </div>`;
+      container.innerHTML=html;
+      return;
+    }
+    const anyWeb=(Array.isArray(webGamesState.games)?webGamesState.games:[]);
+    if(!anyWeb.length){
+      html+=`<div class="empty-state" style="padding:34px 20px;">
+        <div class="es-icon">🎮</div>
+        <div class="es-title">Aucun jeu</div>
+        <div class="es-sub">Réessaie ou change de bibliothèque.</div>
+        <button class="get-btn" onclick="refreshWebGames({clearCache:true})">Actualiser</button>
+      </div>`;
+      container.innerHTML=html;
+      return;
+    }
+    // Web games: split into well-known sections (logic, multiplayer, action, etc.)
+    const allWeb=anyWeb.slice(0,220);
+    const pick=(arr,n)=>shuffleStable(arr,'wg_'+n).slice(0,n);
+    const textOf=(g)=>[g.title,g.genre,g.publisher,g.provider,g.desc].filter(Boolean).join(' ').toLowerCase();
+    const isAny=(txt,words)=>words.some(w=>txt.includes(w));
+    const classify=(g)=>{
+      const txt=textOf(g);
+      if(isAny(txt,['multiplayer','multi','mmo','pvp','battle royale','io','co-op','coop','versus']))return'multi';
+      if(isAny(txt,['puzzle','logic','logique','brain','sudoku','mahjong','match','tetris','2048','words','word','letter','quiz']))return'logic';
+      if(isAny(txt,['strategy','stratégie','tower defense','td','defense','chess','cards','card','rts']))return'strategy';
+      if(isAny(txt,['racing','race','car','drift','bike','kart','runner','endless','sprint']))return'race';
+      if(isAny(txt,['sport','football','soccer','basket','tennis','golf','hockey']))return'sport';
+      if(isAny(txt,['shooter','shoot','fps','gun','sniper','zombie','fighting','combat','war','action','adventure','survival']))return'action';
+      if(isAny(txt,['arcade','retro','platform','platformer','classic','breakout','pinball','flappy']))return'arcade';
+      return'casual';
+    };
+    const buckets={multi:[],logic:[],strategy:[],race:[],sport:[],action:[],arcade:[],casual:[]};
+    allWeb.forEach(g=>{(buckets[classify(g)]||buckets.casual).push(g);});
+
+    const webRow=(title,items)=>{
+      const list=(Array.isArray(items)?items:[]).filter(Boolean);
+      if(!list.length)return'';
+      const limited=pick(list,12);
+      let s=`<div class="sec-head"><div class="sec-title">${esc(title)}</div><div class="sec-more" onclick="filterCatSB('games',document.getElementById('nav-cat-games'))">Tout voir</div></div>`;
+      s+=`<div class="hscroll">`;
+      limited.forEach(g=>{
+        const t=g.thumbnail?`<img src="${g.thumbnail}" alt="" loading="lazy">`:'';
+        s+=`<div class="small-card" onclick="openWebGameDetail('${g.id}')">
+          <div class="sc-cover" style="background:var(--surface2);">${t}</div>
+          <div class="sc-body">
+            <div class="sc-name">${esc(g.title||'Jeu')}</div>
+            <div class="sc-cat">${esc(g.genre||g.provider||g.publisher||'')}</div>
+          </div>
+        </div>`;
+      });
+      s+=`</div>`;
+      return s;
+    };
+
+    // Multijoueur: include installable games + web multiplayer (mixed).
+    const installables=shuffleStable(byCat.games,'installable_games').slice(0,10).map(app=>({
+      __kind:'app',
+      id:app.id,
+      title:app.name,
+      subtitle:app.dev||'',
+      cover:getCoverUrl(app),
+      coverStyle:getCoverStyle(app)
+    }));
+    const webMulti=pick(buckets.multi,12).map(g=>({
+      __kind:'web',
+      id:g.id,
+      title:g.title,
+      subtitle:g.genre||g.provider||g.publisher||'',
+      thumb:g.thumbnail||''
+    }));
+    const multiMixed=shuffleStable(installables.concat(webMulti),'multi_mixed').slice(0,12);
+    if(multiMixed.length){
+      html+=`<div class="sec-head"><div class="sec-title">Multijoueur</div><div class="sec-more" onclick="filterCatSB('games',document.getElementById('nav-cat-games'))">Tout voir</div></div>`;
+      html+=`<div class="hscroll">`;
+      multiMixed.forEach(item=>{
+        if(item.__kind==='app'){
+          const img=item.cover?`<img src="${item.cover}" alt="" loading="lazy">`:'';
+          html+=`<div class="small-card" onclick="openDetail('${item.id}')">
+            <div class="sc-cover" style="${item.coverStyle||''}">${img}</div>
+            <div class="sc-body">
+              <div class="sc-name">${esc(item.title||'Jeu')}</div>
+              <div class="sc-cat">${esc(item.subtitle||'')}</div>
+            </div>
+          </div>`;
+        }else{
+          const t=item.thumb?`<img src="${item.thumb}" alt="" loading="lazy">`:'';
+          html+=`<div class="small-card" onclick="openWebGameDetail('${item.id}')">
+            <div class="sc-cover" style="background:var(--surface2);">${t}</div>
+            <div class="sc-body">
+              <div class="sc-name">${esc(item.title||'Jeu')}</div>
+              <div class="sc-cat">${esc(item.subtitle||'')}</div>
+            </div>
+          </div>`;
+        }
+      });
+      html+=`</div>`;
+    }
+
+    html+=webRow('Logique', buckets.logic);
+    html+=webRow('Action', buckets.action);
+    html+=webRow('Arcade', buckets.arcade);
+    html+=webRow('Sport & course', buckets.sport.concat(buckets.race));
+    html+=webRow('Stratégie', buckets.strategy);
+    html+=webRow('Découverte', buckets.casual.concat(buckets.logic).concat(buckets.action));
+
+    container.innerHTML=html;
+    return;
+  }
+
+  // Default: classic list (category pages and search)
+  const listApps=all;
   if(listApps.length){
     const secLabel=currentCat==='all'&&!q?'Toutes les apps':
       currentCat==='productivity'?'Productivité':
@@ -1168,6 +2263,174 @@ function renderDiscover(){
       <div class="es-sub">${q?`Aucune app ne correspond à "${esc(q)}"`:''}</div>
     </div>`;
   }
+
+  container.innerHTML=html;
+}
+
+// ══════════════════════════════════════════
+// SETTINGS VIEW (Store)
+// ══════════════════════════════════════════
+function setWebGamesLibraryEnabled(libId, enabled){
+  storeSettings=loadStoreSettings();
+  const id=String(libId||'').trim();
+  const on=!!enabled;
+  if(id==='gamepix'||id==='famobi'){
+    storeSettings.webGames.libraries[id].enabled=on;
+  }else{
+    const c=(storeSettings.webGames.custom||[]).find(x=>x&&String(x.id)===id);
+    if(c)c.enabled=on;
+  }
+  saveStoreSettings(storeSettings);
+}
+
+function toggleWebGamesLibrary(libId){
+  storeSettings=loadStoreSettings();
+  const id=String(libId||'').trim();
+  let next=false;
+  if(id==='gamepix'||id==='famobi'){
+    next=!storeSettings.webGames.libraries[id].enabled;
+    storeSettings.webGames.libraries[id].enabled=next;
+  }else{
+    const c=(storeSettings.webGames.custom||[]).find(x=>x&&String(x.id)===id);
+    if(c){next=!c.enabled;c.enabled=next;}
+  }
+  saveStoreSettings(storeSettings);
+  toast(next?'Bibliothèque activée':'Bibliothèque désactivée','success');
+  refreshWebGames({clearCache:true});
+  renderSettings();
+}
+
+function setWebGamesOpenMode(libId, mode){
+  storeSettings=loadStoreSettings();
+  const id=String(libId||'').trim();
+  const m=(String(mode||'').trim()==='embed')?'embed':'play';
+  if(id==='gamepix'||id==='famobi'){
+    storeSettings.webGames.libraries[id].openMode=m;
+  }else{
+    const c=(storeSettings.webGames.custom||[]).find(x=>x&&String(x.id)===id);
+    if(c)c.openMode=m;
+  }
+  saveStoreSettings(storeSettings);
+}
+
+function setGamePixCfg(field, value){
+  storeSettings=loadStoreSettings();
+  const cfg=storeSettings.webGames.libraries.gamepix;
+  if(field==='sid')cfg.sid=String(value||'').trim()||'1';
+  if(field==='pages')cfg.pages=clamp(value,1,6);
+  if(field==='limit')cfg.limit=clamp(value,20,120);
+  saveStoreSettings(storeSettings);
+}
+
+function addCustomLibrary(){
+  storeSettings=loadStoreSettings();
+  const nameEl=document.getElementById('custom-lib-name');
+  const urlEl=document.getElementById('custom-lib-url');
+  const name=String(nameEl&&nameEl.value||'').trim()||'Bibliothèque';
+  const url=sanitizeUrl(String(urlEl&&urlEl.value||'').trim());
+  if(!url){toast('URL invalide','error');return;}
+  const id=`custom_${Date.now()}_${Math.random().toString(16).slice(2,6)}`;
+  storeSettings.webGames.custom=Array.isArray(storeSettings.webGames.custom)?storeSettings.webGames.custom:[];
+  storeSettings.webGames.custom.push({id,name,url,enabled:true,openMode:'play'});
+  saveStoreSettings(storeSettings);
+  try{if(nameEl)nameEl.value='';if(urlEl)urlEl.value='';}catch(e){}
+  toast('Bibliothèque ajoutée','success');
+  refreshWebGames({clearCache:true});
+  renderSettings();
+}
+
+function removeCustomLibrary(libId){
+  storeSettings=loadStoreSettings();
+  const id=String(libId||'').trim();
+  storeSettings.webGames.custom=(storeSettings.webGames.custom||[]).filter(x=>x&&String(x.id)!==id);
+  saveStoreSettings(storeSettings);
+  toast('Bibliothèque supprimée','success');
+  refreshWebGames({clearCache:true});
+  renderSettings();
+}
+
+function clearWebGamesAllCache(){
+  try{localStorage.removeItem(WEB_GAMES_LS_KEY);}catch(e){}
+  clearWebGamesCaches();
+  toast('Cache vidé','success');
+  refreshWebGames({clearCache:false});
+  renderSettings();
+}
+
+function renderSettings(){
+  const container=document.getElementById('view-settings');
+  if(!container)return;
+  storeSettings=loadStoreSettings();
+  const lib=storeSettings.webGames.libraries;
+  const customs=(storeSettings.webGames.custom||[]);
+
+  const jsq=(v)=>String(v||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/\r?\n/g,' ');
+
+  const row=(opts)=>{
+    const idJs=jsq(opts.id);
+    const name=esc(opts.name);
+    const desc=esc(opts.desc||'');
+    const badges=(opts.badges||[]).map(b=>`<span class="lib-badge">${esc(b)}</span>`).join('');
+    const enabled=!!opts.enabled;
+    const openMode=String(opts.openMode||'play')==='embed'?'embed':'play';
+    return `
+      <div class="lib-row">
+        <div class="lib-meta">
+          <div class="lib-name">${esc(opts.icon||'📚')} ${name}</div>
+          <div class="lib-desc">${desc}</div>
+          <div class="lib-badges">${badges}</div>
+        </div>
+        <select class="mini-select" onchange="setWebGamesOpenMode('${idJs}',this.value);refreshWebGames({clearCache:true});">
+          <option value="play" ${openMode==='play'?'selected':''}>URL du jeu</option>
+          <option value="embed" ${openMode==='embed'?'selected':''}>Embed</option>
+        </select>
+        <div class="toggle ${enabled?'on':''}" role="switch" aria-checked="${enabled?'true':'false'}" onclick="toggleWebGamesLibrary('${idJs}')"></div>
+      </div>
+    `;
+  };
+
+  let html='';
+  html+=`<div class="store-settings">
+    <div class="ss-head">
+      <div>
+        <div class="ss-title">Paramètres</div>
+        <div class="ss-sub">Gère les bibliothèques de jeux et la façon d’ouvrir les jeux (URL ou embed).</div>
+      </div>
+      <div class="ss-actions">
+        <button class="get-btn" onclick="clearWebGamesAllCache()">Vider cache</button>
+        <button class="get-btn" onclick="refreshWebGames({clearCache:true})">Rafraîchir</button>
+      </div>
+    </div>
+
+    <div class="ss-card">
+      <h3>Bibliothèques De Jeux Web</h3>
+      ${row({id:'gamepix',icon:'🧩',name:'GamePix',desc:'Catalogue HTML5. Souvent accessible sans proxy.',badges:['API','CORS OK'],enabled:lib.gamepix.enabled,openMode:lib.gamepix.openMode})}
+      <div style="padding:0 10px 12px 10px;display:flex;gap:10px;flex-wrap:wrap;">
+        <input class="ss-input" style="min-width:160px;" value="${esc(lib.gamepix.sid)}" oninput="setGamePixCfg('sid',this.value)" placeholder="SID GamePix">
+        <input class="ss-input" style="min-width:160px;" type="number" min="1" max="6" value="${Number(lib.gamepix.pages)||3}" oninput="setGamePixCfg('pages',this.value)" placeholder="Pages">
+        <input class="ss-input" style="min-width:160px;" type="number" min="20" max="120" value="${Number(lib.gamepix.limit)||60}" oninput="setGamePixCfg('limit',this.value)" placeholder="Limit">
+      </div>
+      ${row({id:'famobi',icon:'🕹️',name:'Famobi',desc:'Catalogue HTML5 via proxy (utile si réseau bloque).',badges:['API','Proxy'],enabled:lib.famobi.enabled,openMode:lib.famobi.openMode})}
+      ${customs.map(c=>row({id:c.id,icon:'🧷',name:c.name||'Bibliothèque',desc:c.url||'',badges:['JSON','Custom'],enabled:!!c.enabled,openMode:c.openMode||'play'})).join('')}
+      ${!customs.length?`<div class="ss-help">Aucune bibliothèque custom ajoutée.</div>`:''}
+    </div>
+
+    <div class="ss-card">
+      <h3>Ajouter Un Flux JSON</h3>
+      <div class="ss-form">
+        <input class="ss-input" id="custom-lib-name" placeholder="Nom (ex: Jeux Indie)">
+        <input class="ss-input" id="custom-lib-url" placeholder="URL JSON (https://...)">
+        <button class="get-btn" onclick="addCustomLibrary()">Ajouter</button>
+      </div>
+      <div class="ss-help">
+        Le flux doit renvoyer soit un tableau JSON, soit un objet avec <code>games</code>, <code>data</code> ou <code>results</code> (tableaux).
+        Chaque item doit contenir au minimum <code>title/name</code> et <code>url/link</code>.
+      </div>
+      ${customs.map(c=>`<div style="display:flex;justify-content:flex-end;padding-top:10px;">
+        <button class="get-btn" style="background:rgba(255,59,48,0.12);color:var(--red);" onclick="removeCustomLibrary('${jsq(c.id)}')">Supprimer ${esc(c.name||'Bibliothèque')}</button>
+      </div>`).join('')}
+    </div>
+  </div>`;
 
   container.innerHTML=html;
 }
@@ -1255,6 +2518,49 @@ function openDetail(id){
           </div>`).join('')}
       </div>
     </div>`:''}
+  `;
+
+  document.getElementById('detail-view').style.display='flex';
+}
+
+function openWebGameDetail(id){
+  const g=webGamesById[String(id||'')];
+  if(!g)return;
+  const idJs=String(g.id||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+  document.getElementById('dv-back-label').textContent=document.getElementById('topbar-title').textContent;
+
+  const cover=g.thumbnail?String(g.thumbnail):'';
+  const provider=String(g.provider||g.publisher||'Jeu web');
+  const genre=String(g.genre||'').trim();
+  const desc=String(g.desc||'Aucune description disponible.').trim();
+  const host=(()=>{try{return new URL(String(g.url||g.playUrl||'')).host;}catch(e){return'';}})();
+
+  document.getElementById('dv-body').innerHTML=`
+    <div class="dv-top-section">
+      <div class="dv-icon-wrap" style="background:var(--surface2);border:1px solid var(--border);">
+        ${cover?`<img src="${esc(cover)}" alt="">`:'🎮'}
+      </div>
+      <div class="dv-app-info">
+        <div class="dv-name">${esc(g.title||'Jeu web')}</div>
+        <div class="dv-dev">${esc(provider)}${host?` • ${esc(host)}`:''}</div>
+        <div class="dv-actions">
+          <button class="dv-get open" onclick="playWebGame('${idJs}')">Jouer</button>
+          ${genre?`<span class="dv-meta-tag">${esc(genre)}</span>`:''}
+          <span class="dv-meta-tag">Web game</span>
+        </div>
+      </div>
+    </div>
+    ${cover?`<div class="dv-hero-cover"><img src="${esc(cover)}" alt=""></div>`:''}
+    <div class="dv-section">
+      <div class="dv-sec-title">Description</div>
+      <div class="dv-desc">${esc(desc)}</div>
+    </div>
+    <div class="dv-section">
+      <div class="dv-sec-title">Source</div>
+      <div class="dv-desc" style="font-size:13px;">
+        ${esc(g.url||'')}
+      </div>
+    </div>
   `;
 
   document.getElementById('detail-view').style.display='flex';

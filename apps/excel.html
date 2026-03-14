@@ -6,6 +6,26 @@
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<script>
+(() => {
+  const applyTheme = (raw) => {
+    const theme = raw === 'light' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', theme);
+    if (document.body) document.body.dataset.theme = theme;
+  };
+
+  try {
+    const parentTheme = window.parent?.document?.documentElement?.getAttribute('data-theme') || '';
+    if (parentTheme) applyTheme(parentTheme);
+  } catch (e) {}
+
+  window.addEventListener('message', (e) => {
+    const data = e.data || {};
+    if (data.type === 'funnyweb_theme_change') applyTheme(data.theme);
+    if (data.type === 'funnyweb_user_sync' && data.theme) applyTheme(data.theme);
+  });
+})();
+</script>
 <style>
 :root {
   --green: #1e7e45;
@@ -34,9 +54,30 @@
   --row-num-w: 46px;
   --col-header-h: 24px;
 }
+:root[data-theme="light"]{ color-scheme: light; }
+:root[data-theme="dark"]{
+  color-scheme: dark;
+  --green-light: rgba(30,126,69,0.18);
+  --gray-50: #0b1220;
+  --gray-100: #0f172a;
+  --gray-200: #111827;
+  --gray-300: rgba(255,255,255,0.12);
+  --gray-400: rgba(255,255,255,0.18);
+  --gray-500: rgba(255,255,255,0.36);
+  --gray-600: rgba(255,255,255,0.52);
+  --gray-700: rgba(255,255,255,0.68);
+  --gray-800: rgba(255,255,255,0.84);
+  --gray-900: #e5e7eb;
+  --surface: #0f172a;
+  --border: rgba(255,255,255,0.12);
+  --cell-border: rgba(255,255,255,0.10);
+  --header-bg: rgba(255,255,255,0.06);
+  --sel-bg: rgba(30,126,69,0.22);
+}
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 html,body{height:100%;overflow:hidden;}
 body{font-family:var(--font);background:#e8eaed;color:var(--gray-900);display:flex;flex-direction:column;font-size:13px;}
+:root[data-theme="dark"] body{background:#0b1220 !important;color:var(--gray-900) !important;}
 
 /* ─── TITLEBAR ─── */
 #titlebar{background:var(--green);color:white;display:flex;align-items:center;padding:0 12px;height:36px;gap:8px;flex-shrink:0;user-select:none;}

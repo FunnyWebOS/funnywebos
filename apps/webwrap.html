@@ -167,7 +167,10 @@
       var runtimeEnv = {};
       try { runtimeEnv = (window.parent && window.parent.AETHER_RUNTIME_ENV) || window.AETHER_RUNTIME_ENV || {}; } catch (e) { runtimeEnv = {}; }
       var uvOrigin = String(runtimeEnv.AETHER_UV_ORIGIN || '').trim();
-      if (uvOrigin) {
+      // Some providers (e.g. GamePix embeds) work best when loaded directly.
+      var forceDirect = false;
+      try { forceDirect = /(^|\\.)play\\.gamepix\\.com$/i.test(new URL(url).hostname); } catch (e) { forceDirect = false; }
+      if (uvOrigin && !forceDirect) {
         try { document.querySelector('.stremio-header').style.display = 'none'; } catch (e) {}
         try { document.querySelector('.stremio-footer').style.display = 'none'; } catch (e) {}
         try { note.style.display = 'none'; } catch (e) {}

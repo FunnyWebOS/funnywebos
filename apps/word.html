@@ -6,6 +6,26 @@
 <title>AetherWord</title>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<script>
+(() => {
+  const applyTheme = (raw) => {
+    const theme = raw === 'light' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', theme);
+    if (document.body) document.body.dataset.theme = theme;
+  };
+
+  try {
+    const parentTheme = window.parent?.document?.documentElement?.getAttribute('data-theme') || '';
+    if (parentTheme) applyTheme(parentTheme);
+  } catch (e) {}
+
+  window.addEventListener('message', (e) => {
+    const data = e.data || {};
+    if (data.type === 'funnyweb_theme_change') applyTheme(data.theme);
+    if (data.type === 'funnyweb_user_sync' && data.theme) applyTheme(data.theme);
+  });
+})();
+</script>
 <style>
 :root {
   --blue: #1a56db;
@@ -32,6 +52,29 @@
   --radius: 4px;
   --font-ui: 'IBM Plex Sans', system-ui, sans-serif;
 }
+:root[data-theme="light"]{ color-scheme: light; }
+:root[data-theme="dark"]{
+  color-scheme: dark;
+  --blue-light: rgba(26,86,219,0.18);
+  --gray-50: #0b1220;
+  --gray-100: #0f172a;
+  --gray-200: #111827;
+  --gray-300: rgba(255,255,255,0.12);
+  --gray-400: rgba(255,255,255,0.18);
+  --gray-500: rgba(255,255,255,0.36);
+  --gray-600: rgba(255,255,255,0.52);
+  --gray-700: rgba(255,255,255,0.68);
+  --gray-800: rgba(255,255,255,0.84);
+  --gray-900: #e5e7eb;
+  --surface: #0f172a;
+  --ribbon-bg: #0b1220;
+  --border: rgba(255,255,255,0.12);
+  --text: #e5e7eb;
+  --text-muted: rgba(229,231,235,0.72);
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.5);
+  --shadow-md: 0 2px 10px rgba(0,0,0,0.55);
+  --shadow-lg: 0 12px 44px rgba(0,0,0,0.65);
+}
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 html, body { height: 100%; overflow: hidden; }
 body {
@@ -43,6 +86,7 @@ body {
   font-size: 13px;
   line-height: 1.4;
 }
+:root[data-theme="dark"] body{ background:#0b1220 !important; color:var(--text) !important; }
 
 /* ─── TITLEBAR ─── */
 #titlebar {

@@ -30,9 +30,12 @@ class WindowManager {
         this.uiPreferences = this.getDefaultUIPreferences();
         this.vfs = {};
         this.installedApps = [];
+        this.pinnedApps = [];
         this.activeWidgets = []; // V3: Track widgets
         this.customApps = JSON.parse(localStorage.getItem('aether_custom_apps') || '[]'); // V3.1: Local AI Apps
         this.pathPickerState = null;
+        this.launchpadOpenTimer = null;
+        this.webWrapApps = {};
 
         this.sysVersion = "AetherOS v3.0 - Singularity";
         this.releaseVersion = "3.0.0";
@@ -75,6 +78,8 @@ class WindowManager {
         this.loginClockInterval = null;
 
         this.setTheme(this.theme);
+        // Load and apply the Settings app state (theme/accent/wallpaper/font/etc.) at boot.
+        this.applyAetherSettingsFromStorage();
         this.initOS();
         this.injectSystemStyles(); // V3 CSS Fixes
 
@@ -85,6 +90,12 @@ class WindowManager {
                 this.vfs_delete(e.data.path);
             } else if (e.data.type === 'OS_RESOLVE_PATH_PICKER') {
                 this.resolvePathPicker(e.data.requestId, e.data.path);
+            } else if (e.data && (e.data.type === 'AETHER_SETTINGS_UPDATED' || e.data.type === 'AETHER_SETTINGS_APPLY')) {
+                // Settings app -> OS bridge: apply settings system-wide and sync to all apps.
+                try {
+                    const next = e.data.settings && typeof e.data.settings === 'object' ? e.data.settings : null;
+                    if (next) this.applyAetherSettings(next, { persist: false });
+                } catch (err) { }
             }
         });
 
@@ -380,10 +391,19 @@ class WindowManager {
 
     saveAccounts() {
         if (this.currentAccount) {
-            const dockInstalledApps = Array.from(document.querySelectorAll('#installed-apps .dock-item'))
+            const dockPinnedApps = Array.from(document.querySelectorAll('#installed-apps .dock-item'))
                 .map(item => item.getAttribute('data-id'))
                 .filter(Boolean);
-            const installedSnapshot = dockInstalledApps.length > 0 ? dockInstalledApps : (Array.isArray(this.installedApps) ? this.installedApps : []);
+
+            const pinnedSnapshot = dockPinnedApps.length > 0
+                ? dockPinnedApps
+                : (Array.isArray(this.pinnedApps) ? this.pinnedApps : []);
+
+            const installedSnapshot = Array.isArray(this.installedApps) ? this.installedApps : [];
+
+            const normalizedPinned = [...new Set(pinnedSnapshot.filter(Boolean))];
+            const normalizedInstalled = [...new Set([...installedSnapshot, ...normalizedPinned].filter(Boolean))];
+
             this.accounts[this.currentAccount] = {
                 pin: this.pin,
                 sessionID: this.sessionID || (this.accounts[this.currentAccount] && this.accounts[this.currentAccount].sessionID) || null,
@@ -395,7 +415,8 @@ class WindowManager {
                 accessibility: this.accessibility,
                 uiPreferences: this.uiPreferences,
                 vfs: this.vfs,
-                installedApps: installedSnapshot
+                installedApps: normalizedInstalled,
+                pinnedApps: normalizedPinned
             };
         }
         localStorage.setItem('aether_accounts', JSON.stringify(this.accounts));
@@ -464,8 +485,24 @@ class WindowManager {
         this.accessibility = { ...this.getDefaultAccessibility(), ...(user.accessibility || {}) };
         this.uiPreferences = this.sanitizeUIPreferences(user.uiPreferences || {});
         this.vfs = user.vfs || this.getDefaultVFS();
+
+        const defaultInstalledApps = ["word", "excel", "powerpoint", "store", "explorer", "wiki"];
+        const defaultPinnedApps = ["word", "excel", "powerpoint", "store", "wiki"];
+
         const savedInstalledApps = Array.isArray(user.installedApps) ? user.installedApps : [];
-        this.installedApps = savedInstalledApps.length > 0 ? savedInstalledApps : ["word", "excel", "powerpoint", "store", "explorer", "wiki"];
+        const savedPinnedApps = Array.isArray(user.pinnedApps) ? user.pinnedApps : [];
+
+        // Migration legacy: before v3.0.1, "installedApps" effectively meant "pinned to dock".
+        const nextPinned = savedPinnedApps.length > 0
+            ? savedPinnedApps
+            : (savedInstalledApps.length > 0 ? savedInstalledApps : defaultPinnedApps);
+
+        const nextInstalled = savedInstalledApps.length > 0
+            ? savedInstalledApps
+            : defaultInstalledApps;
+
+        this.pinnedApps = [...new Set(nextPinned.filter(Boolean))];
+        this.installedApps = [...new Set([...nextInstalled, ...this.pinnedApps].filter(Boolean))];
         this.ensureAdminToolsInstalled();
         this.sessionID = user.sessionID || this.generateSessionId(this.userName);
         if (!user.sessionID) {
@@ -497,7 +534,7 @@ class WindowManager {
     }
 
     getDefaultAccessibility() {
-        return { fontSize: "14px", highContrast: false, narrator: false, magnifier: false };
+        return { fontSize: "14px", highContrast: false, reducedMotion: false, narrator: false, magnifier: false };
     }
 
     getDefaultUIPreferences() {
@@ -964,12 +1001,14 @@ class WindowManager {
             sessionID: this.sessionID || account.sessionID || null,
             profilePic: this.profilePic || account.profilePic || "",
             wallpaper: this.wallpaper || account.wallpaper || "var(--bg-image)",
+            theme: this.theme || account.theme || 'dark',
             timeZone: this.timeZone || account.timeZone || Intl.DateTimeFormat().resolvedOptions().timeZone,
             timeFormat: this.timeFormat || account.timeFormat || "24h",
             accessibility: this.accessibility || account.accessibility || this.getDefaultAccessibility(),
             uiPreferences: this.uiPreferences || account.uiPreferences || this.getDefaultUIPreferences(),
             vfs: this.vfs || account.vfs || this.getDefaultVFS(),
-            installedApps: Array.isArray(this.installedApps) ? this.installedApps : (account.installedApps || ["word", "excel", "powerpoint", "store", "explorer", "wiki"])
+            installedApps: Array.isArray(this.installedApps) ? this.installedApps : (account.installedApps || ["word", "excel", "powerpoint", "store", "explorer", "wiki"]),
+            pinnedApps: Array.isArray(this.pinnedApps) ? this.pinnedApps : (account.pinnedApps || [])
         };
     }
 
@@ -979,6 +1018,7 @@ class WindowManager {
             sessionID: payload.sessionID || null,
             profilePic: payload.profilePic || "",
             wallpaper: payload.wallpaper || "var(--bg-image)",
+            theme: payload.theme === 'light' ? 'light' : 'dark',
             timeZone: payload.timeZone || Intl.DateTimeFormat().resolvedOptions().timeZone,
             timeFormat: payload.timeFormat || "24h",
             accessibility: { ...this.getDefaultAccessibility(), ...(payload.accessibility || {}) },
@@ -986,7 +1026,8 @@ class WindowManager {
             vfs: payload.vfs || this.getDefaultVFS(),
             installedApps: Array.isArray(payload.installedApps) && payload.installedApps.length > 0
                 ? payload.installedApps
-                : ["word", "excel", "powerpoint", "store", "explorer", "wiki"]
+                : ["word", "excel", "powerpoint", "store", "explorer", "wiki"],
+            pinnedApps: Array.isArray(payload.pinnedApps) ? payload.pinnedApps : []
         };
     }
 
@@ -1212,14 +1253,18 @@ class WindowManager {
                 this.sessionID = remote.sessionID || this.generateSessionId(userName);
                 this.profilePic = remote.profilePic;
                 this.wallpaper = remote.wallpaper;
+                this.theme = remote.theme || this.theme || 'dark';
                 this.timeZone = remote.timeZone;
                 this.timeFormat = remote.timeFormat;
                 this.accessibility = remote.accessibility;
                 this.uiPreferences = remote.uiPreferences;
                 this.vfs = remote.vfs;
-                this.installedApps = remote.installedApps;
+                this.pinnedApps = Array.isArray(remote.pinnedApps) ? remote.pinnedApps : [];
+                this.installedApps = Array.isArray(remote.installedApps) ? remote.installedApps : [];
+                this.installedApps = [...new Set([...this.installedApps, ...this.pinnedApps].filter(Boolean))];
                 this.ensureAdminToolsInstalled();
                 setTimeout(() => {
+                    this.setTheme(this.theme || 'dark');
                     this.setWallpaper(this.wallpaper);
                     this.applyAccessibilitySettings();
                     this.applyUIPreferences();
@@ -1752,7 +1797,7 @@ class WindowManager {
         const launchpad = document.getElementById('launchpad');
         const spotlight = document.getElementById('spotlight-search');
         const controlCenter = document.querySelector('.control-center');
-        if (launchpad && launchpad.classList.contains('active')) this.toggleLaunchpad();
+        if (launchpad && (launchpad.classList.contains('active') || launchpad.style.display === 'flex')) this.closeLaunchpad(true);
         if (spotlight && spotlight.classList.contains('active')) this.toggleSearch();
         if (controlCenter) controlCenter.classList.remove('active');
 
@@ -1794,7 +1839,7 @@ class WindowManager {
             this.syncImmersiveUI();
             this.fitWindowsToViewport();
 
-            this.installedApps.forEach(id => this.installApp(id, null, true));
+            (Array.isArray(this.pinnedApps) ? this.pinnedApps : []).forEach(id => this.pinApp(id, null, true));
 
             const avatar = document.getElementById('start-avatar');
             const nameDisp = document.getElementById('start-username');
@@ -2115,6 +2160,34 @@ class WindowManager {
         this.initAppLogic(id);
     }
 
+    openWebWrap(url, name = '', icon = '🌐') {
+        const raw = String(url || '').trim();
+        if (!raw) return;
+        const withProtocol = /^https?:\/\//i.test(raw) ? raw : `https://${raw}`;
+        let safeUrl = '';
+        try {
+            const parsed = new URL(withProtocol);
+            if (!['http:', 'https:'].includes(parsed.protocol)) return;
+            safeUrl = parsed.href;
+        } catch (err) {
+            return;
+        }
+
+        const safeName = String(name || '').trim();
+        const safeIcon = String(icon || '').trim();
+        const id = `webwrap_${Date.now()}_${Math.random().toString(16).slice(2, 6)}`;
+        if (!this.webWrapApps || typeof this.webWrapApps !== 'object') this.webWrapApps = {};
+        this.webWrapApps[id] = { url: safeUrl, name: safeName, icon: safeIcon };
+
+        let title = safeName;
+        if (!title) {
+            try { title = new URL(safeUrl).hostname; } catch (err) { title = 'Web'; }
+        }
+        if (safeIcon) title = `${safeIcon} ${title}`;
+        this.createWindow(id, title, true);
+        return id;
+    }
+
     getAppContent(id) {
         const localFileAliases = { webos: 'browser', sheets: 'excel', slides: 'powerpoint', docs: 'word' };
         const localFirstApps = new Set(['docs', 'word', 'sheets', 'excel', 'slides', 'powerpoint']);
@@ -2122,6 +2195,15 @@ class WindowManager {
             const resolvedId = localFileAliases[id] || id;
             const appFile = `apps/${resolvedId}.html`;
             return `<iframe src="${appFile}" style="width:100%; height:100%; border:none; background:#0f172a;" id="iframe-${id}" onload="windowManager.initIframeUser('${id}')"></iframe>`;
+        }
+
+        if (id.startsWith('webwrap_') && this.webWrapApps && this.webWrapApps[id] && this.webWrapApps[id].url) {
+            const cfg = this.webWrapApps[id];
+            const url = encodeURIComponent(String(cfg.url || '').trim());
+            const name = encodeURIComponent(String(cfg.name || '').trim());
+            const icon = encodeURIComponent(String(cfg.icon || '').trim());
+            const src = `apps/webwrap.html#url=${url}&name=${name}&icon=${icon}`;
+            return `<iframe src="${src}" style="width:100%; height:100%; border:none; background:#0f172a;" id="iframe-${id}" onload="windowManager.initIframeUser('${id}')"></iframe>`;
         }
 
         const registryAppInfo = this.appsRegistry.find(app => app && app.id === id);
@@ -2241,6 +2323,9 @@ class WindowManager {
         const iframe = document.getElementById(`iframe-${id}`);
         if (!iframe) return;
 
+        // Keep iframe theme in sync with the OS (same-origin only; safe-guarded inside syncThemeToIframe).
+        this.syncThemeToIframe(id);
+
         iframe.contentWindow.postMessage({
             type: 'funnyweb_user_sync',
             userName: this.userName,
@@ -2248,6 +2333,9 @@ class WindowManager {
             sessionID: this.sessionID,
             profilePic: this.profilePic,
             theme: this.theme,
+            accentColor: this.getComputedAccentColor ? this.getComputedAccentColor() : '',
+            fontFamily: this.fontFamily || '',
+            baseFontSizePx: Number(this.baseFontSizePx) || 14,
             timeZone: this.timeZone,
             timeFormat: this.timeFormat,
             accessibility: this.accessibility,
@@ -2361,14 +2449,48 @@ class WindowManager {
     setWallpaper(theme) {
         const desktop = document.getElementById('desktop');
         if (!desktop) return;
-        const selectedTheme = typeof theme === 'string' ? theme : '';
+        const selectedTheme = typeof theme === 'string' ? theme.trim() : '';
+        if (!selectedTheme) return;
 
-        if (selectedTheme === 'default') this.wallpaper = "var(--bg-image)";
-        else if (selectedTheme === 'gradient') this.wallpaper = "linear-gradient(135deg, #1e293b, #4c1d95)";
-        else if (selectedTheme === 'blue') this.wallpaper = "#0f172a";
-        else if (selectedTheme === 'dark') this.wallpaper = "#020617";
-        else if (selectedTheme === 'sunset') this.wallpaper = "linear-gradient(135deg, #f64f59, #12c2e9)";
-        else this.wallpaper = (selectedTheme.startsWith('data:') || selectedTheme.startsWith('http')) ? `url('${selectedTheme}')` : selectedTheme;
+        const presets = {
+            default: "var(--bg-image)",
+            gradient: "linear-gradient(135deg, #1e293b, #4c1d95)",
+            blue: "#0f172a",
+            dark: "#020617",
+            sunset: "linear-gradient(135deg, #f64f59, #12c2e9)",
+            // Settings app presets (v3 settings modules)
+            forest: "linear-gradient(135deg, #134e5e 0%, #71b280 100%)",
+            ocean: "linear-gradient(135deg, #2E3192 0%, #1bffff 100%)"
+        };
+
+        const resolveCustomWallpaper = () => {
+            try {
+                const raw = localStorage.getItem('aether_settings');
+                if (!raw) return '';
+                const parsed = JSON.parse(raw);
+                const value = parsed && parsed.personalization ? parsed.personalization.customWallpaper : '';
+                return (typeof value === 'string' && value.trim()) ? value.trim() : '';
+            } catch (err) {
+                return '';
+            }
+        };
+
+        if (selectedTheme === 'custom') {
+            const custom = resolveCustomWallpaper();
+            this.wallpaper = custom
+                ? `url('${custom}')`
+                : (this.wallpaper || presets.default);
+        } else if (Object.prototype.hasOwnProperty.call(presets, selectedTheme)) {
+            this.wallpaper = presets[selectedTheme];
+        } else if (selectedTheme.startsWith('data:') || selectedTheme.startsWith('http')) {
+            this.wallpaper = `url('${selectedTheme}')`;
+        } else if (typeof CSS !== 'undefined' && CSS && typeof CSS.supports === 'function') {
+            const supportsImage = CSS.supports('background-image', selectedTheme);
+            const supportsColor = CSS.supports('background-color', selectedTheme);
+            this.wallpaper = (supportsImage || supportsColor) ? selectedTheme : presets.default;
+        } else {
+            this.wallpaper = selectedTheme;
+        }
 
         // V3: Fix wallpaper stretching
         if (desktop) {
@@ -2379,6 +2501,20 @@ class WindowManager {
 
         const layers = document.querySelectorAll('#setup-overlay, #login-overlay, #desktop');
         const hasImageLayer = /url\(|gradient|var\(/.test(this.wallpaper);
+
+        // CSS forces `background-image: var(--bg-image) !important;` on the desktop/overlays.
+        // Update the variable so custom images/gradients actually apply (and avoid a black screen).
+        const root = document.documentElement;
+        const isDefaultVar = this.wallpaper === presets.default || this.wallpaper === 'var(--bg-image)';
+        if (root) {
+            if (hasImageLayer) {
+                if (isDefaultVar) root.style.removeProperty('--bg-image');
+                else root.style.setProperty('--bg-image', this.wallpaper);
+            } else {
+                root.style.setProperty('--bg-image', 'none');
+            }
+        }
+
         layers.forEach(el => {
             if (hasImageLayer) {
                 el.style.backgroundImage = this.wallpaper;
@@ -2398,6 +2534,20 @@ class WindowManager {
         this.saveUserData();
     }
 
+    syncThemeToIframe(id) {
+        // Backwards-compatible theme-only sync, now delegates to the full style sync.
+        const iframe = document.getElementById(`iframe-${id}`);
+        if (!iframe || !iframe.contentWindow) return;
+        const normalized = this.theme === 'light' ? 'light' : 'dark';
+
+        try { iframe.contentWindow.postMessage({ type: 'funnyweb_theme_change', theme: normalized }, '*'); } catch (err) { }
+        this.syncStyleToIframe(id);
+    }
+
+    syncThemeToIframes() {
+        this.windows.forEach((win, id) => this.syncThemeToIframe(id));
+    }
+
     setTheme(theme = 'dark') {
         const normalized = theme === 'light' ? 'light' : 'dark';
         const root = document.documentElement;
@@ -2406,6 +2556,7 @@ class WindowManager {
         this.theme = normalized;
         try { localStorage.setItem('aether_theme', normalized); } catch (err) { }
         if (this.currentAccount) this.saveUserData();
+        this.syncStyleToIframes();
     }
 
     setAccentColor(color = '#0078d4') {
@@ -2414,6 +2565,57 @@ class WindowManager {
         root.style.setProperty('--accent', color);
         root.style.setProperty('--accent-glow', color);
         root.style.setProperty('--primary', color);
+        this.syncStyleToIframes();
+        this.saveUserData();
+    }
+
+    setFontFamily(fontName = '') {
+        const raw = typeof fontName === 'string' ? fontName.trim() : '';
+        if (!raw) return;
+        // Store as a simple family name and build a safe stack.
+        const quoted = /[\\s,]/.test(raw) ? `'${raw.replace(/'/g, "\\'")}'` : raw;
+        const stack = `${quoted}, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
+        const root = document.documentElement;
+        if (root) root.style.setProperty('--font-main', stack);
+        this.fontFamily = raw;
+        this.syncStyleToIframes();
+        this.saveUserData();
+    }
+
+    setBaseFontSizePx(px = 14) {
+        const v = Math.max(11, Math.min(22, Math.round(Number(px) || 14)));
+        const root = document.documentElement;
+        if (root) root.style.fontSize = `${v}px`;
+        this.baseFontSizePx = v;
+        this.syncStyleToIframes();
+        this.saveUserData();
+    }
+
+    setReducedMotion(enabled) {
+        if (!this.accessibility) this.accessibility = this.getDefaultAccessibility();
+        this.accessibility.reducedMotion = !!enabled;
+        // Reduce motion on the shell as well.
+        const root = document.documentElement;
+        if (root) {
+            if (this.accessibility.reducedMotion) {
+                root.style.setProperty('--dur', '0s');
+                root.style.setProperty('--transition-fast', '0s');
+                root.style.setProperty('--transition-normal', '0s');
+            } else {
+                root.style.removeProperty('--dur');
+                root.style.removeProperty('--transition-fast');
+                root.style.removeProperty('--transition-normal');
+            }
+        }
+        this.syncStyleToIframes();
+        this.saveUserData();
+    }
+
+    setHighContrast(enabled) {
+        if (!this.accessibility) this.accessibility = this.getDefaultAccessibility();
+        this.accessibility.highContrast = !!enabled;
+        this.applyAccessibilitySettings();
+        this.syncStyleToIframes();
         this.saveUserData();
     }
 
@@ -2429,6 +2631,83 @@ class WindowManager {
         if (!root) return;
         root.style.fontSize = this.accessibility.fontSize || '14px';
         root.classList.toggle('high-contrast', !!this.accessibility.highContrast);
+    }
+
+    getComputedAccentColor() {
+        try {
+            const root = document.documentElement;
+            if (!root) return '#C084FC';
+            const v = getComputedStyle(root).getPropertyValue('--accent').trim();
+            return v || '#C084FC';
+        } catch (err) {
+            return '#C084FC';
+        }
+    }
+
+    getComputedFontStack() {
+        try {
+            const root = document.documentElement;
+            if (!root) return '';
+            return getComputedStyle(root).getPropertyValue('--font-main').trim();
+        } catch (err) {
+            return '';
+        }
+    }
+
+    syncStyleToIframe(id) {
+        const iframe = document.getElementById(`iframe-${id}`);
+        if (!iframe || !iframe.contentWindow) return;
+        const normalized = this.theme === 'light' ? 'light' : 'dark';
+        const accent = this.getComputedAccentColor();
+        const fontStack = this.getComputedFontStack();
+        const baseFontPx = Number(this.baseFontSizePx) || 14;
+        const accessibility = this.accessibility || this.getDefaultAccessibility();
+
+        // Notify apps that support postMessage-based sync.
+        try {
+            iframe.contentWindow.postMessage({
+                type: 'funnyweb_style_sync',
+                theme: normalized,
+                accentColor: accent,
+                fontFamily: this.fontFamily || '',
+                fontStack: fontStack || '',
+                baseFontSizePx: baseFontPx,
+                accessibility
+            }, '*');
+        } catch (err) { }
+
+        // Same-origin only: enforce styles via injected CSS so ALL apps follow the system settings.
+        try {
+            const doc = iframe.contentDocument;
+            if (!doc || !doc.documentElement) return;
+            doc.documentElement.setAttribute('data-theme', normalized);
+            if (doc.body) doc.body.dataset.theme = normalized;
+
+            // Set variables that many apps use.
+            doc.documentElement.style.setProperty('--accent', accent);
+            doc.documentElement.style.setProperty('--primary', accent);
+            if (fontStack) doc.documentElement.style.setProperty('--font-main', fontStack);
+            doc.documentElement.style.fontSize = `${baseFontPx}px`;
+
+            let styleEl = doc.getElementById('aether-os-injected-style');
+            if (!styleEl) {
+                styleEl = doc.createElement('style');
+                styleEl.id = 'aether-os-injected-style';
+                (doc.head || doc.documentElement).appendChild(styleEl);
+            }
+            const reduce = !!accessibility.reducedMotion;
+            const contrast = !!accessibility.highContrast;
+            styleEl.textContent = `
+                :root{ --accent:${accent}; --primary:${accent}; ${fontStack ? `--font-main:${fontStack};` : ''} }
+                html,body{ ${fontStack ? `font-family:var(--font-main) !important;` : ''} font-size:${baseFontPx}px !important; }
+                ${contrast ? 'html{filter:contrast(1.25) !important;}' : ''}
+                ${reduce ? '*{animation-duration:0s !important;animation-delay:0s !important;transition-duration:0s !important;scroll-behavior:auto !important;}' : ''}
+            `;
+        } catch (err) { }
+    }
+
+    syncStyleToIframes() {
+        this.windows.forEach((win, id) => this.syncStyleToIframe(id));
     }
 
     applyUIPreferences() {
@@ -2574,6 +2853,72 @@ class WindowManager {
         requestAnimationFrame(positionTray);
         this.fitWindowsToViewport();
         updateClock();
+    }
+
+    loadAetherSettingsFromStorage() {
+        try {
+            const raw = localStorage.getItem('aether_settings');
+            if (!raw) return null;
+            const parsed = JSON.parse(raw);
+            return parsed && typeof parsed === 'object' ? parsed : null;
+        } catch (err) {
+            return null;
+        }
+    }
+
+    applyAetherSettingsFromStorage() {
+        const settings = this.loadAetherSettingsFromStorage();
+        if (settings) this.applyAetherSettings(settings, { persist: false });
+    }
+
+    applyAetherSettings(settings, { persist = false } = {}) {
+        if (!settings || typeof settings !== 'object') return;
+
+        if (settings.theme === 'light' || settings.theme === 'dark') this.setTheme(settings.theme);
+        if (typeof settings.accentColor === 'string' && settings.accentColor.trim()) this.setAccentColor(settings.accentColor.trim());
+
+        // Personalization
+        if (settings.personalization && typeof settings.personalization === 'object') {
+            const p = settings.personalization;
+            if (typeof p.wallpaper === 'string' && p.wallpaper.trim()) this.setWallpaper(p.wallpaper.trim());
+            if (Number.isFinite(Number(p.uiScale))) this.setUIScale(Number(p.uiScale));
+            if (typeof p.fontFamily === 'string' && p.fontFamily.trim()) this.setFontFamily(p.fontFamily.trim());
+        }
+
+        // Accessibility
+        if (settings.accessibility && typeof settings.accessibility === 'object') {
+            const a = settings.accessibility;
+            if (typeof a.highContrast === 'boolean') this.setHighContrast(a.highContrast);
+            if (typeof a.reducedMotion === 'boolean') this.setReducedMotion(a.reducedMotion);
+            if (Number.isFinite(Number(a.fontPx))) this.setBaseFontSizePx(Number(a.fontPx));
+            if (typeof a.fontSize === 'string' && a.fontSize.trim()) {
+                if (!this.accessibility) this.accessibility = this.getDefaultAccessibility();
+                this.accessibility.fontSize = a.fontSize.trim();
+                this.applyAccessibilitySettings();
+            }
+        }
+
+        // Dock/taskbar + notifications
+        try {
+            const nextUi = { ...(this.uiPreferences || {}) };
+            if (settings.taskbar && typeof settings.taskbar === 'object') {
+                nextUi.dockPosition = settings.taskbar.position || nextUi.dockPosition;
+                nextUi.trayStyle = settings.taskbar.style || nextUi.trayStyle;
+                nextUi.dockSize = settings.taskbar.size || nextUi.dockSize;
+            }
+            if (settings.notifications && typeof settings.notifications === 'object') {
+                nextUi.notifications = settings.notifications;
+            }
+            this.uiPreferences = this.sanitizeUIPreferences(nextUi);
+            this.applyUIPreferences();
+        } catch (err) { }
+
+        if (persist) {
+            try { localStorage.setItem('aether_settings', JSON.stringify(settings)); } catch (err) { }
+        }
+
+        // Ensure all current windows immediately reflect the new settings.
+        this.syncStyleToIframes();
     }
 
     isEditableTarget(target) {
@@ -2996,19 +3341,24 @@ removeWidget(id) {
     }
 
     uninstallApp(id, winId = null) {
-        // Remove from installedApps list
+        if (!id) return;
+        // Remove from installed/pinned state
+        if (!Array.isArray(this.installedApps)) this.installedApps = [];
+        if (!Array.isArray(this.pinnedApps)) this.pinnedApps = [];
         this.installedApps = this.installedApps.filter(appId => appId !== id);
+        this.pinnedApps = this.pinnedApps.filter(appId => appId !== id);
         this.saveUserData();
 
-        // Update UI
+        // Update UI (only remove user-pinned dock items, never the fixed system ones)
+        const pinnedContainer = document.getElementById('installed-apps');
         const dockItem = document.getElementById(`dock-item-${id}`);
-        if (dockItem) dockItem.remove();
+        if (dockItem && pinnedContainer && pinnedContainer.contains(dockItem)) dockItem.remove();
 
         // Some legacy ID check
         const icon = document.getElementById(`icon-${id}`);
         if (icon) {
             const dockItemFallback = icon.closest('.dock-item');
-            if (dockItemFallback) dockItemFallback.remove();
+            if (dockItemFallback && pinnedContainer && pinnedContainer.contains(dockItemFallback)) dockItemFallback.remove();
         }
 
         const instAppsCont = document.getElementById(`inst-app-${id}`);
@@ -3020,25 +3370,51 @@ removeWidget(id) {
 
         this.notify("Désinstallation", `${id} a été supprimé du système.`, 'install');
         this.syncAllIframes(); // To update the Store view
+        if (document.getElementById('launchpad-grid')) this.renderLaunchpad();
 
         if (winId) {
             this.openProductPage(winId, id); // Refresh page to show OBTENIR
         }
     }
 
+    closeLaunchpad(immediate = false) {
+        const lp = document.getElementById('launchpad');
+        if (!lp) return;
+
+        if (this.launchpadOpenTimer) {
+            clearTimeout(this.launchpadOpenTimer);
+            this.launchpadOpenTimer = null;
+        }
+
+        const wasActive = lp.classList.contains('active');
+        lp.classList.remove('active');
+
+        if (immediate || !wasActive) {
+            lp.style.display = 'none';
+            return;
+        }
+
+        setTimeout(() => { if (!lp.classList.contains('active')) lp.style.display = 'none'; }, 300);
+    }
+
     toggleLaunchpad() {
         const lp = document.getElementById('launchpad');
+        if (!lp) return;
         const input = document.querySelector('#launchpad .launchpad-search input');
-        const isActive = lp.classList.contains('active');
-        if (!isActive) {
+        const isVisible = lp.classList.contains('active') || lp.style.display === 'flex';
+        if (!isVisible) {
             if (input) input.value = '';
             this.renderLaunchpad();
             lp.style.display = 'flex';
-            setTimeout(() => lp.classList.add('active'), 10);
-        } else {
-            lp.classList.remove('active');
-            setTimeout(() => { if (!lp.classList.contains('active')) lp.style.display = 'none'; }, 300);
+            if (this.launchpadOpenTimer) clearTimeout(this.launchpadOpenTimer);
+            this.launchpadOpenTimer = setTimeout(() => {
+                this.launchpadOpenTimer = null;
+                lp.classList.add('active');
+            }, 10);
+            return;
         }
+
+        this.closeLaunchpad();
     }
 
     getApprovedAppsCatalog() {
@@ -3147,7 +3523,7 @@ removeWidget(id) {
         }
 
         grid.innerHTML = apps.map(app => `
-            <div class="launchpad-item" onclick="windowManager.installApp('${app.id}'); windowManager.toggleLaunchpad();">
+            <div class="launchpad-item" data-id="${this.escapeHtmlAttr(app.id)}" data-title="${this.escapeHtmlAttr(app.title)}" onclick="windowManager.installApp(this.dataset.id); windowManager.closeLaunchpad();">
                 <div class="launchpad-icon">${this.renderAppIconMarkup(app.icon, '📦')}</div>
                 <span>${app.title}</span>
             </div>
@@ -3162,7 +3538,7 @@ removeWidget(id) {
             spotlight.style.display = 'block';
             setTimeout(() => spotlight.classList.add('active'), 10);
             setTimeout(() => document.getElementById('spotlight-input').focus(), 150);
-            if (document.getElementById('launchpad').classList.contains('active')) this.toggleLaunchpad();
+            this.closeLaunchpad();
         } else {
             spotlight.classList.remove('active');
             setTimeout(() => { if (!spotlight.classList.contains('active')) spotlight.style.display = 'none'; }, 300);
@@ -3215,7 +3591,7 @@ removeWidget(id) {
         if (isLaunchpadActive && launchpadGrid) {
             const launchpadApps = this.getInstalledLaunchpadApps(q);
             const launchpadHtml = launchpadApps.map(app => `
-                <div class="launchpad-item" onclick="windowManager.installApp('${app.id}'); windowManager.toggleLaunchpad();">
+                <div class="launchpad-item" data-id="${this.escapeHtmlAttr(app.id)}" data-title="${this.escapeHtmlAttr(app.title)}" onclick="windowManager.installApp(this.dataset.id); windowManager.closeLaunchpad();">
                     <div class="launchpad-icon">${this.renderAppIconMarkup(app.icon, '📦')}</div>
                     <span>${app.title}</span>
                 </div>
@@ -3295,6 +3671,7 @@ removeWidget(id) {
         this.uiPreferences = this.getDefaultUIPreferences();
         this.vfs = this.getDefaultVFS();
         this.installedApps = ["word", "excel", "powerpoint", "store", "explorer", "wiki"];
+        this.pinnedApps = ["word", "excel", "powerpoint", "store", "wiki"];
         this.saveAccounts();
 
         this.nextSetupStep('loading');
@@ -3359,6 +3736,7 @@ removeWidget(id) {
                     this.uiPreferences = this.getDefaultUIPreferences();
                     this.vfs = this.getDefaultVFS();
                     this.installedApps = ["word", "excel", "powerpoint", "store", "explorer", "wiki"];
+                    this.pinnedApps = ["word", "excel", "powerpoint", "store", "wiki"];
                     this.saveAccounts();
                 } else {
                     this.prepareAccount(existingLocalKey);
@@ -3389,6 +3767,7 @@ removeWidget(id) {
                     this.uiPreferences = this.getDefaultUIPreferences();
                     this.vfs = this.getDefaultVFS();
                     this.installedApps = ["word", "excel", "powerpoint", "store", "explorer", "wiki"];
+                    this.pinnedApps = ["word", "excel", "powerpoint", "store", "wiki"];
                     this.saveAccounts();
                     await this.hydrateAccountFromSupabase(userName);
                     await this.syncCurrentAccountToSupabase();
@@ -3440,6 +3819,11 @@ removeWidget(id) {
                 // Clear indicator
                 const dockItem = document.getElementById(`dock-item-${id}`);
                 if (dockItem) dockItem.classList.remove('active-app');
+
+                // Cleanup ephemeral web wrapper entries
+                if (this.webWrapApps && Object.prototype.hasOwnProperty.call(this.webWrapApps, id)) {
+                    delete this.webWrapApps[id];
+                }
             }, 300);
         }
     }
@@ -3457,6 +3841,78 @@ removeWidget(id) {
 
     minimizeWindow(id) { this.windows.get(id)?.element.classList.add('minimized'); }
     restoreWindow(id) { const w = this.windows.get(id); if (w) { w.element.classList.remove('minimized'); this.focusWindow(id); } }
+
+    getFocusedWindowId() {
+        const el = document.querySelector('.window.focused');
+        if (!el) return '';
+        const raw = String(el.id || '');
+        return raw.startsWith('window-') ? raw.slice('window-'.length) : '';
+    }
+
+    closeFocusedWindow() {
+        const id = this.getFocusedWindowId();
+        if (id) this.closeWindow(id);
+    }
+
+    cycleWindows(direction = 1) {
+        const nodes = Array.from(document.querySelectorAll('.window'));
+        if (!nodes.length) return;
+        const sorted = nodes
+            .map((el) => ({ el, z: Number(el.style.zIndex) || 0 }))
+            .sort((a, b) => a.z - b.z);
+        const focusedId = this.getFocusedWindowId();
+        let idx = sorted.findIndex(x => x.el.id === `window-${focusedId}`);
+        if (idx === -1) idx = sorted.length - 1;
+        const next = (idx + (direction >= 0 ? 1 : -1) + sorted.length) % sorted.length;
+        const nextEl = sorted[next] && sorted[next].el;
+        if (!nextEl) return;
+        const id = String(nextEl.id || '').replace(/^window-/, '');
+        if (id) {
+            this.restoreWindow(id);
+            this.focusWindow(id);
+        }
+    }
+
+    async captureScreenshot() {
+        try {
+            if (!navigator.mediaDevices || typeof navigator.mediaDevices.getDisplayMedia !== 'function') {
+                this.notify && this.notify('Capture', "Capture d'écran non supportée par ce navigateur.", 'system');
+                return;
+            }
+
+            const stream = await navigator.mediaDevices.getDisplayMedia({ video: { displaySurface: 'window' }, audio: false });
+            const track = stream.getVideoTracks()[0];
+            const video = document.createElement('video');
+            video.srcObject = stream;
+            await video.play();
+
+            const w = video.videoWidth || 1280;
+            const h = video.videoHeight || 720;
+            const canvas = document.createElement('canvas');
+            canvas.width = w;
+            canvas.height = h;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(video, 0, 0, w, h);
+
+            // Cleanup
+            try { track.stop(); } catch (err) { }
+            try { stream.getTracks().forEach(t => t.stop()); } catch (err) { }
+
+            const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/png'));
+            if (!blob) throw new Error('Impossible de générer l’image');
+            const url = URL.createObjectURL(blob);
+
+            const a = document.createElement('a');
+            const ts = new Date().toISOString().replace(/[:.]/g, '-');
+            a.href = url;
+            a.download = `aether-screenshot-${ts}.png`;
+            a.click();
+            setTimeout(() => URL.revokeObjectURL(url), 8000);
+            if (this.notify) this.notify('Capture', 'Capture enregistrée.', 'system');
+        } catch (err) {
+            try { if (this.notify) this.notify('Capture', 'Capture annulée ou bloquée.', 'system'); } catch (e) { }
+        }
+    }
 
     toggleMaximizeWindow(id) {
         const win = this.windows.get(id);
@@ -3675,19 +4131,78 @@ removeWidget(id) {
         `;
     }
 
+    pinApp(id, forcedTitle = null, isRestoring = false) {
+        if (!id) return;
+
+        const dock = document.getElementById('installed-apps');
+        if (!dock) return;
+
+        // If the dock item already exists (either fixed system icon or already pinned), don't duplicate.
+        const existing = document.getElementById(`dock-item-${id}`);
+        if (existing) {
+            if (!dock.contains(existing)) return;
+            if (!Array.isArray(this.pinnedApps)) this.pinnedApps = [];
+            if (!this.pinnedApps.includes(id)) this.pinnedApps.push(id);
+            if (!Array.isArray(this.installedApps)) this.installedApps = [];
+            if (!this.installedApps.includes(id)) this.installedApps.push(id);
+            if (!isRestoring) this.saveUserData();
+            return;
+        }
+
+        const appData = this.appsRegistry.find(a => a.id === id);
+        const title = forcedTitle || (appData ? appData.title : (gameTitles[id] || id));
+
+        const item = document.createElement('div');
+        item.className = 'dock-item';
+        item.id = `dock-item-${id}`;
+        item.title = title;
+        item.setAttribute('data-id', id);
+        item.onclick = () => this.installApp(id);
+        const iconContent = appData && appData.icon
+            ? this.renderAppIconMarkup(appData.icon, '📦')
+            : (appIcons[id] || `<svg viewBox="0 0 100 100">${this.getGameIcon(id)}</svg>`);
+        item.innerHTML = `<div class="dock-icon" id="icon-${id}">${iconContent}</div>`;
+
+        dock.appendChild(item);
+        this.applyUIPreferences();
+
+        if (!Array.isArray(this.pinnedApps)) this.pinnedApps = [];
+        if (!this.pinnedApps.includes(id)) this.pinnedApps.push(id);
+
+        // Pinned implies installed (for launchpad, store, etc.)
+        if (!Array.isArray(this.installedApps)) this.installedApps = [];
+        if (!this.installedApps.includes(id)) this.installedApps.push(id);
+
+        if (!isRestoring) {
+            this.saveUserData();
+            this.notify('Dock', `${title} épinglée.`, 'dock');
+            if (document.getElementById('launchpad-grid')) this.renderLaunchpad();
+            this.syncAllIframes();
+        }
+    }
+
     unpinApp(id) {
+        if (!id) return;
+
+        if (!Array.isArray(this.pinnedApps)) this.pinnedApps = [];
+        this.pinnedApps = this.pinnedApps.filter(appId => appId !== id);
+
+        const dock = document.getElementById('installed-apps');
+        const dockItemById = document.getElementById(`dock-item-${id}`);
+        if (dockItemById && dock && dock.contains(dockItemById)) dockItemById.remove();
+
+        // Legacy safety: remove via icon id, but only inside the user-pinned container.
         const icon = document.getElementById(`icon-${id}`);
         if (icon) {
-            const dockItem = icon.closest('.dock-item');
-            if (dockItem) dockItem.remove();
+            const dockItemFallback = icon.closest('.dock-item');
+            if (dockItemFallback && dock && dock.contains(dockItemFallback)) dockItemFallback.remove();
         }
-        const dockItemById = document.getElementById(`dock-item-${id}`);
-        if (dockItemById) dockItemById.remove();
 
-        // Also remove from saved installed apps
-        this.installedApps = this.installedApps.filter(appId => appId !== id);
         this.saveUserData();
-        this.notify('Dock', `Application retirée du système.`, 'dock');
+        this.applyUIPreferences();
+        this.notify('Dock', `Application désépinglée.`, 'dock');
+        if (document.getElementById('launchpad-grid')) this.renderLaunchpad();
+        this.syncAllIframes();
     }
 
     backToStoreGrid(winId) {
@@ -3703,6 +4218,13 @@ removeWidget(id) {
     filterStoreCategory(id, cat) { const g = document.getElementById(`app-grid-${id}`); if (g) g.innerHTML = this.renderAppGridItems('', cat); }
 
     installApp(id, forcedTitle = null, isRestoring = false) {
+        if (!id) return;
+
+        if (isRestoring) {
+            this.pinApp(id, forcedTitle, true);
+            return;
+        }
+
         const appData = this.appsRegistry.find(a => a.id === id);
         const title = forcedTitle || (appData ? appData.title : (gameTitles[id] || id));
 
@@ -3710,47 +4232,32 @@ removeWidget(id) {
             this.focusWindow(id);
             return;
         }
-        
-        if (document.getElementById(`dock-item-${id}`)) {
-            if (isRestoring) return;
-            this.createWindow(id, title, true);
+
+        if (!Array.isArray(this.installedApps)) this.installedApps = [];
+        const isInstalled = this.installedApps.includes(id);
+
+        const openWindow = () => {
+            const sys = ['store', 'webos', 'music', 'notes', 'settings', 'terminal', 'files', 'sysinfo', 'calc', 'weather', 'docs', 'word', 'sheets', 'excel', 'slides', 'powerpoint', 'mail', 'outlook', 'activity', 'coder', 'designer', 'android', 'maps', 'camera'];
+            this.createWindow(id, title, sys.includes(id) || (appData && appData.category === 'productivity') || id.startsWith('dev_app_'));
+        };
+
+        if (isInstalled) {
+            openWindow();
             return;
         }
 
-        if (!isRestoring) this.notify("Installation", `Installation de ${title}...`, 'install');
+        this.notify("Installation", `Installation de ${title}...`, 'install');
 
         setTimeout(() => {
-            const dock = document.getElementById('installed-apps');
-            if (!dock) return;
-            const item = document.createElement('div');
-            item.className = 'dock-item';
-            item.id = `dock-item-${id}`;
-            item.title = title;
-            item.setAttribute('data-id', id);
-            item.onclick = () => this.installApp(id);
-            const iconContent = appData && appData.icon
-                ? this.renderAppIconMarkup(appData.icon, '📦')
-                : (appIcons[id] || `<svg viewBox="0 0 100 100">${this.getGameIcon(id)}</svg>`);
-            item.innerHTML = `<div class="dock-icon" id="icon-${id}">${iconContent}</div>`;
-            dock.appendChild(item);
-            this.applyUIPreferences();
-
-            if (!this.installedApps.includes(id)) {
-                this.installedApps.push(id);
-            }
-
-            if (!isRestoring) {
-                this.saveUserData();
-                this.notify("Succès", `${title} est prêt !`, 'install');
-                this.syncAllIframes(); // Synchronize UI after installation
-            }
-            
-            // During session restore, only repin apps to the dock.
-            if (isRestoring) return;
-
-            const sys = ['store', 'webos', 'music', 'notes', 'settings', 'terminal', 'files', 'sysinfo', 'calc', 'weather', 'docs', 'word', 'sheets', 'excel', 'slides', 'powerpoint', 'mail', 'outlook', 'activity', 'coder', 'designer', 'android', 'maps', 'camera'];
-            this.createWindow(id, title, sys.includes(id) || (appData && appData.category === 'productivity') || id.startsWith('dev_app_'));
-        }, isRestoring ? 10 : 800);
+            if (!Array.isArray(this.installedApps)) this.installedApps = [];
+            if (!this.installedApps.includes(id)) this.installedApps.push(id);
+            this.installedApps = [...new Set(this.installedApps.filter(Boolean))];
+            this.saveUserData();
+            this.notify("Succès", `${title} est installé !`, 'install');
+            if (document.getElementById('launchpad-grid')) this.renderLaunchpad();
+            this.syncAllIframes();
+            openWindow();
+        }, 800);
     }
 
     getGameIcon(id) {
@@ -3813,6 +4320,7 @@ function openApp(id) {
         : '';
     const title = gameTitles[id] || titleFromRegistry || id;
     windowManager.createWindow(id, title, true);
+    windowManager.closeLaunchpad();
 }
 function updateClock() {
     const el = document.getElementById('clock');
@@ -3837,8 +4345,8 @@ document.addEventListener('DOMContentLoaded', () => {
 document.addEventListener('click', (e) => {
     const lp = document.getElementById('launchpad');
     const startBtn = document.querySelector('.dock-item[title="AetherNode"]');
-    if (lp && lp.classList.contains('active') && !lp.contains(e.target) && (!startBtn || !startBtn.contains(e.target))) {
-        windowManager.toggleLaunchpad();
+    if (lp && (lp.classList.contains('active') || lp.style.display === 'flex') && !lp.contains(e.target) && (!startBtn || !startBtn.contains(e.target))) {
+        windowManager.closeLaunchpad();
     }
 
     const spotlight = document.getElementById('spotlight-search');
@@ -3868,6 +4376,77 @@ window.addEventListener('keydown', (e) => {
         return;
     }
 
+    // Spotlight (Settings app shows ⌘ + Space)
+    if ((e.metaKey || e.ctrlKey) && !e.shiftKey && !e.altKey && (e.code === 'Space' || e.key === ' ')) {
+        if (!windowManager.isEditableTarget(e.target)) {
+            e.preventDefault();
+            windowManager.toggleSearch();
+        }
+        return;
+    }
+
+    // Screenshot (⌘ + Shift + 3)
+    if ((e.metaKey || e.ctrlKey) && e.shiftKey && !e.altKey && (e.key === '3' || e.code === 'Digit3')) {
+        e.preventDefault();
+        windowManager.captureScreenshot();
+        return;
+    }
+
+    // Close focused window (⌘ + W)
+    if ((e.metaKey || e.ctrlKey) && !e.shiftKey && !e.altKey && e.key.toLowerCase() === 'w') {
+        e.preventDefault();
+        windowManager.closeFocusedWindow();
+        return;
+    }
+
+    // New window (⌘ + N) -> open browser for now
+    if ((e.metaKey || e.ctrlKey) && !e.shiftKey && !e.altKey && e.key.toLowerCase() === 'n') {
+        e.preventDefault();
+        openApp('browser');
+        return;
+    }
+
+    // Settings (⌘ + ,)
+    if ((e.metaKey || e.ctrlKey) && !e.shiftKey && !e.altKey && (e.key === ',' || e.code === 'Comma')) {
+        e.preventDefault();
+        openApp('settings');
+        return;
+    }
+
+    // Switch app (⌘ + Tab)
+    if ((e.metaKey || e.ctrlKey) && !e.altKey && e.key === 'Tab') {
+        e.preventDefault();
+        windowManager.cycleWindows(e.shiftKey ? -1 : 1);
+        return;
+    }
+
+    // App shortcuts (match the Settings list)
+    if ((e.metaKey || e.ctrlKey) && !e.shiftKey && !e.altKey && !windowManager.isEditableTarget(e.target)) {
+        const k = e.key.toLowerCase();
+        if (k === 'b') { e.preventDefault(); openApp('browser'); return; }
+        if (k === 'e') { e.preventDefault(); openApp('files'); return; }
+        if (k === 't') { e.preventDefault(); openApp('ide'); return; }
+    }
+    if ((e.metaKey || e.ctrlKey) && e.altKey && !e.shiftKey && !windowManager.isEditableTarget(e.target) && e.key.toLowerCase() === 't') {
+        e.preventDefault();
+        openApp('terminal');
+        return;
+    }
+
+    // Quit app (⌘ + Q)
+    if ((e.metaKey || e.ctrlKey) && !e.shiftKey && !e.altKey && e.key.toLowerCase() === 'q') {
+        e.preventDefault();
+        windowManager.closeFocusedWindow();
+        return;
+    }
+
+    // Show desktop (⌘ + M)
+    if ((e.metaKey || e.ctrlKey) && !e.shiftKey && !e.altKey && e.key.toLowerCase() === 'm') {
+        e.preventDefault();
+        windowManager.windows.forEach((w, id) => windowManager.minimizeWindow(id));
+        return;
+    }
+
     if ((e.metaKey || e.ctrlKey) && !e.shiftKey && e.key.toLowerCase() === 'l') {
         e.preventDefault();
         windowManager.lockSession();
@@ -3888,13 +4467,13 @@ window.addEventListener('keydown', (e) => {
 
     if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key.toLowerCase() === 'm') {
         e.preventDefault();
-        openApp('mickey');
+        openApp('activity');
         return;
     }
 
     if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
         e.preventDefault();
-        windowManager.toggleSearch();
+        openApp('calc');
     }
 
     if (e.key === 'Escape') {
@@ -3902,7 +4481,7 @@ window.addEventListener('keydown', (e) => {
         const spotlight = document.getElementById('spotlight-search');
         const controlCenter = document.querySelector('.control-center');
         const whatsNew = document.getElementById('whats-new-modal');
-        if (lp && lp.classList.contains('active')) windowManager.toggleLaunchpad();
+        if (lp && (lp.classList.contains('active') || lp.style.display === 'flex')) windowManager.closeLaunchpad();
         if (spotlight && spotlight.classList.contains('active')) windowManager.toggleSearch();
         if (controlCenter && controlCenter.classList.contains('active')) controlCenter.classList.remove('active');
         if (whatsNew && whatsNew.classList.contains('active')) windowManager.closeWhatsNew();
@@ -4013,6 +4592,37 @@ document.addEventListener('contextmenu', (e) => {
         return;
     }
 
+    // A.5 Launchpad / Start Menu item
+    const launchpadItem = e.target.closest('.launchpad-item');
+    if (launchpadItem) {
+        const id = launchpadItem.getAttribute('data-id') || '';
+        const title = launchpadItem.getAttribute('data-title') || id || 'App';
+        if (!id) return;
+
+        const pinnedContainer = document.getElementById('installed-apps');
+        const dockItem = document.getElementById(`dock-item-${id}`);
+        const isPinned = !!(dockItem && pinnedContainer && pinnedContainer.contains(dockItem));
+
+        showContextMenu(x, y, [
+            { header: title },
+            {
+                icon: '🚀',
+                label: 'Ouvrir',
+                action: () => {
+                    windowManager.installApp(id);
+                    windowManager.closeLaunchpad();
+                }
+            },
+            '---',
+            {
+                icon: '📌',
+                label: isPinned ? 'Désépingler' : 'Épingler',
+                action: () => (isPinned ? windowManager.unpinApp(id) : windowManager.pinApp(id))
+            }
+        ]);
+        return;
+    }
+
     // B. Dock / Taskbar
     const dock = e.target.closest('#dock');
     if (dock) {
@@ -4049,11 +4659,27 @@ document.addEventListener('contextmenu', (e) => {
         const win = titlebar.closest('.window');
         const id = win.id.replace('window-', '');
         const title = titlebar.querySelector('.window-title')?.textContent || 'App';
-        showContextMenu(x, y, [
+
+        const pinnedContainer = document.getElementById('installed-apps');
+        const dockItem = document.getElementById(`dock-item-${id}`);
+        const isPinned = !!(dockItem && pinnedContainer && pinnedContainer.contains(dockItem));
+        const isFixedDockIcon = !!(dockItem && pinnedContainer && !pinnedContainer.contains(dockItem));
+
+        const items = [
             { header: title },
-            { icon: '🔽', label: 'Réduire', action: () => windowManager.minimizeWindow(id) },
-            { icon: '❌', label: 'Fermer', danger: true, action: () => windowManager.closeWindow(id) }
-        ]);
+            { icon: '🔽', label: 'Réduire', action: () => windowManager.minimizeWindow(id) }
+        ];
+
+        if (id && !isFixedDockIcon) {
+            items.push({
+                icon: '📌',
+                label: isPinned ? 'Désépingler' : 'Épingler',
+                action: () => (isPinned ? windowManager.unpinApp(id) : windowManager.pinApp(id))
+            });
+        }
+
+        items.push({ icon: '❌', label: 'Fermer', danger: true, action: () => windowManager.closeWindow(id) });
+        showContextMenu(x, y, items);
         return;
     }
 

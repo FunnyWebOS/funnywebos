@@ -1,1334 +1,1939 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-    <meta charset="UTF-8">
-    <title>Paramètres - AetherOS</title>
-    <style>
-        :root {
-            --primary: #0078d4;
-            --primary-hover: #106ebe;
-            --secondary: #6c757d;
-            --success: #107c10;
-            --warning: #ff8c00;
-            --danger: #d13438;
-            --background-primary: #ffffff;
-            --background-secondary: #f3f2f1;
-            --background-tertiary: #e1dfdd;
-            --text-primary: #323130;
-            --text-secondary: #605e5c;
-            --text-tertiary: #a19f9d;
-            --border-primary: #d2d0ce;
-            --border-secondary: #e1dfdd;
-            --shadow-4: 0 4px 8px rgba(0, 0, 0, 0.12);
-            --spacing-xs: 4px;
-            --spacing-sm: 8px;
-            --spacing-md: 16px;
-            --spacing-lg: 24px;
-            --spacing-xl: 32px;
-            --radius-md: 8px;
-            --radius-lg: 12px;
-            --transition-fast: 150ms ease;
-            --transition-normal: 250ms ease;
-        }
+<meta charset="UTF-8">
+<title>Paramètres — AetherOS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+/* ─── RESET ─── */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{height:100%;}
 
-        [data-theme="dark"] {
-            --background-primary: #0f0f0f;
-            --background-secondary: #1a1a1a;
-            --background-tertiary: #252525;
-            --text-primary: #ffffff;
-            --text-secondary: #d2d0ce;
-            --text-tertiary: #a19f9d;
-            --border-primary: #3b3a39;
-            --border-secondary: #484644;
-        }
+/* ─── THEME TOKENS ─── */
+:root{
+  --bg:#f0f2f5;
+  --sidebar:#ffffff;
+  --surface:#ffffff;
+  --surface2:#f7f8fa;
+  --surface3:#eef0f3;
+  --border:rgba(0,0,0,.07);
+  --border2:rgba(0,0,0,.12);
+  --text:#111318;
+  --text2:#5a5f6e;
+  --text3:#9ba1b0;
+  --accent:#0078d4;
+  --accent-rgb:0,120,212;
+  --accent2:#106ebe;
+  --success:#16a34a;
+  --warning:#d97706;
+  --danger:#dc2626;
+  --shadow-xs:0 1px 2px rgba(0,0,0,.06);
+  --shadow-sm:0 2px 8px rgba(0,0,0,.08),0 1px 3px rgba(0,0,0,.05);
+  --shadow-md:0 8px 24px rgba(0,0,0,.1),0 2px 8px rgba(0,0,0,.06);
+  --shadow-lg:0 20px 48px rgba(0,0,0,.14);
+  --radius:10px;
+  --radius-lg:16px;
+  --radius-xl:20px;
+  --font:'Geist','Segoe UI',system-ui,sans-serif;
+  --dur:.18s;
+  --ease:cubic-bezier(.16,1,.3,1);
+}
+[data-theme="dark"]{
+  --bg:#0d0e11;
+  --sidebar:#13151a;
+  --surface:#181b21;
+  --surface2:#1e2128;
+  --surface3:#252930;
+  --border:rgba(255,255,255,.07);
+  --border2:rgba(255,255,255,.12);
+  --text:#f0f2f7;
+  --text2:rgba(230,235,245,.6);
+  --text3:rgba(200,210,230,.35);
+  --shadow-xs:0 1px 2px rgba(0,0,0,.3);
+  --shadow-sm:0 2px 8px rgba(0,0,0,.3),0 1px 3px rgba(0,0,0,.2);
+  --shadow-md:0 8px 24px rgba(0,0,0,.4),0 2px 8px rgba(0,0,0,.3);
+}
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
+/* ─── BODY ─── */
+body{
+  font-family:var(--font);
+  font-size:13.5px;
+  line-height:1.55;
+  color:var(--text);
+  background:var(--bg);
+  height:100vh;
+  overflow:hidden;
+  -webkit-font-smoothing:antialiased;
+  transition:background var(--dur),color var(--dur);
+}
 
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            font-size: 14px;
-            line-height: 1.5;
-            color: var(--text-primary);
-            background: var(--background-primary);
-            height: 100vh;
-            overflow: hidden;
-        }
+/* ─── LAYOUT ─── */
+.shell{display:flex;height:100vh;}
 
-        .settings-container {
-            display: flex;
-            height: 100vh;
-        }
+/* ─── SIDEBAR ─── */
+.sidebar{
+  width:234px;flex-shrink:0;
+  background:var(--sidebar);
+  border-right:1px solid var(--border);
+  display:flex;flex-direction:column;
+  overflow:hidden;
+  transition:background var(--dur);
+}
+.sb-top{padding:16px 14px 10px;flex-shrink:0;}
+.sb-brand{display:flex;align-items:center;gap:10px;padding:4px 6px 12px;border-bottom:1px solid var(--border);margin-bottom:8px;}
+.sb-brand-icon{
+  width:32px;height:32px;border-radius:8px;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  display:flex;align-items:center;justify-content:center;
+  color:#fff;font-size:14px;flex-shrink:0;
+  box-shadow:0 2px 8px rgba(var(--accent-rgb),.3);
+}
+.sb-brand-name{font-size:14px;font-weight:700;color:var(--text);letter-spacing:-.02em;}
 
-        .sidebar {
-            width: 280px;
-            background: var(--background-secondary);
-            border-right: 1px solid var(--border-primary);
-            display: flex;
-            flex-direction: column;
-        }
+.sb-search-wrap{position:relative;margin-bottom:2px;}
+.sb-search-ico{position:absolute;left:9px;top:50%;transform:translateY(-50%);color:var(--text3);font-size:11px;pointer-events:none;}
+.sb-search{
+  width:100%;background:var(--surface2);border:1.5px solid transparent;
+  border-radius:8px;padding:7px 10px 7px 28px;
+  color:var(--text);font-family:var(--font);font-size:12.5px;outline:none;
+  transition:all .18s;
+}
+.sb-search::placeholder{color:var(--text3);}
+.sb-search:focus{border-color:var(--accent);background:var(--surface);box-shadow:0 0 0 3px rgba(var(--accent-rgb),.1);}
 
-        .sidebar-header {
-            padding: var(--spacing-lg);
-            border-bottom: 1px solid var(--border-primary);
-        }
+.sb-nav{flex:1;overflow-y:auto;overflow-x:hidden;padding:4px 10px 12px;scrollbar-width:none;}
+.sb-nav::-webkit-scrollbar{display:none;}
 
-        .logo {
-            display: flex;
-            align-items: center;
-            gap: var(--spacing-md);
-            font-size: 18px;
-            font-weight: 600;
-            color: var(--text-primary);
-        }
+.sb-section{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:var(--text3);padding:10px 6px 4px;}
 
-        .logo i {
-            font-size: 24px;
-            color: var(--primary);
-        }
+.nav-item{
+  display:flex;align-items:center;gap:9px;
+  padding:7px 9px;border-radius:8px;
+  cursor:pointer;font-size:13px;font-weight:500;color:var(--text2);
+  transition:all var(--dur) var(--ease);margin-bottom:1px;
+  position:relative;
+}
+.nav-item:hover{background:rgba(var(--accent-rgb),.07);color:var(--text);}
+.nav-item.active{
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  color:#fff;
+  box-shadow:0 3px 12px rgba(var(--accent-rgb),.35);
+}
+.nav-item .ni-ico{
+  width:26px;height:26px;border-radius:7px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:12px;flex-shrink:0;
+  background:rgba(var(--accent-rgb),.1);color:var(--accent);
+  transition:all var(--dur);
+}
+.nav-item.active .ni-ico{background:rgba(255,255,255,.2);color:#fff;}
+.nav-item:not(.active):hover .ni-ico{background:rgba(var(--accent-rgb),.14);}
 
-        .sidebar-nav {
-            flex: 1;
-            padding: var(--spacing-md) 0;
-            overflow-y: auto;
-        }
+/* ─── MAIN ─── */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;}
 
-        .nav-item {
-            display: flex;
-            align-items: center;
-            gap: var(--spacing-md);
-            padding: var(--spacing-md) var(--spacing-lg);
-            cursor: pointer;
-            border-radius: var(--radius-md);
-            margin: 0 var(--spacing-sm);
-            transition: all var(--transition-fast);
-            color: var(--text-secondary);
-            font-weight: 500;
-        }
+.topbar{
+  height:52px;flex-shrink:0;padding:0 24px;
+  display:flex;align-items:center;gap:12px;
+  background:rgba(255,255,255,.8);
+  border-bottom:1px solid var(--border);
+  backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+}
+[data-theme="dark"] .topbar{background:rgba(19,21,26,.85);}
+.topbar-title{font-size:16px;font-weight:800;letter-spacing:-.03em;color:var(--text);flex:1;}
+.topbar-sub{font-size:12px;color:var(--text3);}
+.save-badge{
+  display:none;font-size:11.5px;font-weight:700;
+  background:rgba(var(--accent-rgb),.12);color:var(--accent);
+  border:1px solid rgba(var(--accent-rgb),.2);
+  border-radius:999px;padding:3px 12px;
+  animation:badge-in .2s var(--ease);
+}
+.save-badge.show{display:block;}
+@keyframes badge-in{from{opacity:0;transform:scale(.85);}to{opacity:1;transform:scale(1);}}
 
-        .nav-item:hover {
-            background: rgba(0, 120, 212, 0.1);
-            color: var(--primary);
-        }
+.content{flex:1;overflow-y:auto;overflow-x:hidden;padding:24px 28px;scrollbar-width:thin;scrollbar-color:rgba(0,0,0,.1) transparent;}
+.content::-webkit-scrollbar{width:4px;}
+.content::-webkit-scrollbar-thumb{background:rgba(0,0,0,.1);border-radius:4px;}
+[data-theme="dark"] .content::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);}
 
-        .nav-item.active {
-            background: var(--primary);
-            color: #ffffff;
-            border-radius: var(--radius-md);
-            margin: 0 var(--spacing-sm);
-        }
+/* ─── PANELS ─── */
+.panel{display:none;}
+.panel.active{display:block;animation:panel-in .22s var(--ease);}
+@keyframes panel-in{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
 
-        .nav-item i {
-            font-size: 18px;
-            width: 24px;
-            text-align: center;
-        }
+/* ─── CARD ─── */
+.card{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius-lg);margin-bottom:16px;
+  box-shadow:var(--shadow-xs);overflow:hidden;
+  transition:box-shadow var(--dur);
+}
+.card:hover{box-shadow:var(--shadow-sm);}
+.card-head{
+  padding:14px 18px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+}
+.card-title{font-size:13px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.07em;}
+.card-action{font-size:12.5px;color:var(--accent);cursor:pointer;font-weight:600;transition:opacity .15s;}
+.card-action:hover{opacity:.7;}
 
-        .main-content {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-            background: var(--background-primary);
-        }
+/* ─── ROWS ─── */
+.row{
+  display:flex;align-items:center;padding:12px 18px;
+  border-bottom:1px solid var(--border);gap:14px;
+  transition:background var(--dur);
+}
+.row:last-child{border-bottom:none;}
+.row:hover{background:rgba(0,0,0,.02);}
+[data-theme="dark"] .row:hover{background:rgba(255,255,255,.025);}
 
-        .content-header {
-            padding: var(--spacing-xl) var(--spacing-xl) var(--spacing-lg);
-            border-bottom: 1px solid var(--border-primary);
-        }
+.row-ico{
+  width:34px;height:34px;border-radius:9px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:15px;flex-shrink:0;
+}
+.row-info{flex:1;min-width:0;}
+.row-label{font-size:13.5px;font-weight:600;color:var(--text);}
+.row-sub{font-size:11.5px;color:var(--text3);margin-top:1px;line-height:1.4;}
+.row-ctrl{flex-shrink:0;display:flex;align-items:center;gap:8px;}
 
-        .content-header h1 {
-            font-size: 32px;
-            font-weight: 600;
-            margin-bottom: var(--spacing-xs);
-            color: var(--text-primary);
-        }
+/* icon color helpers */
+.ic-blue{background:linear-gradient(135deg,#0078d4,#0ea5e9);}
+.ic-purple{background:linear-gradient(135deg,#7c3aed,#a855f7);}
+.ic-pink{background:linear-gradient(135deg,#db2777,#f472b6);}
+.ic-orange{background:linear-gradient(135deg,#ea580c,#fb923c);}
+.ic-green{background:linear-gradient(135deg,#16a34a,#4ade80);}
+.ic-teal{background:linear-gradient(135deg,#0891b2,#22d3ee);}
+.ic-red{background:linear-gradient(135deg,#dc2626,#f87171);}
+.ic-indigo{background:linear-gradient(135deg,#4338ca,#818cf8);}
+.ic-gray{background:linear-gradient(135deg,#6b7280,#9ca3af);}
+.ic-yellow{background:linear-gradient(135deg,#d97706,#fbbf24);}
 
-        .content-header p {
-            font-size: 16px;
-            color: var(--text-secondary);
-        }
+/* ─── TOGGLE ─── */
+.tog{
+  position:relative;width:42px;height:24px;
+  background:var(--surface3);border-radius:999px;
+  cursor:pointer;border:none;flex-shrink:0;
+  transition:background .2s;
+}
+.tog.on{background:var(--accent);}
+.tog::after{
+  content:'';width:18px;height:18px;background:#fff;border-radius:50%;
+  position:absolute;top:3px;left:3px;
+  transition:transform .2s cubic-bezier(.34,1.56,.64,1);
+  box-shadow:0 1px 4px rgba(0,0,0,.2);
+}
+.tog.on::after{transform:translateX(18px);}
 
-        .content-body {
-            flex: 1;
-            padding: var(--spacing-xl);
-            overflow-y: auto;
-        }
+/* ─── SELECT ─── */
+.sel{
+  background:var(--surface2);border:1.5px solid var(--border2);
+  border-radius:8px;padding:6px 28px 6px 10px;
+  color:var(--text);font-family:var(--font);font-size:12.5px;font-weight:500;
+  outline:none;cursor:pointer;min-width:130px;
+  -webkit-appearance:none;appearance:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23888' stroke-width='1.5' stroke-linecap='round' fill='none'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 9px center;
+  transition:border-color .18s;
+}
+.sel:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(var(--accent-rgb),.1);}
 
-        .settings-card {
-            background: var(--background-primary);
-            border: 1px solid var(--border-primary);
-            border-radius: var(--radius-lg);
-            padding: var(--spacing-lg);
-            margin-bottom: var(--spacing-lg);
-            transition: all var(--transition-normal);
-        }
+/* ─── INPUT ─── */
+.inp{
+  background:var(--surface2);border:1.5px solid var(--border2);
+  border-radius:8px;padding:7px 11px;color:var(--text);
+  font-family:var(--font);font-size:12.5px;outline:none;
+  transition:border-color .18s;width:220px;
+}
+.inp:focus{border-color:var(--accent);background:var(--surface);box-shadow:0 0 0 3px rgba(var(--accent-rgb),.1);}
+.inp::placeholder{color:var(--text3);}
+.inp.full{width:100%;}
 
-        .settings-card:hover {
-            box-shadow: var(--shadow-4);
-        }
+/* ─── SLIDER ─── */
+.slider{
+  -webkit-appearance:none;appearance:none;
+  height:4px;border-radius:2px;outline:none;cursor:pointer;
+  background:linear-gradient(to right,var(--accent) var(--v,50%),var(--surface3) var(--v,50%));
+  width:140px;
+}
+.slider::-webkit-slider-thumb{
+  -webkit-appearance:none;width:16px;height:16px;border-radius:50%;
+  background:#fff;border:2px solid var(--accent);
+  box-shadow:0 1px 4px rgba(0,0,0,.2);cursor:pointer;
+}
 
-        .settings-card-title {
-            font-size: 18px;
-            font-weight: 600;
-            color: var(--text-primary);
-            display: flex;
-            align-items: center;
-            gap: var(--spacing-sm);
-            margin-bottom: var(--spacing-md);
-        }
+/* ─── BUTTONS ─── */
+.btn{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:7px 14px;border-radius:8px;
+  border:1.5px solid var(--border2);background:var(--surface2);
+  color:var(--text);font-family:var(--font);font-size:12.5px;font-weight:600;
+  cursor:pointer;transition:all .15s;
+}
+.btn:hover{background:var(--surface3);}
+.btn.primary{background:var(--accent);color:#fff;border-color:transparent;box-shadow:0 2px 8px rgba(var(--accent-rgb),.3);}
+.btn.primary:hover{filter:brightness(1.08);}
+.btn.danger{background:rgba(220,38,38,.08);color:var(--danger);border-color:rgba(220,38,38,.2);}
+.btn.danger:hover{background:rgba(220,38,38,.14);}
+.btn.success{background:rgba(22,163,74,.08);color:var(--success);border-color:rgba(22,163,74,.2);}
 
-        .settings-card-title i {
-            color: var(--primary);
-        }
+/* ─── THEMES GRID ─── */
+.themes-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(128px,1fr));gap:10px;padding:14px 18px;}
+.theme-card{
+  border-radius:10px;cursor:pointer;border:2px solid transparent;
+  overflow:hidden;transition:all .2s;box-shadow:var(--shadow-xs);
+  position:relative;
+}
+.theme-card:hover{transform:translateY(-2px);box-shadow:var(--shadow-sm);}
+.theme-card.sel{border-color:var(--accent);box-shadow:0 0 0 3px rgba(var(--accent-rgb),.2),var(--shadow-sm);}
+.theme-card.sel::after{
+  content:'✓';position:absolute;top:5px;right:5px;
+  width:16px;height:16px;background:var(--accent);color:#fff;
+  border-radius:50%;font-size:9px;font-weight:800;
+  display:flex;align-items:center;justify-content:center;
+}
+.tc-preview{height:62px;display:flex;flex-direction:column;overflow:hidden;}
+.tc-bar{height:18px;display:flex;align-items:center;gap:3px;padding:0 6px;flex-shrink:0;}
+.tc-dot{width:5px;height:5px;border-radius:50%;}
+.tc-body{flex:1;display:flex;gap:3px;padding:4px 6px;}
+.tc-side{width:22px;border-radius:2px;opacity:.55;}
+.tc-main{flex:1;border-radius:2px;opacity:.35;}
+.tc-name{font-size:10.5px;font-weight:700;text-align:center;padding:5px 6px;border-top:1px solid rgba(0,0,0,.06);}
 
-        .form-group {
-            margin-bottom: var(--spacing-lg);
-        }
+/* ─── ACCENT GRID ─── */
+.accent-grid{display:flex;flex-wrap:wrap;gap:8px;padding:14px 18px;}
+.acc-swatch{
+  width:30px;height:30px;border-radius:50%;cursor:pointer;
+  border:2px solid transparent;transition:all .18s;
+  box-shadow:var(--shadow-xs);
+}
+.acc-swatch:hover{transform:scale(1.1);}
+.acc-swatch.sel{border-color:#fff;box-shadow:0 0 0 3px rgba(0,0,0,.2),var(--shadow-sm);}
+[data-theme="dark"] .acc-swatch.sel{border-color:rgba(255,255,255,.8);}
 
-        .form-label {
-            display: block;
-            font-weight: 600;
-            margin-bottom: var(--spacing-sm);
-            color: var(--text-primary);
-        }
+/* ─── WALLPAPER GRID ─── */
+.wp-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:8px;padding:12px 18px;}
+.wp-thumb{
+  aspect-ratio:16/9;border-radius:8px;cursor:pointer;
+  border:2px solid transparent;overflow:hidden;
+  transition:all .18s;box-shadow:var(--shadow-xs);
+}
+.wp-thumb:hover{transform:scale(1.03);box-shadow:var(--shadow-sm);}
+.wp-thumb.sel{border-color:var(--accent);box-shadow:0 0 0 3px rgba(var(--accent-rgb),.2);}
+.wp-thumb div{width:100%;height:100%;}
 
-        .form-description {
-            font-size: 12px;
-            color: var(--text-secondary);
-            margin-bottom: var(--spacing-md);
-        }
+/* ─── FONT LIST ─── */
+.font-item{
+  display:flex;align-items:center;gap:12px;
+  padding:11px 18px;border-bottom:1px solid var(--border);
+  cursor:pointer;transition:background var(--dur);
+}
+.font-item:last-child{border-bottom:none;}
+.font-item:hover{background:rgba(0,0,0,.02);}
+[data-theme="dark"] .font-item:hover{background:rgba(255,255,255,.02);}
+.fi-preview{font-size:17px;flex:1;color:var(--text);}
+.fi-meta{font-size:11px;color:var(--text3);}
+.fi-check{width:18px;height:18px;border-radius:50%;background:var(--accent);color:#fff;font-size:9px;font-weight:800;display:flex;align-items:center;justify-content:center;opacity:0;flex-shrink:0;transition:opacity .15s;}
+.font-item.sel .fi-check{opacity:1;}
 
-        .form-input,
-        .form-select {
-            width: 100%;
-            padding: var(--spacing-md);
-            border: 1px solid var(--border-primary);
-            border-radius: var(--radius-md);
-            background: var(--background-primary);
-            color: var(--text-primary);
-            font-family: inherit;
-            font-size: 14px;
-            transition: all var(--transition-fast);
-        }
+/* ─── PROFILE CARD ─── */
+.profile-hero{
+  display:flex;align-items:center;gap:16px;
+  padding:18px;border-bottom:1px solid var(--border);
+}
+.profile-av{
+  width:58px;height:58px;border-radius:50%;flex-shrink:0;
+  background:linear-gradient(135deg,var(--accent),#7c3aed);
+  display:flex;align-items:center;justify-content:center;
+  font-size:22px;font-weight:800;color:#fff;
+  box-shadow:0 4px 14px rgba(var(--accent-rgb),.3);
+  cursor:pointer;transition:transform .2s;overflow:hidden;
+}
+.profile-av:hover{transform:scale(1.04);}
+.profile-name{font-size:18px;font-weight:800;letter-spacing:-.02em;}
+.profile-role{font-size:12px;color:var(--text3);margin-top:2px;}
 
-        .form-input:focus,
-        .form-select:focus {
-            outline: none;
-            border-color: var(--primary);
-            box-shadow: 0 0 0 2px rgba(0, 120, 212, 0.1);
-        }
+/* ─── ACCOUNT ITEM ─── */
+.account-item{
+  display:flex;align-items:center;gap:12px;
+  padding:13px 18px;border-bottom:1px solid var(--border);
+  transition:background var(--dur);
+}
+.account-item:last-child{border-bottom:none;}
+.ai-icon{width:36px;height:36px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0;}
+.ai-info{flex:1;}
+.ai-name{font-size:13.5px;font-weight:600;}
+.ai-status{font-size:11.5px;margin-top:2px;}
+.ai-status.ok{color:var(--success);}
+.ai-status.off{color:var(--text3);}
 
-        .btn {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: var(--spacing-sm);
-            padding: var(--spacing-md) var(--spacing-lg);
-            border: none;
-            border-radius: var(--radius-md);
-            font-weight: 600;
-            font-size: 14px;
-            cursor: pointer;
-            transition: all var(--transition-fast);
-            text-decoration: none;
-            min-height: 40px;
-        }
+/* ─── SECURITY LEVELS ─── */
+.sec-levels{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:14px 18px;}
+.sec-level{
+  padding:12px 10px;border-radius:10px;cursor:pointer;
+  border:2px solid var(--border2);text-align:center;
+  transition:all .18s;background:var(--surface2);
+}
+.sec-level:hover{border-color:var(--accent);}
+.sec-level.sel{border-color:var(--accent);background:rgba(var(--accent-rgb),.08);}
+.sec-level-ico{font-size:20px;margin-bottom:5px;}
+.sec-level-name{font-size:12px;font-weight:700;color:var(--text);}
+.sec-level-sub{font-size:10.5px;color:var(--text3);margin-top:2px;}
 
-        .btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
+/* ─── SHORTCUT ROW ─── */
+.sc-row{display:flex;align-items:center;padding:10px 18px;border-bottom:1px solid var(--border);}
+.sc-row:last-child{border-bottom:none;}
+.sc-name{flex:1;font-size:13px;font-weight:500;color:var(--text);}
+.sc-keys{display:flex;gap:3px;}
+.key{
+  background:var(--surface2);border:1px solid var(--border2);
+  border-radius:5px;padding:2px 7px;font-size:11px;font-weight:700;
+  color:var(--text2);box-shadow:0 1px 0 var(--border2);font-family:monospace;
+}
 
-        .btn-primary {
-            background: var(--primary);
-            color: #ffffff;
-        }
+/* ─── ABOUT ─── */
+.about-logo{
+  width:68px;height:68px;border-radius:18px;
+  background:linear-gradient(135deg,var(--accent),#7c3aed);
+  display:flex;align-items:center;justify-content:center;
+  font-size:28px;font-weight:800;color:#fff;
+  box-shadow:0 8px 28px rgba(var(--accent-rgb),.35);
+  margin:0 auto 14px;
+}
+.about-stats{display:grid;grid-template-columns:1fr 1fr;gap:0;}
+.about-stat{padding:14px 18px;border-bottom:1px solid var(--border);border-right:1px solid var(--border);}
+.about-stat:nth-child(even){border-right:none;}
+.about-stat:nth-last-child(-n+2){border-bottom:none;}
+.as-val{font-size:20px;font-weight:800;color:var(--text);letter-spacing:-.03em;}
+.as-label{font-size:10.5px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-top:2px;}
 
-        .btn-primary:hover:not(:disabled) {
-            background: var(--primary-hover);
-            transform: translateY(-1px);
-            box-shadow: var(--shadow-4);
-        }
+/* ─── STORAGE BAR ─── */
+.storage-bar-wrap{width:100%;height:8px;background:var(--surface3);border-radius:4px;overflow:hidden;margin-top:10px;}
+.storage-bar-fill{height:100%;background:linear-gradient(90deg,var(--accent),#7c3aed);border-radius:4px;transition:width .5s var(--ease);}
 
-        .btn-secondary {
-            background: var(--background-tertiary);
-            color: var(--text-primary);
-        }
+/* ─── TOAST ─── */
+#toast{
+  position:fixed;bottom:20px;left:50%;transform:translateX(-50%);
+  background:rgba(20,22,28,.93);color:#fff;
+  padding:9px 18px;border-radius:999px;
+  font-size:12.5px;font-weight:600;font-family:var(--font);
+  display:none;z-index:9999;backdrop-filter:blur(12px);
+  box-shadow:var(--shadow-lg);pointer-events:none;
+}
 
-        .btn-secondary:hover:not(:disabled) {
-            background: var(--border-primary);
-        }
+/* ─── CUSTOM THEME EDITOR ─── */
+.te-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;}
+.te-field label{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--text3);display:block;margin-bottom:4px;}
+.te-row{display:flex;align-items:center;gap:8px;}
+.color-inp{width:38px;height:28px;border-radius:7px;border:1.5px solid var(--border2);cursor:pointer;padding:2px;background:var(--surface2);}
+.te-prev{height:100px;border-radius:10px;border:1.5px solid var(--border2);overflow:hidden;display:flex;flex-direction:column;margin-bottom:12px;}
+.te-prev-bar{height:24px;display:flex;align-items:center;gap:4px;padding:0 8px;flex-shrink:0;}
+.te-prev-body{flex:1;display:flex;gap:4px;padding:6px 8px;}
+.te-prev-side{width:32px;border-radius:3px;opacity:.6;}
+.te-prev-main{flex:1;border-radius:3px;opacity:.35;}
 
-        .btn-danger {
-            background: var(--danger);
-            color: #ffffff;
-        }
+/* ─── MISC ─── */
+.flex-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+.value-tag{font-size:11px;font-weight:700;color:var(--text3);background:var(--surface2);border:1px solid var(--border);border-radius:5px;padding:2px 8px;}
+.value-tag.accent{background:rgba(var(--accent-rgb),.08);color:var(--accent);border-color:rgba(var(--accent-rgb),.2);}
+.panel-desc{font-size:13px;color:var(--text2);margin-bottom:18px;line-height:1.5;}
+.section-label{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:var(--text3);margin:4px 0 8px;padding:0 2px;}
+.notif-disabled{opacity:.5;pointer-events:none;}
+.form-desc{font-size:11.5px;color:var(--text3);margin-top:4px;line-height:1.4;}
 
-        .btn-danger:hover:not(:disabled) {
-            background: #b91e1e;
-        }
-
-        .toggle {
-            position: relative;
-            display: inline-block;
-            width: 48px;
-            height: 24px;
-        }
-
-        .toggle input {
-            opacity: 0;
-            width: 0;
-            height: 0;
-        }
-
-        .toggle-slider {
-            position: absolute;
-            cursor: pointer;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: var(--border-primary);
-            transition: var(--transition-fast);
-            border-radius: 24px;
-        }
-
-        .toggle-slider:before {
-            position: absolute;
-            content: "";
-            height: 18px;
-            width: 18px;
-            left: 3px;
-            bottom: 3px;
-            background: white;
-            transition: var(--transition-fast);
-            border-radius: 50%;
-        }
-
-        input:checked + .toggle-slider {
-            background: var(--primary);
-        }
-
-        input:checked + .toggle-slider:before {
-            transform: translateX(24px);
-        }
-
-        .list-item {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: var(--spacing-lg);
-            border-bottom: 1px solid var(--border-secondary);
-            transition: background var(--transition-fast);
-        }
-
-        .list-item:hover {
-            background: var(--background-secondary);
-        }
-
-        .list-item:last-child {
-            border-bottom: none;
-        }
-
-        .list-item-title {
-            font-weight: 600;
-            margin-bottom: var(--spacing-xs);
-        }
-
-        .list-item-description {
-            font-size: 12px;
-            color: var(--text-secondary);
-        }
-
-        .grid {
-            display: grid;
-            gap: var(--spacing-lg);
-        }
-
-        .grid-cols-2 { grid-template-columns: repeat(2, 1fr); }
-        .grid-cols-4 { grid-template-columns: repeat(4, 1fr); }
-
-        .text-secondary { color: var(--text-secondary); }
-        .text-center { text-align: center; }
-        .mb-4 { margin-bottom: var(--spacing-lg); }
-        .mt-4 { margin-top: var(--spacing-lg); }
-        .flex { display: flex; }
-        .items-center { align-items: center; }
-        .gap-2 { gap: var(--spacing-sm); }
-        .gap-3 { gap: var(--spacing-md); }
-        .gap-4 { gap: var(--spacing-lg); }
-
-        .color-option {
-            width: 60px;
-            height: 60px;
-            border-radius: 12px;
-            cursor: pointer;
-            border: 2px solid var(--border-primary);
-            position: relative;
-            transition: all var(--transition-fast);
-        }
-
-        .color-option:hover {
-            transform: scale(1.05);
-        }
-
-        .color-option.active {
-            border: 3px solid var(--text-primary);
-        }
-
-        .wallpaper-option {
-            width: 120px;
-            height: 80px;
-            border-radius: 8px;
-            cursor: pointer;
-            border: 2px solid var(--border-primary);
-            position: relative;
-            background-size: cover;
-            background-position: center;
-            transition: all var(--transition-fast);
-        }
-
-        .wallpaper-option:hover {
-            transform: scale(1.02);
-        }
-
-        .wallpaper-option.active {
-            border: 3px solid var(--primary);
-        }
-
-        .high-contrast {
-            --text-primary: #000000 !important;
-            --text-secondary: #000000 !important;
-            --background-primary: #FFFFFF !important;
-            --background-secondary: #F0F0F0 !important;
-            --border-primary: #000000 !important;
-        }
-    </style>
+.mt-1{margin-top:4px;}
+.mt-2{margin-top:8px;}
+.mt-3{margin-top:12px;}
+.hidden{display:none!important;}
+</style>
 </head>
 <body>
-    <div class="settings-container">
-        <aside class="sidebar">
-            <div class="sidebar-header">
-                <div class="logo">
-                    <i class="fas fa-cog"></i>
-                    <span>Paramètres</span>
-                </div>
-            </div>
-            
-            <nav class="sidebar-nav">
-                <div class="nav-item active" data-category="apps" onclick="showCategory('apps')">
-                    <i class="fas fa-grid-2"></i>
-                    <span>Applications</span>
-                </div>
-                <div class="nav-item" data-category="personalization" onclick="showCategory('personalization')">
-                    <i class="fas fa-palette"></i>
-                    <span>Personnalisation</span>
-                </div>
-                <div class="nav-item" data-category="security" onclick="showCategory('security')">
-                    <i class="fas fa-shield-halved"></i>
-                    <span>Sécurité</span>
-                </div>
-                <div class="nav-item" data-category="accounts" onclick="showCategory('accounts')">
-                    <i class="fas fa-user-circle"></i>
-                    <span>Comptes</span>
-                </div>
-                <div class="nav-item" data-category="accessibility" onclick="showCategory('accessibility')">
-                    <i class="fas fa-universal-access"></i>
-                    <span>Accessibilité</span>
-                </div>
-                <div class="nav-item" data-category="notifications" onclick="showCategory('notifications')">
-                    <i class="fas fa-bell"></i>
-                    <span>Notifications</span>
-                </div>
-                <div class="nav-item" data-category="system" onclick="showCategory('system')">
-                    <i class="fas fa-desktop"></i>
-                    <span>Système</span>
-                </div>
-            </nav>
-        </aside>
+<div class="shell">
 
-        <main class="main-content">
-            <header class="content-header">
-                <h1 id="category-title">Applications</h1>
-                <p id="category-description">Gérez vos applications et programmes par défaut</p>
-            </header>
+<!-- ════ SIDEBAR ════ -->
+<aside class="sidebar">
+  <div class="sb-top">
+    <div class="sb-brand">
+      <div class="sb-brand-icon"><i class="fas fa-gear"></i></div>
+      <span class="sb-brand-name">Paramètres</span>
+    </div>
+    <div class="sb-search-wrap">
+      <i class="fas fa-magnifying-glass sb-search-ico"></i>
+      <input class="sb-search" id="sb-search" placeholder="Rechercher…" oninput="filterNav(this.value)">
+    </div>
+  </div>
+  <nav class="sb-nav" id="sb-nav"></nav>
+</aside>
 
-            <div class="content-body" id="settings-content">
-                <!-- Dynamic content will be loaded here -->
-            </div>
-</main>
+<!-- ════ MAIN ════ -->
+<div class="main">
+  <div class="topbar">
+    <div class="topbar-title" id="topbar-title">Paramètres</div>
+    <div class="save-badge" id="save-badge">Modifications en attente</div>
+  </div>
+
+  <div class="content" id="content">
+
+    <!-- ── PROFIL ── -->
+    <div class="panel" id="panel-profil">
+      <div class="panel-desc">Gérez votre identité sur AetherOS.</div>
+      <div class="card">
+        <div class="profile-hero">
+          <div class="profile-av" id="profile-av">A</div>
+          <div style="flex:1">
+            <div class="profile-name" id="profile-name-disp">Admin</div>
+            <div class="profile-role">Administrateur · AetherOS</div>
+          </div>
+          <div class="flex-row">
+            <button class="btn primary" onclick="saveProfile()"><i class="fas fa-check"></i> Appliquer</button>
+            <button class="btn danger" onclick="signOut()"><i class="fas fa-right-from-bracket"></i></button>
+          </div>
+        </div>
+        <div class="row">
+          <div class="row-ico ic-blue"><i class="fas fa-user" style="color:#fff;font-size:13px;"></i></div>
+          <div class="row-info"><div class="row-label">Nom d'utilisateur</div></div>
+          <div class="row-ctrl"><input class="inp" id="pref-username" placeholder="nom_utilisateur" oninput="markUnsaved()"></div>
+        </div>
+        <div class="row">
+          <div class="row-ico ic-teal"><i class="fas fa-envelope" style="color:#fff;font-size:13px;"></i></div>
+          <div class="row-info"><div class="row-label">Email</div></div>
+          <div class="row-ctrl"><input class="inp" id="pref-email" type="email" placeholder="email@example.com" oninput="markUnsaved()"></div>
+        </div>
+        <div class="row">
+          <div class="row-ico ic-orange"><i class="fas fa-circle-dot" style="color:#fff;font-size:13px;"></i></div>
+          <div class="row-info"><div class="row-label">Statut</div></div>
+          <div class="row-ctrl"><input class="inp" id="pref-status" placeholder="En ligne…" oninput="markUnsaved()"></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-head"><span class="card-title">Sécurité du compte</span></div>
+        <div class="row">
+          <div class="row-ico ic-red"><i class="fas fa-lock" style="color:#fff;font-size:13px;"></i></div>
+          <div class="row-info"><div class="row-label">Mot de passe</div><div class="row-sub">Modifié il y a 30 jours</div></div>
+          <div class="row-ctrl"><button class="btn" onclick="toast('Bientôt disponible')">Modifier</button></div>
+        </div>
+        <div class="row">
+          <div class="row-ico ic-green"><i class="fas fa-shield-halved" style="color:#fff;font-size:13px;"></i></div>
+          <div class="row-info"><div class="row-label">Authentification 2 facteurs</div><div class="row-sub">Protection renforcée</div></div>
+          <div class="row-ctrl"><button class="tog" id="tog-2fa" onclick="this.classList.toggle('on');markUnsaved()"></button></div>
+        </div>
+        <div class="row">
+          <div class="row-ico ic-purple"><i class="fas fa-key" style="color:#fff;font-size:13px;"></i></div>
+          <div class="row-info"><div class="row-label">Sessions actives</div><div class="row-sub">1 appareil connecté</div></div>
+          <div class="row-ctrl"><button class="btn danger" onclick="toast('Sessions révoquées')">Révoquer tout</button></div>
+        </div>
+      </div>
     </div>
 
-    <script src="https://accounts.google.com/gsi/client" async defer></script>
-    <script>
-        const wm = window.parent.windowManager;
-        let currentCategory = 'apps';
-        let settings = loadSettings();
-        let googleTokenClient = null;
+    <!-- ── PERSONNALISATION ── -->
+    <div class="panel" id="panel-personalization">
+      <div class="panel-desc">Thèmes, couleurs, fond d'écran et barre des tâches.</div>
 
-        function loadSettings() {
-            const runtimeTheme = (() => {
-                try {
-                    const fromWm = wm && wm.theme ? String(wm.theme) : '';
-                    if (fromWm === 'light' || fromWm === 'dark') return fromWm;
-                    const raw = localStorage.getItem('aether_theme');
-                    return raw === 'light' ? 'light' : 'dark';
-                } catch {
-                    return 'dark';
-                }
-            })();
-            const defaultSettings = {
-                theme: runtimeTheme,
-                accentColor: '#0078d4',
-                personalization: {
-                    wallpaper: 'default',
-                    uiScale: 100,
-                    animations: true
-                },
-                security: {
-                    level: 'normal',
-                    verifiedApps: [],
-                    warnings: true
-                },
-                accessibility: {
-                    highContrast: false,
-                    largeText: false,
-                    reducedMotion: false,
-                    fontSize: 'normal'
-                },
-                accounts: {
-                    onedrive: { connected: false, email: '', driveUrl: 'https://onedrive.live.com' },
-                    googledrive: {
-                        connected: false,
-                        email: '',
-                        driveUrl: 'https://drive.google.com',
-                        clientId: '',
-                        accessToken: '',
-                        expiresAt: 0
-                    }
-                },
-                taskbar: {
-                    position: 'left',
-                    style: 'floating',
-                    size: 'normal'
-                },
-                notifications: {
-                    enabled: true,
-                    durationMs: 5000,
-                    types: {
-                        system: true,
-                        settings_change: true,
-                        security: true,
-                        accounts: true,
-                        store: true,
-                        install: true,
-                        dock: true,
-                        immersive: true,
-                        file: true
-                    }
-                }
-            };
+      <!-- Thèmes -->
+      <div class="card">
+        <div class="card-head"><span class="card-title">Thème visuel</span><span class="card-action" onclick="openCustomTheme()">+ Créer le mien</span></div>
+        <div class="themes-grid" id="themes-grid"></div>
+      </div>
 
-            const saved = localStorage.getItem('aether_settings');
-            const parsed = saved ? JSON.parse(saved) : {};
-            const wmPrefs = wm && wm.uiPreferences ? wm.uiPreferences : {};
-            const wmNotif = (wmPrefs && typeof wmPrefs.notifications === 'object' && wmPrefs.notifications) ? wmPrefs.notifications : {};
-            return {
-                ...defaultSettings,
-                ...parsed,
-                accounts: {
-                    ...defaultSettings.accounts,
-                    ...(parsed.accounts || {}),
-                    onedrive: { ...defaultSettings.accounts.onedrive, ...((parsed.accounts && parsed.accounts.onedrive) || {}) },
-                    googledrive: { ...defaultSettings.accounts.googledrive, ...((parsed.accounts && parsed.accounts.googledrive) || {}) }
-                },
-                taskbar: {
-                    ...defaultSettings.taskbar,
-                    ...(parsed.taskbar || {}),
-                    position: wmPrefs.dockPosition || (parsed.taskbar && parsed.taskbar.position) || defaultSettings.taskbar.position,
-                    style: wmPrefs.trayStyle || (parsed.taskbar && parsed.taskbar.style) || defaultSettings.taskbar.style,
-                    size: wmPrefs.dockSize || (parsed.taskbar && parsed.taskbar.size) || defaultSettings.taskbar.size
-                },
-                notifications: {
-                    ...defaultSettings.notifications,
-                    ...((parsed.notifications || {})),
-                    ...wmNotif,
-                    types: {
-                        ...defaultSettings.notifications.types,
-                        ...((((parsed.notifications || {}).types) || {})),
-                        ...((wmNotif.types || {}))
-                    }
-                }
-            };
-        }
+      <!-- Couleur accent -->
+      <div class="card">
+        <div class="card-head"><span class="card-title">Couleur d'accentuation</span></div>
+        <div class="accent-grid" id="accent-grid"></div>
+        <div class="row">
+          <div class="row-ico ic-purple"><i class="fas fa-palette" style="color:#fff;font-size:13px;"></i></div>
+          <div class="row-info"><div class="row-label">Couleur personnalisée</div></div>
+          <div class="row-ctrl flex-row">
+            <input type="color" class="color-inp" id="accent-custom" value="#0078d4" oninput="applyAccent(this.value,true)">
+            <span class="value-tag accent" id="accent-hex">#0078d4</span>
+          </div>
+        </div>
+      </div>
 
-        function saveSettings() {
-            localStorage.setItem('aether_settings', JSON.stringify(settings));
-            applyTheme();
-            applyPersonalization();
-            applyNotifications();
-            if (wm && wm.notify) {
-                wm.notify('Paramètres', 'Paramètres enregistrés avec succès', 'settings_change');
-            }
-        }
+      <!-- Fond d'écran -->
+      <div class="card">
+        <div class="card-head"><span class="card-title">Fond d'écran</span></div>
+        <div class="wp-grid" id="wp-grid"></div>
+        <div class="row">
+          <div class="row-ico ic-teal"><i class="fas fa-link" style="color:#fff;font-size:13px;"></i></div>
+          <div class="row-info"><div class="row-label">URL personnalisée</div></div>
+          <div class="row-ctrl"><input class="inp" id="wp-url" placeholder="https://…" oninput="markUnsaved()"></div>
+        </div>
+      </div>
 
-        function applyTheme() {
-            document.documentElement.setAttribute('data-theme', settings.theme);
-            if (wm && wm.setTheme) {
-                wm.setTheme(settings.theme);
-            }
-            if (settings.accentColor) {
-                document.documentElement.style.setProperty('--primary', settings.accentColor);
-                if (wm && wm.setAccentColor) wm.setAccentColor(settings.accentColor);
-            }
-        }
+      <!-- Mode sombre -->
+      <div class="card">
+        <div class="card-head"><span class="card-title">Apparence</span></div>
+        <div class="row">
+          <div class="row-ico ic-gray"><i class="fas fa-moon" style="color:#fff;font-size:13px;"></i></div>
+          <div class="row-info"><div class="row-label">Mode sombre</div><div class="row-sub">Basculer l'interface</div></div>
+          <div class="row-ctrl"><button class="tog" id="tog-dark" onclick="toggleDark()"></button></div>
+        </div>
+        <div class="row">
+          <div class="row-ico ic-cyan" style="background:linear-gradient(135deg,#0891b2,#22d3ee)"><i class="fas fa-sparkles" style="color:#fff;font-size:13px;"></i></div>
+          <div class="row-info"><div class="row-label">Effets de transparence</div></div>
+          <div class="row-ctrl"><button class="tog on" id="tog-blur" onclick="this.classList.toggle('on');markUnsaved()"></button></div>
+        </div>
+        <div class="row">
+          <div class="row-ico ic-green"><i class="fas fa-film" style="color:#fff;font-size:13px;"></i></div>
+          <div class="row-info"><div class="row-label">Animations de l'interface</div></div>
+          <div class="row-ctrl"><button class="tog on" id="tog-anims" onclick="toggleAnims()"></button></div>
+        </div>
+        <div class="row">
+          <div class="row-ico ic-blue"><i class="fas fa-magnifying-glass" style="color:#fff;font-size:13px;"></i></div>
+          <div class="row-info"><div class="row-label">Zoom de l'interface</div></div>
+          <div class="row-ctrl">
+            <select class="sel" id="ui-zoom" onchange="updateUIScale(this.value)">
+              <option value="85">85% — Compact</option>
+              <option value="100" selected>100% — Standard</option>
+              <option value="110">110% — Confortable</option>
+              <option value="120">120% — Grand</option>
+              <option value="135">135% — Très grand</option>
+            </select>
+          </div>
+        </div>
+      </div>
 
-        function applyPersonalization() {
-            if (wm && wm.setWallpaper && settings.personalization.wallpaper) {
-                wm.setWallpaper(settings.personalization.wallpaper);
-            }
-            if (wm && wm.setUIScale && settings.personalization.uiScale) {
-                wm.setUIScale(settings.personalization.uiScale);
-            }
-            if (wm) {
-                wm.uiPreferences = wm.sanitizeUIPreferences ? wm.sanitizeUIPreferences({
-                    ...(wm.uiPreferences || {}),
-                    dockPosition: settings.taskbar.position,
-                    trayStyle: settings.taskbar.style,
-                    dockSize: settings.taskbar.size
-                }) : {
-                    ...(wm.uiPreferences || {}),
-                    dockPosition: settings.taskbar.position,
-                    trayStyle: settings.taskbar.style,
-                    dockSize: settings.taskbar.size
-                };
-                if (wm.applyUIPreferences) wm.applyUIPreferences();
-                if (wm.saveUserData) wm.saveUserData();
-            }
-        }
+      <!-- Taskbar -->
+      <div class="card">
+        <div class="card-head"><span class="card-title">Barre des tâches</span></div>
+        <div class="row">
+          <div class="row-ico ic-indigo"><i class="fas fa-bars" style="color:#fff;font-size:13px;"></i></div>
+          <div class="row-info"><div class="row-label">Position</div></div>
+          <div class="row-ctrl">
+            <select class="sel" onchange="updateTaskbarPosition(this.value)">
+              <option value="left">Gauche</option>
+              <option value="right">Droite</option>
+              <option value="bottom">Bas</option>
+              <option value="top">Haut</option>
+            </select>
+          </div>
+        </div>
+        <div class="row">
+          <div class="row-ico ic-purple"><i class="fas fa-layer-group" style="color:#fff;font-size:13px;"></i></div>
+          <div class="row-info"><div class="row-label">Style</div></div>
+          <div class="row-ctrl">
+            <select class="sel" onchange="updateTaskbarStyle(this.value)">
+              <option value="floating">Flottante</option>
+              <option value="attached">Attachée</option>
+            </select>
+          </div>
+        </div>
+        <div class="row">
+          <div class="row-ico ic-orange"><i class="fas fa-expand" style="color:#fff;font-size:13px;"></i></div>
+          <div class="row-info"><div class="row-label">Taille</div></div>
+          <div class="row-ctrl">
+            <select class="sel" onchange="updateTaskbarSize(this.value)">
+              <option value="compact">Compacte</option>
+              <option value="normal" selected>Normale</option>
+              <option value="large">Grande</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
 
-        function applyNotifications() {
-            if (!wm) return;
-            if (wm.setNotificationPreferences) {
-                wm.setNotificationPreferences(settings.notifications || {});
-                return;
-            }
-            wm.uiPreferences = wm.sanitizeUIPreferences ? wm.sanitizeUIPreferences({
-                ...(wm.uiPreferences || {}),
-                notifications: settings.notifications || {}
-            }) : {
-                ...(wm.uiPreferences || {}),
-                notifications: settings.notifications || {}
-            };
-            if (wm.saveUserData) wm.saveUserData();
-        }
+    <!-- ── POLICES ── -->
+    <div class="panel" id="panel-polices">
+      <div class="panel-desc">Choisissez la typographie de votre système.</div>
+      <div class="card">
+        <div class="card-head"><span class="card-title">Taille du texte</span></div>
+        <div class="row">
+          <div class="row-ico ic-blue"><i class="fas fa-text-height" style="color:#fff;font-size:13px;"></i></div>
+          <div class="row-info"><div class="row-label">Taille de base</div><div class="row-sub" id="fs-label">14px</div></div>
+          <div class="row-ctrl flex-row">
+            <span style="font-size:11px;color:var(--text3)">A</span>
+            <input type="range" class="slider" min="11" max="20" value="14" id="fs-slider" oninput="changeFontSize(this.value)" style="--v:43%">
+            <span style="font-size:17px;color:var(--text3)">A</span>
+          </div>
+        </div>
+        <div class="row">
+          <div class="row-ico ic-purple"><i class="fas fa-text-width" style="color:#fff;font-size:13px;"></i></div>
+          <div class="row-info"><div class="row-label">Espacement des lettres</div></div>
+          <div class="row-ctrl">
+            <select class="sel" onchange="markUnsaved()">
+              <option>Normal</option><option>Large</option><option>Serré</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-head"><span class="card-title">Police système</span></div>
+        <div id="font-list"></div>
+      </div>
+    </div>
 
-        function getRuntimeGoogleClientId() {
-            const env = (window.parent && window.parent.AETHER_RUNTIME_ENV) || window.AETHER_RUNTIME_ENV || {};
-            return env.AETHER_GOOGLE_DRIVE_CLIENT_ID || env.AETHER_GOOGLE_CLIENT_ID || '';
-        }
+    <!-- ── SÉCURITÉ ── -->
+    <div class="panel" id="panel-security">
+      <div class="panel-desc">Niveau de protection de votre système AetherOS.</div>
+      <div class="card">
+        <div class="card-head"><span class="card-title">Niveau de sécurité</span></div>
+        <div class="sec-levels" id="sec-levels"></div>
+      </div>
+      <div class="card">
+        <div class="card-head"><span class="card-title">Options</span></div>
+        <div class="row">
+          <div class="row-ico ic-orange"><i class="fas fa-triangle-exclamation" style="color:#fff;font-size:13px;"></i></div>
+          <div class="row-info"><div class="row-label">Avertissements de sécurité</div><div class="row-sub">Applications non vérifiées</div></div>
+          <div class="row-ctrl"><button class="tog on" id="tog-sec-warn" onclick="this.classList.toggle('on');settings.security.warnings=this.classList.contains('on');saveSettings();"></button></div>
+        </div>
+        <div class="row">
+          <div class="row-ico ic-red"><i class="fas fa-shield" style="color:#fff;font-size:13px;"></i></div>
+          <div class="row-info"><div class="row-label">Firewall applicatif</div><div class="row-sub">Filtrer les connexions réseau</div></div>
+          <div class="row-ctrl"><button class="tog" id="tog-firewall" onclick="this.classList.toggle('on');markUnsaved()"></button></div>
+        </div>
+        <div class="row">
+          <div class="row-ico ic-purple"><i class="fas fa-bug" style="color:#fff;font-size:13px;"></i></div>
+          <div class="row-info"><div class="row-label">Mode développeur</div><div class="row-sub">Accès aux outils avancés</div></div>
+          <div class="row-ctrl"><button class="tog" id="tog-devmode" onclick="this.classList.toggle('on');markUnsaved()"></button></div>
+        </div>
+      </div>
+    </div>
 
-        function isGoogleDriveSessionValid() {
-            const account = settings.accounts.googledrive || {};
-            return !!(account.connected && account.accessToken && account.expiresAt && Date.now() < account.expiresAt);
-        }
+    <!-- ── COMPTES ── -->
+    <div class="panel" id="panel-accounts">
+      <div class="panel-desc">Connectez vos services cloud et comptes externes.</div>
+      <div class="card">
+        <div class="card-head"><span class="card-title">Services connectés</span></div>
+        <div id="accounts-list"></div>
+      </div>
+      <div class="card">
+        <div class="card-head"><span class="card-title">Google OAuth Client ID</span></div>
+        <div class="row">
+          <div class="row-ico ic-blue"><i class="fab fa-google" style="color:#fff;font-size:13px;"></i></div>
+          <div class="row-info"><div class="row-label">Client ID Google</div><div class="row-sub">Pour Google Drive OAuth</div></div>
+          <div class="row-ctrl"><input class="inp" id="googledrive-client-id" placeholder="xxxxx.apps.googleusercontent.com" onchange="updateGoogleDriveClientId(this.value)"></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-head"><span class="card-title">Synchronisation</span></div>
+        <div class="row">
+          <div class="row-ico ic-blue"><i class="fas fa-cloud" style="color:#fff;font-size:13px;"></i></div>
+          <div class="row-info"><div class="row-label">Sync automatique</div></div>
+          <div class="row-ctrl"><button class="tog on" id="tog-sync" onclick="this.classList.toggle('on');markUnsaved()"></button></div>
+        </div>
+        <div class="row">
+          <div class="row-ico ic-green"><i class="fas fa-rotate" style="color:#fff;font-size:13px;"></i></div>
+          <div class="row-info"><div class="row-label">Dernière sync</div><div class="row-sub" id="last-sync-label">Jamais</div></div>
+          <div class="row-ctrl"><button class="btn primary" onclick="syncNow()">Sync maintenant</button></div>
+        </div>
+      </div>
+    </div>
 
-        function ensureGoogleTokenClient(clientId) {
-            if (!window.google || !window.google.accounts || !window.google.accounts.oauth2) return null;
-            if (googleTokenClient && googleTokenClient.__clientId === clientId) return googleTokenClient;
-            googleTokenClient = window.google.accounts.oauth2.initTokenClient({
-                client_id: clientId,
-                scope: 'https://www.googleapis.com/auth/drive https://www.googleapis.com/auth/userinfo.email',
-                callback: () => {}
-            });
-            googleTokenClient.__clientId = clientId;
-            return googleTokenClient;
-        }
+    <!-- ── ACCESSIBILITÉ ── -->
+    <div class="panel" id="panel-accessibility">
+      <div class="panel-desc">Adaptez l'interface à vos besoins.</div>
+      <div class="card">
+        <div class="card-head"><span class="card-title">Vision</span></div>
+        <div class="row">
+          <div class="row-ico ic-blue"><i class="fas fa-eye" style="color:#fff;font-size:13px;"></i></div>
+          <div class="row-info"><div class="row-label">Contraste élevé</div><div class="row-sub">Améliore la lisibilité</div></div>
+          <div class="row-ctrl"><button class="tog" id="tog-contrast" onclick="toggleHighContrast()"></button></div>
+        </div>
+        <div class="row">
+          <div class="row-ico ic-orange"><i class="fas fa-text-height" style="color:#fff;font-size:13px;"></i></div>
+          <div class="row-info"><div class="row-label">Texte agrandi</div></div>
+          <div class="row-ctrl"><button class="tog" id="tog-largetext" onclick="toggleLargeText()"></button></div>
+        </div>
+        <div class="row">
+          <div class="row-ico ic-purple"><i class="fas fa-circle-half-stroke" style="color:#fff;font-size:13px;"></i></div>
+          <div class="row-info"><div class="row-label">Taille du texte</div></div>
+          <div class="row-ctrl">
+            <select class="sel" onchange="setFontSize(this.value)">
+              <option value="small">Petit</option>
+              <option value="normal" selected>Normal</option>
+              <option value="large">Grand</option>
+              <option value="extra-large">Très grand</option>
+            </select>
+          </div>
+        </div>
+        <div class="row">
+          <div class="row-ico ic-red"><i class="fas fa-droplet-slash" style="color:#fff;font-size:13px;"></i></div>
+          <div class="row-info"><div class="row-label">Daltonisme</div></div>
+          <div class="row-ctrl">
+            <select class="sel" onchange="markUnsaved()">
+              <option>Désactivé</option><option>Protanopie</option><option>Deutéranopie</option><option>Tritanopie</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-head"><span class="card-title">Motricité &amp; Interaction</span></div>
+        <div class="row">
+          <div class="row-ico ic-green"><i class="fas fa-person-walking" style="color:#fff;font-size:13px;"></i></div>
+          <div class="row-info"><div class="row-label">Mouvements réduits</div><div class="row-sub">Minimise les animations</div></div>
+          <div class="row-ctrl"><button class="tog" id="tog-reduced" onclick="toggleReducedMotion()"></button></div>
+        </div>
+        <div class="row">
+          <div class="row-ico ic-teal"><i class="fas fa-keyboard" style="color:#fff;font-size:13px;"></i></div>
+          <div class="row-info"><div class="row-label">Touches rémanentes</div></div>
+          <div class="row-ctrl"><button class="tog" id="tog-sticky" onclick="this.classList.toggle('on');markUnsaved()"></button></div>
+        </div>
+        <div class="row">
+          <div class="row-ico ic-indigo"><i class="fas fa-computer-mouse" style="color:#fff;font-size:13px;"></i></div>
+          <div class="row-info"><div class="row-label">Vitesse du pointeur</div></div>
+          <div class="row-ctrl"><input type="range" class="slider" min="1" max="10" value="5" oninput="markUnsaved()" style="--v:44%"></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-head"><span class="card-title">Lecture d'écran</span></div>
+        <div class="row">
+          <div class="row-ico ic-orange"><i class="fas fa-volume-high" style="color:#fff;font-size:13px;"></i></div>
+          <div class="row-info"><div class="row-label">Lecture d'écran</div><div class="row-sub">Lit le contenu à voix haute</div></div>
+          <div class="row-ctrl"><button class="tog" id="tog-screen-reader" onclick="this.classList.toggle('on');markUnsaved()"></button></div>
+        </div>
+        <div class="row">
+          <div class="row-ico ic-green"><i class="fas fa-closed-captioning" style="color:#fff;font-size:13px;"></i></div>
+          <div class="row-info"><div class="row-label">Sous-titres automatiques</div></div>
+          <div class="row-ctrl"><button class="tog" id="tog-captions" onclick="this.classList.toggle('on');markUnsaved()"></button></div>
+        </div>
+      </div>
+    </div>
 
-        function requestGoogleDriveToken(clientId, promptMode = 'consent') {
-            return new Promise((resolve, reject) => {
-                const tokenClient = ensureGoogleTokenClient(clientId);
-                if (!tokenClient) {
-                    reject(new Error('Google Identity Services indisponible'));
-                    return;
-                }
-                tokenClient.callback = (response) => {
-                    if (!response || response.error) {
-                        reject(new Error(response && response.error ? response.error : 'Token refusé'));
-                        return;
-                    }
-                    resolve(response);
-                };
-                tokenClient.requestAccessToken({ prompt: promptMode });
-            });
-        }
+    <!-- ── NOTIFICATIONS ── -->
+    <div class="panel" id="panel-notifications">
+      <div class="panel-desc">Contrôlez ce que le système peut vous notifier.</div>
+      <div class="card">
+        <div class="card-head"><span class="card-title">Global</span></div>
+        <div class="row">
+          <div class="row-ico ic-orange"><i class="fas fa-bell" style="color:#fff;font-size:13px;"></i></div>
+          <div class="row-info"><div class="row-label">Autoriser les notifications</div><div class="row-sub">Désactiver coupe tout</div></div>
+          <div class="row-ctrl"><button class="tog on" id="tog-notif-enabled" onclick="toggleNotificationsEnabled()"></button></div>
+        </div>
+        <div class="row" id="row-notif-duration">
+          <div class="row-ico ic-blue"><i class="fas fa-clock" style="color:#fff;font-size:13px;"></i></div>
+          <div class="row-info"><div class="row-label">Durée d'affichage</div><div class="row-sub" id="notif-dur-label">5s</div></div>
+          <div class="row-ctrl flex-row">
+            <input type="range" class="slider" min="2" max="15" value="5" id="notif-dur-slider" oninput="setNotificationDuration(this.value)" style="--v:23%">
+            <span class="value-tag" id="notif-dur-val">5s</span>
+          </div>
+        </div>
+        <div class="row">
+          <div class="row-ico ic-purple"><i class="fas fa-bell-slash" style="color:#fff;font-size:13px;"></i></div>
+          <div class="row-info"><div class="row-label">Ne pas déranger</div></div>
+          <div class="row-ctrl"><button class="tog" id="tog-dnd" onclick="this.classList.toggle('on');markUnsaved()"></button></div>
+        </div>
+        <div class="row">
+          <div class="row-ico ic-green"><i class="fas fa-music" style="color:#fff;font-size:13px;"></i></div>
+          <div class="row-info"><div class="row-label">Son des notifications</div></div>
+          <div class="row-ctrl"><button class="tog on" id="tog-notif-sound" onclick="this.classList.toggle('on');markUnsaved()"></button></div>
+        </div>
+      </div>
+      <div class="card" id="notif-types-card">
+        <div class="card-head"><span class="card-title">Types de notifications</span></div>
+        <div id="notif-types-list"></div>
+      </div>
+      <div class="card">
+        <div class="card-head"><span class="card-title">Test</span></div>
+        <div class="row">
+          <div class="row-ico ic-teal"><i class="fas fa-flask" style="color:#fff;font-size:13px;"></i></div>
+          <div class="row-info"><div class="row-label">Notification de test</div><div class="row-sub">Valider la configuration</div></div>
+          <div class="row-ctrl"><button class="btn primary" id="btn-test-notif" onclick="sendTestNotification()">Envoyer</button></div>
+        </div>
+      </div>
+    </div>
 
-        async function fetchGoogleAccountEmail(accessToken) {
-            const response = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
-                headers: { Authorization: `Bearer ${accessToken}` }
-            });
-            if (!response.ok) throw new Error(`HTTP ${response.status}`);
-            const data = await response.json();
-            return data.email || '';
-        }
+    <!-- ── SYSTÈME ── -->
+    <div class="panel" id="panel-system">
+      <div class="panel-desc">Langue, région, heure et comportements système.</div>
+      <div class="card">
+        <div class="card-head"><span class="card-title">Langue &amp; Région</span></div>
+        <div class="row">
+          <div class="row-ico ic-blue"><i class="fas fa-globe" style="color:#fff;font-size:13px;"></i></div>
+          <div class="row-info"><div class="row-label">Langue</div></div>
+          <div class="row-ctrl">
+            <select class="sel" onchange="markUnsaved()">
+              <option selected>Français</option><option>English</option><option>Español</option><option>Deutsch</option><option>日本語</option><option>中文</option>
+            </select>
+          </div>
+        </div>
+        <div class="row">
+          <div class="row-ico ic-green"><i class="fas fa-location-dot" style="color:#fff;font-size:13px;"></i></div>
+          <div class="row-info"><div class="row-label">Région</div></div>
+          <div class="row-ctrl">
+            <select class="sel" onchange="markUnsaved()">
+              <option selected>France</option><option>Belgique</option><option>Suisse</option><option>Canada</option><option>États-Unis</option>
+            </select>
+          </div>
+        </div>
+        <div class="row">
+          <div class="row-ico ic-orange"><i class="fas fa-clock" style="color:#fff;font-size:13px;"></i></div>
+          <div class="row-info"><div class="row-label">Fuseau horaire</div></div>
+          <div class="row-ctrl">
+            <select class="sel" onchange="markUnsaved()">
+              <option selected>Europe/Paris (UTC+1)</option><option>Europe/London (UTC+0)</option><option>America/New_York (UTC-5)</option><option>Asia/Tokyo (UTC+9)</option>
+            </select>
+          </div>
+        </div>
+        <div class="row">
+          <div class="row-ico ic-purple"><i class="fas fa-calendar" style="color:#fff;font-size:13px;"></i></div>
+          <div class="row-info"><div class="row-label">Format de date</div></div>
+          <div class="row-ctrl">
+            <select class="sel" onchange="markUnsaved()">
+              <option selected>JJ/MM/AAAA</option><option>MM/DD/YYYY</option><option>AAAA-MM-JJ</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-head"><span class="card-title">Comportement</span></div>
+        <div class="row">
+          <div class="row-ico ic-blue"><i class="fas fa-rocket" style="color:#fff;font-size:13px;"></i></div>
+          <div class="row-info"><div class="row-label">Démarrage automatique</div><div class="row-sub">Restaure les apps ouvertes</div></div>
+          <div class="row-ctrl"><button class="tog on" id="tog-autostart" onclick="this.classList.toggle('on');markUnsaved()"></button></div>
+        </div>
+        <div class="row">
+          <div class="row-ico ic-red"><i class="fas fa-hourglass" style="color:#fff;font-size:13px;"></i></div>
+          <div class="row-info"><div class="row-label">Mise en veille</div></div>
+          <div class="row-ctrl">
+            <select class="sel" onchange="markUnsaved()">
+              <option>Jamais</option><option>2 min</option><option selected>5 min</option><option>10 min</option><option>30 min</option>
+            </select>
+          </div>
+        </div>
+        <div class="row">
+          <div class="row-ico ic-gray"><i class="fas fa-trash" style="color:#fff;font-size:13px;"></i></div>
+          <div class="row-info"><div class="row-label">Vider corbeille auto</div><div class="row-sub">Après 30 jours</div></div>
+          <div class="row-ctrl"><button class="tog" id="tog-trash" onclick="this.classList.toggle('on');markUnsaved()"></button></div>
+        </div>
+        <div class="row">
+          <div class="row-ico ic-orange"><i class="fas fa-bolt" style="color:#fff;font-size:13px;"></i></div>
+          <div class="row-info"><div class="row-label">Mode performance</div><div class="row-sub">Priorise la réactivité</div></div>
+          <div class="row-ctrl"><button class="tog" id="tog-perf" onclick="this.classList.toggle('on');markUnsaved()"></button></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-head"><span class="card-title">Cache système</span></div>
+        <div class="row">
+          <div class="row-ico ic-green"><i class="fas fa-database" style="color:#fff;font-size:13px;"></i></div>
+          <div class="row-info"><div class="row-label">Cache actuel</div><div class="row-sub">248 MB utilisés</div></div>
+          <div class="row-ctrl"><button class="btn danger" onclick="toast('Cache vidé !')">Vider</button></div>
+        </div>
+      </div>
+    </div>
 
-        function showCategory(category) {
-            currentCategory = category;
-            
-            document.querySelectorAll('.nav-item').forEach(item => {
-                item.classList.remove('active');
-            });
-            document.querySelector(`[data-category="${category}"]`).classList.add('active');
-            
-            const titles = {
-                apps: { title: 'Applications', description: 'Gérez vos applications et programmes par défaut' },
-                personalization: { title: 'Personnalisation', description: 'Personnalisez l\'apparence de votre système' },
-                security: { title: 'Sécurité', description: 'Protégez votre système avec Aether Security' },
-                accounts: { title: 'Comptes', description: 'Gérez vos comptes cloud et services' },
-                accessibility: { title: 'Accessibilité', description: 'Rendez votre système plus accessible' },
-                notifications: { title: 'Notifications', description: 'Contrôlez ce que le système peut vous notifier' },
-                system: { title: 'Système', description: 'Paramètres système avancés' }
-            };
-            
-            const info = titles[category];
-            document.getElementById('category-title').textContent = info.title;
-            document.getElementById('category-description').textContent = info.description;
-            
-            renderCategory(category);
-        }
+    <!-- ── RACCOURCIS ── -->
+    <div class="panel" id="panel-raccourcis">
+      <div class="panel-desc">Raccourcis clavier du système.</div>
+      <div class="card">
+        <div class="card-head"><span class="card-title">Système</span></div>
+        <div id="sc-system"></div>
+      </div>
+      <div class="card">
+        <div class="card-head"><span class="card-title">Applications</span></div>
+        <div id="sc-apps"></div>
+      </div>
+    </div>
 
-        function renderCategory(category) {
-            const content = document.getElementById('settings-content');
-            
-            switch(category) {
-                case 'apps':
-                    renderApps(content);
-                    break;
-                case 'personalization':
-                    renderPersonalization(content);
-                    break;
-                case 'security':
-                    renderSecurity(content);
-                    break;
-                case 'accounts':
-                    renderAccounts(content);
-                    break;
-                case 'accessibility':
-                    renderAccessibility(content);
-                    break;
-                case 'notifications':
-                    renderNotifications(content);
-                    break;
-                case 'system':
-                    renderSystem(content);
-                    break;
-            }
-        }
+    <!-- ── STOCKAGE ── -->
+    <div class="panel" id="panel-stockage">
+      <div class="panel-desc">Gérez l'espace disque et les fichiers système.</div>
+      <div class="card">
+        <div class="card-head"><span class="card-title">Espace VFS</span></div>
+        <div class="row">
+          <div class="row-ico ic-blue"><i class="fas fa-hard-drive" style="color:#fff;font-size:13px;"></i></div>
+          <div class="row-info">
+            <div class="row-label">Stockage utilisé</div>
+            <div class="row-sub" id="storage-text">Calcul…</div>
+            <div class="storage-bar-wrap"><div class="storage-bar-fill" id="storage-fill" style="width:0%"></div></div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="row-ico ic-red"><i class="fas fa-trash" style="color:#fff;font-size:13px;"></i></div>
+          <div class="row-info"><div class="row-label">Vider le stockage VFS</div><div class="row-sub">Irréversible</div></div>
+          <div class="row-ctrl"><button class="btn danger" onclick="clearVFS()">Vider</button></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-head"><span class="card-title">Import / Export</span></div>
+        <div class="row">
+          <div class="row-ico ic-green"><i class="fas fa-file-export" style="color:#fff;font-size:13px;"></i></div>
+          <div class="row-info"><div class="row-label">Exporter les paramètres</div><div class="row-sub">Fichier JSON</div></div>
+          <div class="row-ctrl"><button class="btn" onclick="exportSettings()">Exporter</button></div>
+        </div>
+        <div class="row">
+          <div class="row-ico ic-orange"><i class="fas fa-file-import" style="color:#fff;font-size:13px;"></i></div>
+          <div class="row-info"><div class="row-label">Importer des paramètres</div></div>
+          <div class="row-ctrl"><button class="btn" onclick="importSettings()">Importer</button></div>
+        </div>
+        <div class="row">
+          <div class="row-ico ic-red"><i class="fas fa-rotate-left" style="color:#fff;font-size:13px;"></i></div>
+          <div class="row-info"><div class="row-label">Réinitialiser tout</div><div class="row-sub">Efface tous les paramètres</div></div>
+          <div class="row-ctrl"><button class="btn danger" onclick="resetAll()">Réinitialiser</button></div>
+        </div>
+      </div>
+    </div>
 
-        function renderApps(content) {
-            content.innerHTML = `
-                <div class="settings-card">
-                    <div class="settings-card-title">
-                        <i class="fas fa-rocket"></i>
-                        Applications au démarrage
-                    </div>
-                    <p class="text-secondary mb-4">Choisissez les applications qui se lancent automatiquement</p>
-                    <div class="form-group">
-                        <label class="form-label">Ajouter une application</label>
-                        <select class="form-select" id="startup-app">
-                            <option value="">Sélectionner une application...</option>
-                            <option value="browser">Navigateur Web</option>
-                            <option value="explorer">Explorateur de fichiers</option>
-                        </select>
-                        <button class="btn btn-primary mt-2" onclick="addStartupApp()">Ajouter</button>
-                    </div>
-                </div>
-            `;
-        }
+    <!-- ── ÉDITEUR THÈME ── -->
+    <div class="panel" id="panel-custom-theme">
+      <div class="panel-desc">Créez votre propre thème personnalisé.</div>
+      <div class="card">
+        <div class="card-head"><span class="card-title">Aperçu</span></div>
+        <div style="padding:14px 18px;">
+          <div class="te-prev" id="te-prev">
+            <div class="te-prev-bar" id="te-bar">
+              <div style="width:7px;height:7px;border-radius:50%;background:#ff5f57;flex-shrink:0;"></div>
+              <div style="width:7px;height:7px;border-radius:50%;background:#febc2e;flex-shrink:0;"></div>
+              <div style="width:7px;height:7px;border-radius:50%;background:#28c840;flex-shrink:0;"></div>
+              <div style="flex:1;height:6px;border-radius:3px;background:rgba(255,255,255,.18);margin:0 8px;"></div>
+            </div>
+            <div class="te-prev-body" id="te-body">
+              <div class="te-prev-side" id="te-side" style="background:rgba(0,0,0,.15);"></div>
+              <div class="te-prev-main" id="te-main" style="background:rgba(0,0,0,.08);"></div>
+            </div>
+          </div>
+          <div class="te-grid">
+            <div class="te-field"><label>Arrière-plan</label><div class="te-row"><input type="color" class="color-inp" id="te-bg" value="#f0f2f5" oninput="updateTePreview()"><span class="value-tag" id="te-bg-val">#f0f2f5</span></div></div>
+            <div class="te-field"><label>Surface</label><div class="te-row"><input type="color" class="color-inp" id="te-surface" value="#ffffff" oninput="updateTePreview()"><span class="value-tag" id="te-surface-val">#ffffff</span></div></div>
+            <div class="te-field"><label>Texte</label><div class="te-row"><input type="color" class="color-inp" id="te-text" value="#111318" oninput="updateTePreview()"><span class="value-tag" id="te-text-val">#111318</span></div></div>
+            <div class="te-field"><label>Accent</label><div class="te-row"><input type="color" class="color-inp" id="te-accent" value="#0078d4" oninput="updateTePreview()"><span class="value-tag" id="te-accent-val">#0078d4</span></div></div>
+            <div class="te-field"><label>Sidebar</label><div class="te-row"><input type="color" class="color-inp" id="te-sidebar" value="#f0f2f5" oninput="updateTePreview()"><span class="value-tag" id="te-sidebar-val">#f0f2f5</span></div></div>
+            <div class="te-field"><label>Bordures</label><div class="te-row"><input type="color" class="color-inp" id="te-border" value="#e2e4e9" oninput="updateTePreview()"><span class="value-tag" id="te-border-val">#e2e4e9</span></div></div>
+          </div>
+          <div style="margin-bottom:12px;">
+            <div style="font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--text3);margin-bottom:5px;">Nom du thème</div>
+            <input class="inp full" id="te-name" placeholder="Mon thème…">
+          </div>
+          <div class="flex-row">
+            <button class="btn primary" style="flex:1" onclick="saveCustomTheme()"><i class="fas fa-floppy-disk"></i> Enregistrer</button>
+            <button class="btn" onclick="applyTePreviewLive()"><i class="fas fa-eye"></i> Aperçu live</button>
+          </div>
+        </div>
+      </div>
+    </div>
 
-        function renderPersonalization(content) {
-            const themes = [
-                { id: 'light', name: 'Clair', preview: 'linear-gradient(135deg, #ffffff 0%, #f3f2f1 100%)' },
-                { id: 'dark', name: 'Sombre', preview: 'linear-gradient(135deg, #0f0f0f 0%, #1a1a1a 100%)' },
-                { id: 'auto', name: 'Auto', preview: 'linear-gradient(135deg, #ffffff 0%, #0f0f0f 100%)' }
-            ];
+    <!-- ── À PROPOS ── -->
+    <div class="panel" id="panel-apropos">
+      <div class="card">
+        <div style="text-align:center;padding:28px 20px 20px;border-bottom:1px solid var(--border);">
+          <div class="about-logo">A</div>
+          <div style="font-size:22px;font-weight:800;letter-spacing:-.03em;">AetherOS</div>
+          <div style="font-size:12px;color:var(--text3);margin-top:4px;">Version 3.0.0 · Build 2024.12</div>
+        </div>
+        <div class="about-stats">
+          <div class="about-stat"><div class="as-val" id="about-apps">—</div><div class="as-label">Applications</div></div>
+          <div class="about-stat"><div class="as-val" id="about-files">0</div><div class="as-label">Fichiers VFS</div></div>
+          <div class="about-stat"><div class="as-val">16.0</div><div class="as-label">Moteur</div></div>
+          <div class="about-stat"><div class="as-val">✓</div><div class="as-label">Système sain</div></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-head"><span class="card-title">Mises à jour</span></div>
+        <div class="row">
+          <div class="row-ico ic-green"><i class="fas fa-rotate" style="color:#fff;font-size:13px;"></i></div>
+          <div class="row-info"><div class="row-label">Vérifier les mises à jour</div><div class="row-sub">Système à jour</div></div>
+          <div class="row-ctrl"><button class="btn primary" onclick="toast('✅ AetherOS est à jour !')">Vérifier</button></div>
+        </div>
+        <div class="row">
+          <div class="row-ico ic-blue"><i class="fas fa-bell" style="color:#fff;font-size:13px;"></i></div>
+          <div class="row-info"><div class="row-label">Mises à jour automatiques</div></div>
+          <div class="row-ctrl"><button class="tog on" id="tog-autoupdate" onclick="this.classList.toggle('on');markUnsaved()"></button></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-head"><span class="card-title">Informations légales</span></div>
+        <div class="row">
+          <div class="row-ico ic-gray"><i class="fas fa-file-lines" style="color:#fff;font-size:13px;"></i></div>
+          <div class="row-info"><div class="row-label">FunnyCorp © 2024 — AetherOS</div><div class="row-sub">Projet open-source · Tous droits réservés</div></div>
+        </div>
+      </div>
+    </div>
 
-            const colors = [
-                { name: 'Bleu', value: '#0078d4' },
-                { name: 'Vert', value: '#107c10' },
-                { name: 'Orange', value: '#ff8c00' },
-                { name: 'Rouge', value: '#d13438' },
-                { name: 'Violet', value: '#8764b8' },
-                { name: 'Turquoise', value: '#008272' }
-            ];
+  </div><!-- /content -->
+</div><!-- /main -->
+</div><!-- /shell -->
 
-            content.innerHTML = `
-                <div class="settings-card">
-                    <div class="settings-card-title">
-                        <i class="fas fa-palette"></i>
-                        Thème
-                    </div>
-                    <p class="text-secondary mb-4">Choisissez votre thème de couleur préféré</p>
-                    <div class="grid grid-cols-2 gap-4">
-                        ${themes.map(theme => `
-                            <div class="settings-card" style="cursor: pointer; border: ${settings.theme === theme.id ? '2px solid var(--primary)' : '1px solid var(--border-primary)'}" 
-                                 onclick="setTheme('${theme.id}')">
-                                <div class="flex items-center gap-3">
-                                    <div class="w-12 h-12 rounded-lg" style="background: ${theme.preview}; border: 1px solid var(--border-primary);"></div>
-                                    <div>
-                                        <div style="font-weight: 600;">${theme.name}</div>
-                                        ${settings.theme === theme.id ? '<div style="color: var(--primary); font-size: 12px;">Actif</div>' : ''}
-                                    </div>
-                                </div>
-                            </div>
-                        `).join('')}
-                    </div>
-                </div>
+<div id="toast"></div>
 
-                <div class="settings-card">
-                    <div class="settings-card-title">
-                        <i class="fas fa-paint-brush"></i>
-                        Couleurs
-                    </div>
-                    <p class="text-secondary mb-4">Personnalisez avec votre couleur préférée</p>
-                    <div class="flex gap-3 flex-wrap mb-4">
-                        ${colors.map(color => `
-                            <div class="color-option ${settings.accentColor === color.value ? 'active' : ''}" 
-                                 style="background: ${color.value};"
-                                 onclick="setAccentColor('${color.value}')"
-                                 title="${color.name}">
-                                ${settings.accentColor === color.value ? '<i class="fas fa-check" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: white; text-shadow: 0 0 4px rgba(0,0,0,0.8);"></i>' : ''}
-                            </div>
-                        `).join('')}
-                    </div>
-                </div>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<script>
+// ═══════════════════════════════════════════
+// ORIGINAL LOGIC (preserved 100%)
+// ═══════════════════════════════════════════
+const wm = window.parent.windowManager;
+let currentCategory = 'profil';
+let settings = loadSettings();
+let googleTokenClient = null;
 
-                <div class="settings-card">
-                    <div class="settings-card-title">
-                        <i class="fas fa-desktop"></i>
-                        Affichage
-                    </div>
-                    <p class="text-secondary mb-4">Ajustez l'apparence et la taille des éléments</p>
-                    <div class="form-group">
-                        <label class="form-label">Échelle de l'interface</label>
-                        <div class="flex items-center gap-4">
-                            <input type="range" id="ui-scale" min="80" max="150" value="${settings.personalization.uiScale}" step="10" 
-                                   oninput="updateUIScale(this.value)" style="flex: 1;">
-                            <span id="ui-scale-value" style="min-width: 60px; text-align: center; font-weight: 600;">${settings.personalization.uiScale}%</span>
-                        </div>
-                    </div>
-                </div>
+function loadSettings() {
+  const runtimeTheme = (() => {
+    try {
+      const fromWm = wm && wm.theme ? String(wm.theme) : '';
+      if (fromWm === 'light' || fromWm === 'dark') return fromWm;
+      const raw = localStorage.getItem('aether_theme');
+      return raw === 'light' ? 'light' : 'dark';
+    } catch { return 'dark'; }
+  })();
+  const def = {
+    theme: runtimeTheme,
+    accentColor: '#0078d4',
+    personalization: { wallpaper: 'default', uiScale: 100, animations: true, fontFamily: 'Geist' },
+    security: { level: 'normal', verifiedApps: [], warnings: true },
+    accessibility: { highContrast: false, largeText: false, reducedMotion: false, fontSize: 'normal', fontPx: 14 },
+    accounts: {
+      onedrive: { connected: false, email: '', driveUrl: 'https://onedrive.live.com' },
+      googledrive: { connected: false, email: '', driveUrl: 'https://drive.google.com', clientId: '', accessToken: '', expiresAt: 0 }
+    },
+    taskbar: { position: 'left', style: 'floating', size: 'normal' },
+    notifications: {
+      enabled: true, durationMs: 5000,
+      types: { system:true, settings_change:true, security:true, accounts:true, store:true, install:true, dock:true, immersive:true, file:true }
+    }
+  };
+  const saved = localStorage.getItem('aether_settings');
+  const parsed = saved ? JSON.parse(saved) : {};
+  const wmPrefs = wm && wm.uiPreferences ? wm.uiPreferences : {};
+  const wmNotif = (wmPrefs && typeof wmPrefs.notifications === 'object' && wmPrefs.notifications) ? wmPrefs.notifications : {};
+  return {
+    ...def, ...parsed,
+    accounts: {
+      ...def.accounts, ...(parsed.accounts||{}),
+      onedrive: { ...def.accounts.onedrive, ...((parsed.accounts && parsed.accounts.onedrive)||{}) },
+      googledrive: { ...def.accounts.googledrive, ...((parsed.accounts && parsed.accounts.googledrive)||{}) }
+    },
+    taskbar: {
+      ...def.taskbar, ...(parsed.taskbar||{}),
+      position: wmPrefs.dockPosition || (parsed.taskbar && parsed.taskbar.position) || def.taskbar.position,
+      style: wmPrefs.trayStyle || (parsed.taskbar && parsed.taskbar.style) || def.taskbar.style,
+      size: wmPrefs.dockSize || (parsed.taskbar && parsed.taskbar.size) || def.taskbar.size
+    },
+    notifications: {
+      ...def.notifications, ...(parsed.notifications||{}), ...wmNotif,
+      types: { ...def.notifications.types, ...((parsed.notifications||{}).types||{}), ...(wmNotif.types||{}) }
+    }
+  };
+}
 
-                <div class="settings-card">
-                    <div class="settings-card-title">
-                        <i class="fas fa-grip-horizontal"></i>
-                        Barre des tâches
-                    </div>
-                    <p class="text-secondary mb-4">Personnalisez complètement la taskbar de l'OS</p>
-                    <div class="form-group">
-                        <label class="form-label">Position</label>
-                        <select class="form-select" onchange="updateTaskbarPosition(this.value)">
-                            <option value="left" ${settings.taskbar.position === 'left' ? 'selected' : ''}>Gauche</option>
-                            <option value="right" ${settings.taskbar.position === 'right' ? 'selected' : ''}>Droite</option>
-                            <option value="bottom" ${settings.taskbar.position === 'bottom' ? 'selected' : ''}>Bas</option>
-                            <option value="top" ${settings.taskbar.position === 'top' ? 'selected' : ''}>Haut</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Style</label>
-                        <select class="form-select" onchange="updateTaskbarStyle(this.value)">
-                            <option value="floating" ${settings.taskbar.style === 'floating' ? 'selected' : ''}>Flottante</option>
-                            <option value="attached" ${settings.taskbar.style === 'attached' ? 'selected' : ''}>Attachée</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Taille</label>
-                        <select class="form-select" onchange="updateTaskbarSize(this.value)">
-                            <option value="compact" ${settings.taskbar.size === 'compact' ? 'selected' : ''}>Compacte</option>
-                            <option value="normal" ${settings.taskbar.size === 'normal' ? 'selected' : ''}>Normale</option>
-                            <option value="large" ${settings.taskbar.size === 'large' ? 'selected' : ''}>Grande</option>
-                        </select>
-                    </div>
-                </div>
-            `;
-        }
+function saveSettings() {
+  localStorage.setItem('aether_settings', JSON.stringify(settings));
+  applyTheme();
+  applyPersonalization();
+  applyNotifications();
+  try { window.parent && window.parent.postMessage({ type: 'AETHER_SETTINGS_UPDATED', settings: settings }, '*'); } catch(e) {}
+  clearUnsaved();
+  if (wm && wm.notify) wm.notify('Paramètres', 'Paramètres enregistrés', 'settings_change');
+}
 
-        function renderSecurity(content) {
-            content.innerHTML = `
-                <div class="settings-card">
-                    <div class="settings-card-title">
-                        <i class="fas fa-shield-alt"></i>
-                        Niveau de sécurité Aether
-                    </div>
-                    <p class="text-secondary mb-4">Choisissez votre niveau de protection</p>
-                    <div class="form-group">
-                        <label class="form-label">Niveau de sécurité</label>
-                        <select class="form-select" onchange="setSecurityLevel(this.value)">
-                            <option value="low" ${settings.security.level === 'low' ? 'selected' : ''}>Faible</option>
-                            <option value="normal" ${settings.security.level === 'normal' ? 'selected' : ''}>Normal</option>
-                            <option value="high" ${settings.security.level === 'high' ? 'selected' : ''}>Élevé</option>
-                            <option value="strict" ${settings.security.level === 'strict' ? 'selected' : ''}>Strict</option>
-                        </select>
-                    </div>
-                </div>
-            `;
-        }
+function applyTheme() {
+  document.documentElement.setAttribute('data-theme', settings.theme);
+  if (wm && wm.setTheme) wm.setTheme(settings.theme);
+  if (settings.accentColor) {
+    document.documentElement.style.setProperty('--primary', settings.accentColor);
+    document.documentElement.style.setProperty('--accent', settings.accentColor);
+    const rgb = hexToRgb(settings.accentColor);
+    if (rgb) document.documentElement.style.setProperty('--accent-rgb', `${rgb.r},${rgb.g},${rgb.b}`);
+    if (wm && wm.setAccentColor) wm.setAccentColor(settings.accentColor);
+  }
+}
 
-        function renderAccounts(content) {
-            content.innerHTML = `
-                <div class="settings-card">
-                    <div class="settings-card-title">
-                        <i class="fas fa-cloud"></i>
-                        Services cloud
-                    </div>
-                    <p class="text-secondary mb-4">Connectez vos services cloud préférés</p>
-                    
-                    <div class="list-item">
-                        <div>
-                            <div class="list-item-title">
-                                <i class="fab fa-microsoft" style="color: #0078d4; margin-right: 8px;"></i>
-                                OneDrive
-                                ${settings.accounts.onedrive.connected ? '<span style="color: var(--success); margin-left: 8px;">✓ Connecté</span>' : ''}
-                            </div>
-                            <div class="list-item-description">
-                                ${settings.accounts.onedrive.connected ? 
-                                    `${settings.accounts.onedrive.email}<br><span style="font-size:12px;opacity:.75;">${settings.accounts.onedrive.driveUrl || 'https://onedrive.live.com'}</span>` : 
-                                    'Stockage cloud Microsoft'
-                                }
-                            </div>
-                        </div>
-                        <div>
-                            ${settings.accounts.onedrive.connected ? 
-                                `<button class="btn btn-sm btn-secondary" onclick="editAccountLink('onedrive')">Modifier</button> <button class="btn btn-sm btn-danger" onclick="disconnectAccount('onedrive')">Déconnecter</button>` :
-                                `<button class="btn btn-sm btn-primary" onclick="connectAccount('onedrive')">Lier</button>`
-                            }
-                        </div>
-                    </div>
-                    
-                    <div class="list-item">
-                        <div>
-                            <div class="list-item-title">
-                                <i class="fab fa-google-drive" style="color: #4285f4; margin-right: 8px;"></i>
-                                Google Drive
-                                ${settings.accounts.googledrive.connected ? '<span style="color: var(--success); margin-left: 8px;">✓ Connecté</span>' : ''}
-                            </div>
-                            <div class="list-item-description">
-                                ${settings.accounts.googledrive.connected ? 
-                                    `${settings.accounts.googledrive.email}<br><span style="font-size:12px;opacity:.75;">${settings.accounts.googledrive.driveUrl || 'https://drive.google.com'}</span>` : 
-                                    'Stockage cloud Google'
-                                }
-                            </div>
-                            <div style="margin-top:10px;">
-                                <label class="form-label" style="margin-bottom:6px;display:block;">Google OAuth Client ID</label>
-                                <input class="form-input" id="googledrive-client-id" value="${settings.accounts.googledrive.clientId || getRuntimeGoogleClientId() || ''}" placeholder="1234567890-xxxxx.apps.googleusercontent.com" onchange="updateGoogleDriveClientId(this.value)">
-                                <div class="form-description">Utilise un client OAuth Web Google autorisé pour ce domaine/origine.</div>
-                            </div>
-                        </div>
-                        <div>
-                            ${settings.accounts.googledrive.connected ? 
-                                `<button class="btn btn-sm btn-secondary" onclick="connectAccount('googledrive')">Renouveler</button> <button class="btn btn-sm btn-danger" onclick="disconnectAccount('googledrive')">Déconnecter</button>` :
-                                `<button class="btn btn-sm btn-primary" onclick="connectAccount('googledrive')">Lier</button>`
-                            }
-                        </div>
-                    </div>
-                </div>
-            `;
-        }
+function applyPersonalization() {
+  if (wm && wm.setWallpaper && settings.personalization.wallpaper) wm.setWallpaper(settings.personalization.wallpaper);
+  if (wm && wm.setUIScale && settings.personalization.uiScale) wm.setUIScale(settings.personalization.uiScale);
+  if (wm && wm.setFontFamily && settings.personalization.fontFamily) wm.setFontFamily(settings.personalization.fontFamily);
+  if (wm && wm.setBaseFontSizePx && settings.accessibility && settings.accessibility.fontPx) wm.setBaseFontSizePx(settings.accessibility.fontPx);
+  if (wm) {
+    wm.uiPreferences = wm.sanitizeUIPreferences ? wm.sanitizeUIPreferences({
+      ...(wm.uiPreferences||{}),
+      dockPosition: settings.taskbar.position,
+      trayStyle: settings.taskbar.style,
+      dockSize: settings.taskbar.size
+    }) : { ...(wm.uiPreferences||{}), dockPosition: settings.taskbar.position, trayStyle: settings.taskbar.style, dockSize: settings.taskbar.size };
+    if (wm.applyUIPreferences) wm.applyUIPreferences();
+    if (wm.saveUserData) wm.saveUserData();
+  }
+}
 
-        function renderAccessibility(content) {
-            content.innerHTML = `
-                <div class="settings-card">
-                    <div class="settings-card-title">
-                        <i class="fas fa-eye"></i>
-                        Accessibilité visuelle
-                    </div>
-                    <p class="text-secondary mb-4">Options pour les déficiences visuelles</p>
-                    <div class="form-group">
-                        <label class="form-label">
-                            <label class="toggle">
-                                <input type="checkbox" ${settings.accessibility.highContrast ? 'checked' : ''} onchange="toggleHighContrast()">
-                                <span class="toggle-slider"></span>
-                            </label>
-                            <span style="margin-left: 12px;">Contraste élevé</span>
-                        </label>
-                        <div class="form-description">Augmenter le contraste pour une meilleure visibilité</div>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">
-                            <label class="toggle">
-                                <input type="checkbox" ${settings.accessibility.largeText ? 'checked' : ''} onchange="toggleLargeText()">
-                                <span class="toggle-slider"></span>
-                            </label>
-                            <span style="margin-left: 12px;">Texte agrandi</span>
-                        </label>
-                        <div class="form-description">Agrandir le texte pour une meilleure lisibilité</div>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Taille du texte</label>
-                        <select class="form-select" onchange="setFontSize(this.value)">
-                            <option value="small" ${settings.accessibility.fontSize === 'small' ? 'selected' : ''}>Petit</option>
-                            <option value="normal" ${settings.accessibility.fontSize === 'normal' ? 'selected' : ''}>Normal</option>
-                            <option value="large" ${settings.accessibility.fontSize === 'large' ? 'selected' : ''}>Grand</option>
-                            <option value="extra-large" ${settings.accessibility.fontSize === 'extra-large' ? 'selected' : ''}>Très grand</option>
-                        </select>
-                    </div>
-                </div>
+function applyNotifications() {
+  if (!wm) return;
+  if (wm.setNotificationPreferences) { wm.setNotificationPreferences(settings.notifications||{}); return; }
+  wm.uiPreferences = wm.sanitizeUIPreferences ? wm.sanitizeUIPreferences({ ...(wm.uiPreferences||{}), notifications: settings.notifications||{} })
+    : { ...(wm.uiPreferences||{}), notifications: settings.notifications||{} };
+  if (wm.saveUserData) wm.saveUserData();
+}
 
-                <div class="settings-card">
-                    <div class="settings-card-title">
-                        <i class="fas fa-hand-pointer"></i>
-                        Interaction
-                    </div>
-                    <p class="text-secondary mb-4">Options pour les déficiences motrices</p>
-                    <div class="form-group">
-                        <label class="form-label">
-                            <label class="toggle">
-                                <input type="checkbox" ${settings.accessibility.reducedMotion ? 'checked' : ''} onchange="toggleReducedMotion()">
-                                <span class="toggle-slider"></span>
-                            </label>
-                            <span style="margin-left: 12px;">Mouvements réduits</span>
-                        </label>
-                        <div class="form-description">Minimiser les animations et transitions</div>
-                    </div>
-                </div>
-            `;
-        }
+function getRuntimeGoogleClientId() {
+  const env = (window.parent && window.parent.AETHER_RUNTIME_ENV) || window.AETHER_RUNTIME_ENV || {};
+  return env.AETHER_GOOGLE_DRIVE_CLIENT_ID || env.AETHER_GOOGLE_CLIENT_ID || '';
+}
+function ensureGoogleTokenClient(clientId) {
+  if (!window.google || !window.google.accounts || !window.google.accounts.oauth2) return null;
+  if (googleTokenClient && googleTokenClient.__clientId === clientId) return googleTokenClient;
+  googleTokenClient = window.google.accounts.oauth2.initTokenClient({
+    client_id: clientId, scope: 'https://www.googleapis.com/auth/drive https://www.googleapis.com/auth/userinfo.email', callback: ()=>{}
+  });
+  googleTokenClient.__clientId = clientId;
+  return googleTokenClient;
+}
+function requestGoogleDriveToken(clientId, promptMode='consent') {
+  return new Promise((resolve, reject) => {
+    const tc = ensureGoogleTokenClient(clientId);
+    if (!tc) { reject(new Error('Google Identity Services indisponible')); return; }
+    tc.callback = (r) => { if (!r||r.error) reject(new Error(r&&r.error?r.error:'Token refusé')); else resolve(r); };
+    tc.requestAccessToken({ prompt: promptMode });
+  });
+}
+async function fetchGoogleAccountEmail(accessToken) {
+  const r = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', { headers: { Authorization: `Bearer ${accessToken}` } });
+  if (!r.ok) throw new Error(`HTTP ${r.status}`);
+  const d = await r.json();
+  return d.email || '';
+}
 
-        function renderNotifications(content) {
-            const n = settings.notifications || {};
-            const types = (n.types || {});
-            const typeList = [
-                { key: 'system', title: 'Système', desc: 'Alertes générales (erreurs, statut, messages OS)' },
-                { key: 'settings_change', title: 'Changements de paramètres', desc: 'Quand un paramètre est modifié (thème, dock, accessibilité...)' },
-                { key: 'security', title: 'Sécurité', desc: 'Avertissements et actions de sécurité' },
-                { key: 'accounts', title: 'Comptes', desc: 'Connexion / déconnexion cloud (Drive, etc.)' },
-                { key: 'store', title: 'Store', desc: 'Infos liées au store et au registre' },
-                { key: 'install', title: 'Installation', desc: 'Installation / suppression d\'applications' },
-                { key: 'dock', title: 'Dock', desc: 'Actions liées au dock' },
-                { key: 'immersive', title: 'Mode immersif', desc: 'Plein écran / immersion' },
-                { key: 'file', title: 'Fichiers', desc: 'Ouvertures, imports/exports, erreurs VFS' }
-            ];
-            const seconds = Math.round((Number(n.durationMs) || 5000) / 1000);
-            const disabled = !n.enabled;
-            content.innerHTML = `
-                <div class="settings-card">
-                    <div class="settings-card-title">
-                        <i class="fas fa-bell"></i>
-                        Notifications
-                    </div>
-                    <p class="text-secondary mb-4">Activez, désactivez, ou personnalisez les notifications de l'OS.</p>
+// ── Accounts ──
+function connectAccount(service) {
+  if (service === 'googledrive') { connectGoogleDrive(); return; }
+  const defaultUrl = service === 'onedrive' ? 'https://onedrive.live.com' : 'https://drive.google.com';
+  const label = service === 'onedrive' ? 'OneDrive' : 'Google Drive';
+  const email = prompt(`Adresse du compte ${label}:`, settings.accounts[service]?.email||'');
+  if (!email) return;
+  const driveUrl = prompt(`URL de votre espace ${label}:`, settings.accounts[service]?.driveUrl||defaultUrl);
+  if (!driveUrl) return;
+  settings.accounts[service] = { connected:true, email:email.trim(), driveUrl:driveUrl.trim() };
+  saveSettings();
+  if (wm && wm.notify) wm.notify('Comptes', `${label} lié avec succès`, 'accounts');
+  buildAccountsList();
+}
+function editAccountLink(service) { connectAccount(service); }
+async function connectGoogleDrive() {
+  const clientId = (settings.accounts.googledrive && settings.accounts.googledrive.clientId) || getRuntimeGoogleClientId();
+  if (!clientId) { alert("Renseigne d'abord un Google OAuth Client ID."); return; }
+  try {
+    if (wm && wm.notify) wm.notify('Comptes', 'Connexion à Google Drive…', 'accounts');
+    const token = await requestGoogleDriveToken(clientId, 'consent');
+    const accessToken = token.access_token;
+    const email = await fetchGoogleAccountEmail(accessToken);
+    settings.accounts.googledrive = { connected:true, email:email||settings.accounts.googledrive.email||'', driveUrl:'googledrive://root', clientId, accessToken, expiresAt:Date.now()+((token.expires_in||3600)*1000) };
+    saveSettings();
+    if (wm && wm.notify) wm.notify('Comptes', 'Google Drive lié avec succès', 'accounts');
+    buildAccountsList();
+  } catch(e) { alert(`Connexion impossible: ${e.message}`); }
+}
+function disconnectAccount(service) {
+  if (!confirm(`Déconnecter de ${service}?`)) return;
+  settings.accounts[service] = service === 'googledrive'
+    ? { connected:false, email:'', driveUrl:'https://drive.google.com', clientId:settings.accounts.googledrive?.clientId||'', accessToken:'', expiresAt:0 }
+    : { connected:false, email:'', driveUrl:'https://onedrive.live.com' };
+  saveSettings();
+  if (wm && wm.notify) wm.notify('Comptes', `Déconnecté de ${service}`, 'accounts');
+  buildAccountsList();
+}
+function updateGoogleDriveClientId(v) {
+  settings.accounts.googledrive = settings.accounts.googledrive||{};
+  settings.accounts.googledrive.clientId = (v||'').trim();
+  saveSettings();
+}
 
-                    <div class="list-item">
-                        <div>
-                            <div class="list-item-title">Autoriser les notifications</div>
-                            <div class="list-item-description">Désactiver ici coupe toutes les notifications du système.</div>
-                        </div>
-                        <label class="toggle">
-                            <input type="checkbox" ${n.enabled ? 'checked' : ''} onchange="toggleNotificationsEnabled()">
-                            <span class="toggle-slider"></span>
-                        </label>
-                    </div>
+// ── Notifications ──
+function toggleNotificationsEnabled() {
+  settings.notifications.enabled = !settings.notifications.enabled;
+  saveSettings();
+  syncNotifUI();
+}
+function toggleNotificationType(key) {
+  const types = settings.notifications.types || (settings.notifications.types={});
+  types[key] = !(types[key]!==false);
+  saveSettings();
+}
+function setNotificationDuration(v) {
+  const sec = Math.max(2, Math.min(15, parseInt(v)||5));
+  settings.notifications.durationMs = sec * 1000;
+  const pct = ((sec-2)/(15-2)*100).toFixed(0);
+  document.getElementById('notif-dur-slider').style.setProperty('--v', pct+'%');
+  document.getElementById('notif-dur-val').textContent = sec+'s';
+  document.getElementById('notif-dur-label').textContent = sec+'s';
+  saveSettings();
+}
+function sendTestNotification() {
+  if (wm && wm.notify) wm.notify('Notification', 'Ceci est une notification de test.', 'system', { durationMs: settings.notifications.durationMs||5000 });
+  else toast('🔔 Notification de test envoyée');
+}
+function syncNotifUI() {
+  const on = settings.notifications.enabled;
+  const togEl = document.getElementById('tog-notif-enabled');
+  if (togEl) togEl.classList.toggle('on', on);
+  document.getElementById('row-notif-duration')?.classList.toggle('notif-disabled', !on);
+  document.getElementById('notif-types-card')?.classList.toggle('notif-disabled', !on);
+  document.getElementById('btn-test-notif') && (document.getElementById('btn-test-notif').disabled = !on);
+}
 
-                    <div class="list-item" style="${disabled ? 'opacity:0.75;' : ''}">
-                        <div>
-                            <div class="list-item-title">Durée d'affichage</div>
-                            <div class="list-item-description">Combien de temps une notification reste visible (en secondes).</div>
-                        </div>
-                        <div style="min-width: 220px; display:flex; align-items:center; gap:12px; justify-content:flex-end;">
-                            <input type="range" min="2" max="15" step="1" value="${seconds}" ${disabled ? 'disabled' : ''} onchange="setNotificationDuration(this.value)">
-                            <div style="width:42px; text-align:right; font-weight:600;">${seconds}s</div>
-                        </div>
-                    </div>
-                </div>
+// ── Accessibility ──
+function toggleHighContrast() {
+  settings.accessibility.highContrast = !settings.accessibility.highContrast;
+  saveSettings();
+  if (wm && wm.setHighContrast) wm.setHighContrast(settings.accessibility.highContrast);
+  else if (wm && wm.accessibility) { wm.accessibility.highContrast = settings.accessibility.highContrast; if (wm.applyAccessibilitySettings) wm.applyAccessibilitySettings(); }
+  document.getElementById('tog-contrast')?.classList.toggle('on', settings.accessibility.highContrast);
+  document.documentElement.style.filter = settings.accessibility.highContrast ? 'contrast(1.25)' : '';
+  if (wm && wm.notify) wm.notify('Accessibilité', settings.accessibility.highContrast ? 'Contraste élevé activé' : 'Contraste élevé désactivé', 'settings_change');
+}
+function toggleLargeText() {
+  settings.accessibility.largeText = !settings.accessibility.largeText;
+  settings.accessibility.fontPx = settings.accessibility.largeText ? 18 : (settings.accessibility.fontPx || 14);
+  saveSettings();
+  document.getElementById('tog-largetext')?.classList.toggle('on', settings.accessibility.largeText);
+  document.documentElement.style.fontSize = settings.accessibility.largeText ? '18px' : '';
+  if (wm && wm.setBaseFontSizePx) wm.setBaseFontSizePx(settings.accessibility.largeText ? 18 : (settings.accessibility.fontPx || 14));
+  if (wm && wm.accessibility) { wm.accessibility.fontSize = settings.accessibility.largeText ? '18px' : '14px'; if (wm.applyAccessibilitySettings) wm.applyAccessibilitySettings(); }
+}
+function toggleReducedMotion() {
+  settings.accessibility.reducedMotion = !settings.accessibility.reducedMotion;
+  saveSettings();
+  document.getElementById('tog-reduced')?.classList.toggle('on', settings.accessibility.reducedMotion);
+  if (wm && wm.setReducedMotion) wm.setReducedMotion(settings.accessibility.reducedMotion);
+  if (settings.accessibility.reducedMotion) {
+    document.documentElement.style.setProperty('--dur','0s');
+    document.documentElement.style.setProperty('--transition-fast','0s');
+    document.documentElement.style.setProperty('--transition-normal','0s');
+  } else {
+    document.documentElement.style.removeProperty('--dur');
+    document.documentElement.style.removeProperty('--transition-fast');
+    document.documentElement.style.removeProperty('--transition-normal');
+  }
+}
+function setFontSize(size) {
+  settings.accessibility.fontSize = size;
+  saveSettings();
+  const map = { small:'12px', normal:'14px', large:'16px', 'extra-large':'18px' };
+  document.documentElement.style.fontSize = map[size];
+}
 
-                <div class="settings-card">
-                    <div class="settings-card-title">
-                        <i class="fas fa-sliders"></i>
-                        Types de notifications
-                    </div>
-                    <p class="text-secondary mb-4">Choisissez ce que vous souhaitez recevoir.</p>
-                    ${typeList.map(t => `
-                        <div class="list-item" style="${disabled ? 'opacity:0.7;' : ''}">
-                            <div>
-                                <div class="list-item-title">${t.title}</div>
-                                <div class="list-item-description">${t.desc}</div>
-                            </div>
-                            <label class="toggle">
-                                <input type="checkbox" ${types[t.key] !== false ? 'checked' : ''} ${disabled ? 'disabled' : ''} onchange="toggleNotificationType('${t.key}')">
-                                <span class="toggle-slider"></span>
-                            </label>
-                        </div>
-                    `).join('')}
-                </div>
+// ── Taskbar ──
+function updateTaskbarPosition(v) { settings.taskbar.position=v; saveSettings(); }
+function updateTaskbarStyle(v) { settings.taskbar.style=v; saveSettings(); }
+function updateTaskbarSize(v) { settings.taskbar.size=v; saveSettings(); }
+function setSecurityLevel(level) { settings.security.level=level; saveSettings(); buildSecLevels(); }
+function updateUIScale(v) { settings.personalization.uiScale=parseInt(v); document.documentElement.style.zoom=v/100; saveSettings(); }
 
-                <div class="settings-card">
-                    <div class="settings-card-title">
-                        <i class="fas fa-flask"></i>
-                        Test
-                    </div>
-                    <p class="text-secondary mb-4">Envoyez une notification de test pour valider la configuration.</p>
-                    <button class="btn btn-primary" ${disabled ? 'disabled' : ''} onclick="sendTestNotification()">Envoyer une notification</button>
-                </div>
-            `;
-        }
+// ═══════════════════════════════════════════
+// NEW FEATURES
+// ═══════════════════════════════════════════
 
-        function renderSystem(content) {
-            content.innerHTML = `
-                <div class="settings-card">
-                    <div class="settings-card-title">
-                        <i class="fas fa-info-circle"></i>
-                        Informations système
-                    </div>
-                    <p class="text-secondary mb-4">Détails sur votre système AetherOS</p>
-                    <div class="grid grid-cols-2 gap-4">
-                        <div class="p-3" style="background: var(--background-secondary); border-radius: 8px;">
-                            <div class="text-secondary" style="font-size: 12px; margin-bottom: 4px;">Version</div>
-                            <div style="font-weight: 600;">AetherOS v3.0</div>
-                        </div>
-                        <div class="p-3" style="background: var(--background-secondary); border-radius: 8px;">
-                            <div class="text-secondary" style="font-size: 12px; margin-bottom: 4px;">Build</div>
-                            <div style="font-weight: 600;">3.0.0.20240115</div>
-                        </div>
-                    </div>
-                </div>
-            `;
-        }
+// ── NAV ──
+const NAV = [
+  {section:'Compte'},
+  {id:'profil',     label:'Mon profil',     icon:'fa-user',           color:'ic-blue'},
+  {id:'accounts',   label:'Comptes & Cloud',icon:'fa-cloud',          color:'ic-teal'},
+  {section:'Personnalisation'},
+  {id:'personalization',label:'Apparence',  icon:'fa-palette',        color:'ic-purple'},
+  {id:'polices',    label:'Polices',         icon:'fa-font',           color:'ic-orange'},
+  {section:'Système'},
+  {id:'system',     label:'Général',         icon:'fa-gear',           color:'ic-gray'},
+  {id:'notifications',label:'Notifications',icon:'fa-bell',           color:'ic-red'},
+  {id:'raccourcis', label:'Raccourcis',      icon:'fa-keyboard',       color:'ic-indigo'},
+  {id:'stockage',   label:'Stockage',        icon:'fa-hard-drive',     color:'ic-green'},
+  {section:'Sécurité'},
+  {id:'security',   label:'Sécurité',        icon:'fa-shield-halved',  color:'ic-red'},
+  {id:'accessibility',label:'Accessibilité',icon:'fa-universal-access',color:'ic-green'},
+  {section:'À propos'},
+  {id:'apropos',    label:'À propos',        icon:'fa-circle-info',    color:'ic-cyan'},
+];
 
-        // Action functions
-        function setTheme(theme) {
-            settings.theme = theme;
-            saveSettings();
-            showCategory('personalization');
-        }
+function buildNav(filter='') {
+  const nav = document.getElementById('sb-nav');
+  nav.innerHTML='';
+  NAV.forEach(item => {
+    if (item.section) {
+      if (filter) return;
+      const el = document.createElement('div');
+      el.className='sb-section'; el.textContent=item.section;
+      nav.appendChild(el);
+    } else {
+      if (filter && !item.label.toLowerCase().includes(filter.toLowerCase())) return;
+      const el = document.createElement('div');
+      el.className = 'nav-item' + (item.id===currentCategory?' active':'');
+      el.id = 'nav-'+item.id;
+      el.innerHTML = `<div class="ni-ico"><i class="fas ${item.icon}"></i></div><span>${item.label}</span>`;
+      el.onclick = () => showPanel(item.id);
+      nav.appendChild(el);
+    }
+  });
+}
+function filterNav(q) { buildNav(q); }
 
-        function setAccentColor(color) {
-            settings.accentColor = color;
-            saveSettings();
-        }
+function showPanel(id) {
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  const panel = document.getElementById('panel-'+id);
+  if (panel) panel.classList.add('active');
+  currentCategory = id;
+  buildNav(document.getElementById('sb-search').value);
+  const item = NAV.find(n=>n.id===id);
+  document.getElementById('topbar-title').textContent = item ? item.label : 'Paramètres';
+  if (id==='stockage') updateStorageInfo();
+  if (id==='apropos') updateAboutInfo();
+  if (id==='notifications') syncNotifUI();
+}
 
-        function updateUIScale(value) {
-            document.getElementById('ui-scale-value').textContent = value + '%';
-            settings.personalization.uiScale = parseInt(value);
-            saveSettings();
-        }
+// ── THEMES ──
+const THEMES = [
+  {id:'light',    name:'Clair',       bg:'#f0f2f5',  surface:'#ffffff',  sidebar:'#ffffff',  text:'#111318',  accent:'#0078d4', dark:false},
+  {id:'dark',     name:'Sombre',      bg:'#0d0e11',  surface:'#181b21',  sidebar:'#13151a',  text:'#f0f2f7',  accent:'#0a84ff', dark:true},
+  {id:'nord',     name:'Nord',        bg:'#2e3440',  surface:'#3b4252',  sidebar:'#2e3440',  text:'#eceff4',  accent:'#88c0d0', dark:true},
+  {id:'dracula',  name:'Dracula',     bg:'#282a36',  surface:'#44475a',  sidebar:'#21222c',  text:'#f8f8f2',  accent:'#bd93f9', dark:true},
+  {id:'catppuccin',name:'Catppuccin', bg:'#1e1e2e',  surface:'#313244',  sidebar:'#181825',  text:'#cdd6f4',  accent:'#cba6f7', dark:true},
+  {id:'gruvbox',  name:'Gruvbox',     bg:'#282828',  surface:'#3c3836',  sidebar:'#1d2021',  text:'#ebdbb2',  accent:'#fabd2f', dark:true},
+  {id:'rose-pine',name:'Rosé Pine',   bg:'#191724',  surface:'#26233a',  sidebar:'#1f1d2e',  text:'#e0def4',  accent:'#c4a7e7', dark:true},
+  {id:'solarized',name:'Solarized',   bg:'#002b36',  surface:'#073642',  sidebar:'#002b36',  text:'#839496',  accent:'#268bd2', dark:true},
+  {id:'aether',   name:'Aether',      bg:'#080c18',  surface:'#0f1528',  sidebar:'#060a14',  text:'#e0e8ff',  accent:'#6366f1', dark:true},
+  {id:'neon',     name:'Néon',        bg:'#050510',  surface:'#0a0a20',  sidebar:'#020208',  text:'#e0e0ff',  accent:'#00ff88', dark:true},
+  {id:'cyberpunk',name:'Cyberpunk',   bg:'#0a0014',  surface:'#14001e',  sidebar:'#07000f',  text:'#ffe600',  accent:'#ff0099', dark:true},
+  {id:'forest',   name:'Forêt',       bg:'#1a2e1a',  surface:'#243324',  sidebar:'#142014',  text:'#d4e8d4',  accent:'#52b788', dark:true},
+  {id:'ocean',    name:'Océan',       bg:'#e8f4f8',  surface:'#f0f9ff',  sidebar:'#d6edf7',  text:'#0c2a3d',  accent:'#0077b6', dark:false},
+  {id:'sakura',   name:'Sakura',      bg:'#fff0f3',  surface:'#fff5f7',  sidebar:'#ffe4e8',  text:'#3d1520',  accent:'#e91e63', dark:false},
+  {id:'mint',     name:'Menthe',      bg:'#f0faf5',  surface:'#f7fff9',  sidebar:'#e2f7ea',  text:'#1a3d2b',  accent:'#059669', dark:false},
+  {id:'coffee',   name:'Café',        bg:'#1a0f0a',  surface:'#2d1a0f',  sidebar:'#140c07',  text:'#e8d5c0',  accent:'#d97706', dark:true},
+  {id:'royal',    name:'Royal',       bg:'#0a0520',  surface:'#150840',  sidebar:'#070315',  text:'#e8deff',  accent:'#ffd700', dark:true},
+  {id:'terminal', name:'Terminal',    bg:'#0a0a0a',  surface:'#141414',  sidebar:'#050505',  text:'#00ff00',  accent:'#00cc00', dark:true},
+  {id:'midnight', name:'Minuit',      bg:'#0a0a1a',  surface:'#12122a',  sidebar:'#080814',  text:'#c8c8e8',  accent:'#7c3aed', dark:true},
+  {id:'sunset',   name:'Coucher',     bg:'#1a0a0a',  surface:'#2d1414',  sidebar:'#140808',  text:'#ffd6cc',  accent:'#ff6b35', dark:true},
+  {id:'slate',    name:'Ardoise',     bg:'#0f172a',  surface:'#1e293b',  sidebar:'#0c1220',  text:'#e2e8f0',  accent:'#38bdf8', dark:true},
+  {id:'vaporwave',name:'Vaporwave',   bg:'#1a0529',  surface:'#2d0a40',  sidebar:'#14031e',  text:'#f9a8d4',  accent:'#e879f9', dark:true},
+  {id:'paper',    name:'Papier',      bg:'#f5f0e8',  surface:'#fffdf7',  sidebar:'#ede8dc',  text:'#2c2416',  accent:'#8b4513', dark:false},
+  {id:'cream',    name:'Crème',       bg:'#faf7f0',  surface:'#fff8ee',  sidebar:'#f5f0e8',  text:'#3d3228',  accent:'#c76b1e', dark:false},
+  {id:'glacier',  name:'Glacier',     bg:'#e8f4fb',  surface:'#f0faff',  sidebar:'#dbeefb',  text:'#1a3a5c',  accent:'#0ea5e9', dark:false},
+  {id:'monochrome',name:'Mono',       bg:'#1a1a1a',  surface:'#2a2a2a',  sidebar:'#111',     text:'#e0e0e0',  accent:'#ffffff', dark:true},
+  {id:'ember',    name:'Braise',      bg:'#1c0a00',  surface:'#2e1200',  sidebar:'#160800',  text:'#ffd8b0',  accent:'#f97316', dark:true},
+  {id:'pastel',   name:'Pastel',      bg:'#fdf4ff',  surface:'#fff0fb',  sidebar:'#f9e8ff',  text:'#4a1560',  accent:'#d946ef', dark:false},
+  {id:'ubuntu',   name:'Ubuntu',      bg:'#2c001e',  surface:'#4e0a37',  sidebar:'#2c001e',  text:'#ffffff',  accent:'#e95420', dark:true},
+  {id:'cherry',   name:'Cerise',      bg:'#fff0f0',  surface:'#fff5f5',  sidebar:'#ffe0e0',  text:'#3d0a0a',  accent:'#dc2626', dark:false},
+  {id:'aurora',   name:'Aurora',      bg:'#1a1028',  surface:'#231540',  sidebar:'#130c1e',  text:'#e8d8ff',  accent:'#7ee8a2', dark:true},
+];
 
-        function updateTaskbarPosition(value) {
-            settings.taskbar.position = value;
-            saveSettings();
-            showCategory('personalization');
-        }
+let selectedTheme = settings.theme==='light'?'light':'dark';
 
-        function updateTaskbarStyle(value) {
-            settings.taskbar.style = value;
-            saveSettings();
-            showCategory('personalization');
-        }
+function buildThemesGrid() {
+  const grid = document.getElementById('themes-grid');
+  grid.innerHTML='';
+  THEMES.forEach(t => {
+    const el = document.createElement('div');
+    el.className = 'theme-card' + (t.id===selectedTheme?' sel':'');
+    el.id = 'theme-'+t.id;
+    const barBg = t.dark?'rgba(0,0,0,.6)':t.sidebar;
+    el.innerHTML = `
+      <div class="tc-preview" style="background:${t.bg}">
+        <div class="tc-bar" style="background:${barBg}">
+          <div class="tc-dot" style="background:#ff5f57"></div>
+          <div class="tc-dot" style="background:#febc2e"></div>
+          <div class="tc-dot" style="background:#28c840"></div>
+          <div style="flex:1;height:5px;border-radius:3px;background:rgba(${t.dark?'255,255,255':'0,0,0'},.15);margin:0 5px;"></div>
+        </div>
+        <div class="tc-body">
+          <div class="tc-side" style="background:${t.sidebar};border:1px solid rgba(${t.dark?'255,255,255':'0,0,0'},.08)"></div>
+          <div class="tc-main" style="background:${t.surface};border:1px solid rgba(${t.dark?'255,255,255':'0,0,0'},.05)"></div>
+        </div>
+      </div>
+      <div class="tc-name" style="background:${t.surface};color:${t.text}">${t.name}</div>`;
+    el.onclick = () => applyBuiltinTheme(t.id);
+    grid.appendChild(el);
+  });
+}
 
-        function updateTaskbarSize(value) {
-            settings.taskbar.size = value;
-            saveSettings();
-            showCategory('personalization');
-        }
+function applyBuiltinTheme(id) {
+  const t = THEMES.find(th=>th.id===id);
+  if (!t) return;
+  selectedTheme = id;
+  document.querySelectorAll('.theme-card').forEach(c=>c.classList.toggle('sel', c.id==='theme-'+id));
+  const root = document.documentElement;
+  root.style.setProperty('--bg', t.bg);
+  root.style.setProperty('--surface', t.surface);
+  root.style.setProperty('--sidebar', t.sidebar);
+  root.style.setProperty('--text', t.text);
+  if (t.dark) root.setAttribute('data-theme','dark');
+  else root.removeAttribute('data-theme');
+  applyAccent(t.accent, false);
+  settings.theme = t.dark ? 'dark' : 'light';
+  settings.accentColor = t.accent;
+  document.getElementById('tog-dark')?.classList.toggle('on', t.dark);
+  saveSettings();
+  if (wm && wm.setTheme) wm.setTheme(t.dark?'dark':'light');
+  toast('Thème «'+t.name+'» appliqué');
+}
 
-        function updateGoogleDriveClientId(value) {
-            settings.accounts.googledrive = settings.accounts.googledrive || {};
-            settings.accounts.googledrive.clientId = (value || '').trim();
-            saveSettings();
-        }
+// ── ACCENT ──
+const ACCENTS = [
+  '#0078d4','#5e5ce6','#e91e63','#dc2626','#ff9500',
+  '#ffcc00','#34c759','#32ade6','#00c7be','#bf5af2',
+  '#ffd700','#ff6b6b','#84cc16','#8e8e93','#f97316','#06b6d4',
+];
 
-        function setSecurityLevel(level) {
-            settings.security.level = level;
-            saveSettings();
-        }
+function buildAccentGrid() {
+  const grid = document.getElementById('accent-grid');
+  grid.innerHTML='';
+  ACCENTS.forEach(c => {
+    const el = document.createElement('div');
+    el.className = 'acc-swatch' + (c===settings.accentColor?' sel':'');
+    el.style.background = c;
+    el.title = c;
+    el.onclick = () => applyAccent(c, false);
+    grid.appendChild(el);
+  });
+}
 
-        function connectAccount(service) {
-            if (service === 'googledrive') {
-                connectGoogleDrive();
-                return;
-            }
-            const defaultUrl = service === 'onedrive' ? 'https://onedrive.live.com' : 'https://drive.google.com';
-            const label = service === 'onedrive' ? 'OneDrive' : 'Google Drive';
-            const email = prompt(`Adresse du compte ${label} :`, settings.accounts[service]?.email || '');
-            if (!email) return;
-            const driveUrl = prompt(`URL de votre espace ${label} :`, settings.accounts[service]?.driveUrl || defaultUrl);
-            if (!driveUrl) return;
-            settings.accounts[service] = {
-                connected: true,
-                email: email.trim(),
-                driveUrl: driveUrl.trim()
-            };
-            saveSettings();
-            if (wm && wm.notify) wm.notify('Comptes', `${label} lié avec succès`, 'accounts');
-            showCategory('accounts');
-        }
+function applyAccent(hex, fromPicker=false) {
+  const rgb = hexToRgb(hex);
+  if (!rgb) return;
+  const root = document.documentElement;
+  root.style.setProperty('--accent', hex);
+  root.style.setProperty('--accent-rgb', `${rgb.r},${rgb.g},${rgb.b}`);
+  root.style.setProperty('--accent2', darken(hex, 15));
+  if (!fromPicker) { const inp=document.getElementById('accent-custom'); if(inp) inp.value=hex; }
+  document.getElementById('accent-hex').textContent = hex;
+  document.querySelectorAll('.acc-swatch').forEach(s => s.classList.toggle('sel', s.style.backgroundColor && colorMatch(s.style.backgroundColor, hex)));
+  settings.accentColor = hex;
+  markUnsaved();
+  if (wm && wm.setAccentColor) wm.setAccentColor(hex);
+}
 
-        function editAccountLink(service) {
-            connectAccount(service);
-        }
+// ── WALLPAPERS ──
+const WALLPAPERS = [
+  {id:'w1',  style:'linear-gradient(135deg,#667eea,#764ba2)'},
+  {id:'w2',  style:'linear-gradient(135deg,#f093fb,#f5576c)'},
+  {id:'w3',  style:'linear-gradient(135deg,#4facfe,#00f2fe)'},
+  {id:'w4',  style:'linear-gradient(135deg,#43e97b,#38f9d7)'},
+  {id:'w5',  style:'linear-gradient(135deg,#fa709a,#fee140)'},
+  {id:'w6',  style:'linear-gradient(135deg,#a18cd1,#fbc2eb)'},
+  {id:'w7',  style:'linear-gradient(135deg,#2193b0,#6dd5ed)'},
+  {id:'w8',  style:'linear-gradient(135deg,#cc2b5e,#753a88)'},
+  {id:'w9',  style:'linear-gradient(135deg,#11998e,#38ef7d)'},
+  {id:'w10', style:'linear-gradient(135deg,#f7971e,#ffd200)'},
+  {id:'w11', style:'linear-gradient(160deg,#0093E9,#80D0C7)'},
+  {id:'w12', style:'linear-gradient(135deg,#1a1a2e,#16213e,#0f3460)'},
+  {id:'w13', style:'linear-gradient(135deg,#0a0014,#14001e)'},
+  {id:'w14', style:'conic-gradient(from 225deg,#ff6b6b,#ffd93d,#6bcb77,#4d96ff,#ff6b6b)'},
+  {id:'w15', style:'radial-gradient(circle at 20% 80%,#120078,#8e2de2)'},
+  {id:'w16', style:'linear-gradient(135deg,#1c0a00,#8b4513)'},
+  {id:'w17', style:'linear-gradient(135deg,#0f0c29,#302b63,#24243e)'},
+  {id:'w18', style:'linear-gradient(135deg,#191724,#c4a7e7)'},
+];
+let selWp = 'w1';
 
-        async function connectGoogleDrive() {
-            const clientId = (settings.accounts.googledrive && settings.accounts.googledrive.clientId) || getRuntimeGoogleClientId();
-            if (!clientId) {
-                alert("Renseigne d'abord un Google OAuth Client ID pour Google Drive.");
-                return;
-            }
-            try {
-                if (wm && wm.notify) wm.notify('Comptes', 'Connexion à Google Drive...', 'accounts');
-                const token = await requestGoogleDriveToken(clientId, 'consent');
-                const accessToken = token.access_token;
-                const email = await fetchGoogleAccountEmail(accessToken);
-                settings.accounts.googledrive = {
-                    connected: true,
-                    email: email || settings.accounts.googledrive.email || '',
-                    driveUrl: 'googledrive://root',
-                    clientId,
-                    accessToken,
-                    expiresAt: Date.now() + ((token.expires_in || 3600) * 1000)
-                };
-                saveSettings();
-                if (wm && wm.notify) wm.notify('Comptes', 'Google Drive lié avec succès', 'accounts');
-                showCategory('accounts');
-            } catch (error) {
-                alert(`Connexion Google Drive impossible: ${error.message}`);
-            }
-        }
+function buildWpGrid() {
+  const grid = document.getElementById('wp-grid');
+  grid.innerHTML='';
+  WALLPAPERS.forEach(w => {
+    const el = document.createElement('div');
+    el.className = 'wp-thumb' + (w.id===selWp?' sel':'');
+    el.id = 'wp-'+w.id;
+    el.innerHTML = `<div style="background:${w.style};width:100%;height:100%;"></div>`;
+    el.onclick = () => {
+      selWp = w.id;
+      document.querySelectorAll('.wp-thumb').forEach(t=>t.classList.toggle('sel',t.id==='wp-'+w.id));
+      settings.personalization.wallpaper = w.style;
+      if (wm && wm.setWallpaper) wm.setWallpaper(w.style);
+      markUnsaved();
+      toast('Fond d\'écran appliqué');
+    };
+    grid.appendChild(el);
+  });
+}
 
-        function disconnectAccount(service) {
-            if (confirm(`Déconnecter de ${service}?`)) {
-                settings.accounts[service] = service === 'googledrive'
-                    ? { connected: false, email: '', driveUrl: 'https://drive.google.com', clientId: settings.accounts.googledrive?.clientId || '', accessToken: '', expiresAt: 0 }
-                    : { connected: false, email: '', driveUrl: 'https://onedrive.live.com' };
-                saveSettings();
-                if (wm && wm.notify) {
-                    wm.notify('Comptes', `Déconnecté de ${service}`, 'accounts');
-                }
-                showCategory('accounts');
-            }
-        }
+// ── FONTS ──
+const FONTS = [
+  {name:'Geist',        label:'Geist',         preview:'AetherOS — Typographie moderne'},
+  {name:'Georgia',      label:'Georgia Serif',  preview:'AetherOS — Élégance classique'},
+  {name:'Courier New',  label:'Courier Mono',   preview:'AetherOS — Style terminal'},
+  {name:'Trebuchet MS', label:'Trebuchet',       preview:'AetherOS — Humaniste'},
+  {name:'Palatino',     label:'Palatino',        preview:'AetherOS — Raffinement'},
+  {name:'Verdana',      label:'Verdana',         preview:'AetherOS — Lisibilité maximale'},
+  {name:'Tahoma',       label:'Tahoma',          preview:'AetherOS — Compact et net'},
+];
+let selFont = (settings && settings.personalization && settings.personalization.fontFamily)
+  ? settings.personalization.fontFamily
+  : 'Geist';
 
-        function toggleNotificationsEnabled() {
-            settings.notifications.enabled = !settings.notifications.enabled;
-            saveSettings();
-            showCategory('notifications');
-        }
+function buildFontList() {
+  const list = document.getElementById('font-list');
+  list.innerHTML='';
+  FONTS.forEach(f => {
+    const el = document.createElement('div');
+    el.className = 'font-item' + (f.name===selFont?' sel':'');
+    el.innerHTML = `<div class="fi-preview" style="font-family:'${f.name}'">${f.preview}</div><div class="fi-meta">${f.label}</div><div class="fi-check">✓</div>`;
+    el.onclick = () => {
+      selFont = f.name;
+      document.querySelectorAll('.font-item').forEach(i=>i.classList.remove('sel'));
+      el.classList.add('sel');
+      document.body.style.fontFamily = `'${f.name}',var(--font)`;
+      settings.personalization.fontFamily = f.name;
+      if (wm && wm.setFontFamily) wm.setFontFamily(f.name);
+      markUnsaved();
+      toast('Police «'+f.label+'» appliquée');
+    };
+    list.appendChild(el);
+  });
+}
 
-        function toggleNotificationType(typeKey) {
-            const types = settings.notifications.types || (settings.notifications.types = {});
-            const current = types[typeKey] !== false;
-            types[typeKey] = !current;
-            saveSettings();
-            showCategory('notifications');
-        }
+function changeFontSize(v) {
+  document.getElementById('fs-label').textContent = v+'px';
+  document.documentElement.style.fontSize = v+'px';
+  settings.accessibility.fontPx = parseInt(v) || 14;
+  if (wm && wm.setBaseFontSizePx) wm.setBaseFontSizePx(settings.accessibility.fontPx);
+  const pct = ((v-11)/(20-11)*100).toFixed(0);
+  document.getElementById('fs-slider').style.setProperty('--v', pct+'%');
+  markUnsaved();
+}
 
-        function setNotificationDuration(seconds) {
-            const sec = Math.max(2, Math.min(15, parseInt(seconds, 10) || 5));
-            settings.notifications.durationMs = sec * 1000;
-            saveSettings();
-            showCategory('notifications');
-        }
+// ── DARK MODE ──
+function toggleDark() {
+  const isDark = document.documentElement.getAttribute('data-theme')==='dark';
+  if (isDark) { document.documentElement.removeAttribute('data-theme'); settings.theme='light'; }
+  else { document.documentElement.setAttribute('data-theme','dark'); settings.theme='dark'; }
+  document.getElementById('tog-dark').classList.toggle('on', !isDark);
+  saveSettings();
+  if (wm && wm.setTheme) wm.setTheme(settings.theme);
+}
 
-        function sendTestNotification() {
-            if (wm && wm.notify) {
-                wm.notify('Notification', 'Ceci est une notification de test.', 'system', { durationMs: settings.notifications.durationMs || 5000 });
-            }
-        }
+function toggleAnims() {
+  const btn = document.getElementById('tog-anims');
+  btn.classList.toggle('on');
+  const on = btn.classList.contains('on');
+  if (!on) document.documentElement.style.setProperty('--dur','0s');
+  else document.documentElement.style.removeProperty('--dur');
+  markUnsaved();
+}
 
-        function toggleHighContrast() {
-            settings.accessibility.highContrast = !settings.accessibility.highContrast;
-            saveSettings();
-            if (wm && wm.accessibility) {
-                wm.accessibility.highContrast = settings.accessibility.highContrast;
-                if (wm.applyAccessibilitySettings) wm.applyAccessibilitySettings();
-            }
-            
-            if (settings.accessibility.highContrast) {
-                document.documentElement.classList.add('high-contrast');
-                if (wm && wm.notify) {
-                    wm.notify('Accessibilité', 'Contraste élevé activé', 'settings_change');
-                }
-            } else {
-                document.documentElement.classList.remove('high-contrast');
-                if (wm && wm.notify) {
-                    wm.notify('Accessibilité', 'Contraste élevé désactivé', 'settings_change');
-                }
-            }
-        }
+// ── SECURITY LEVELS ──
+const SEC_LEVELS = [
+  {id:'low',    name:'Faible',  ico:'🔓', sub:'Toutes apps autorisées'},
+  {id:'normal', name:'Normal',  ico:'🛡️',  sub:'Recommandé'},
+  {id:'high',   name:'Élevé',   ico:'🔐', sub:'Apps vérifiées seulement'},
+  {id:'strict', name:'Strict',  ico:'⛔', sub:'Contrôle maximal'},
+];
 
-        function toggleLargeText() {
-            settings.accessibility.largeText = !settings.accessibility.largeText;
-            saveSettings();
-            if (wm && wm.accessibility) {
-                wm.accessibility.fontSize = settings.accessibility.largeText ? '18px' : '14px';
-                if (wm.applyAccessibilitySettings) wm.applyAccessibilitySettings();
-            }
-            
-            if (settings.accessibility.largeText) {
-                document.documentElement.style.fontSize = '18px';
-                if (wm && wm.notify) {
-                    wm.notify('Accessibilité', 'Texte agrandi activé', 'settings_change');
-                }
-            } else {
-                document.documentElement.style.fontSize = '14px';
-                if (wm && wm.notify) {
-                    wm.notify('Accessibilité', 'Texte agrandi désactivé', 'settings_change');
-                }
-            }
-        }
+function buildSecLevels() {
+  const el = document.getElementById('sec-levels');
+  el.innerHTML='';
+  SEC_LEVELS.forEach(l => {
+    const div = document.createElement('div');
+    div.className = 'sec-level' + (settings.security.level===l.id?' sel':'');
+    div.innerHTML = `<div class="sec-level-ico">${l.ico}</div><div class="sec-level-name">${l.name}</div><div class="sec-level-sub">${l.sub}</div>`;
+    div.onclick = () => setSecurityLevel(l.id);
+    el.appendChild(div);
+  });
+}
 
-        function toggleReducedMotion() {
-            settings.accessibility.reducedMotion = !settings.accessibility.reducedMotion;
-            saveSettings();
-            
-            if (settings.accessibility.reducedMotion) {
-                document.documentElement.style.setProperty('--transition-fast', '0s');
-                document.documentElement.style.setProperty('--transition-normal', '0s');
-                if (wm && wm.notify) {
-                    wm.notify('Accessibilité', 'Mouvements réduits activés', 'settings_change');
-                }
-            } else {
-                document.documentElement.style.setProperty('--transition-fast', '150ms ease');
-                document.documentElement.style.setProperty('--transition-normal', '250ms ease');
-                if (wm && wm.notify) {
-                    wm.notify('Accessibilité', 'Mouvements réduits désactivés', 'settings_change');
-                }
-            }
-        }
+// ── ACCOUNTS LIST ──
+const ACCOUNT_SVCS = [
+  {id:'onedrive',   name:'OneDrive',     icon:'<i class="fab fa-microsoft" style="color:#0078d4"></i>'},
+  {id:'googledrive',name:'Google Drive', icon:'<i class="fab fa-google-drive" style="color:#4285f4"></i>'},
+];
 
-        function setFontSize(size) {
-            settings.accessibility.fontSize = size;
-            saveSettings();
-            
-            const fontSizes = {
-                small: '12px',
-                normal: '14px',
-                large: '16px',
-                'extra-large': '18px'
-            };
-            
-            document.documentElement.style.fontSize = fontSizes[size];
-            if (wm && wm.notify) {
-                wm.notify('Accessibilité', `Taille du texte: ${size}`, 'settings_change');
-            }
-        }
+function buildAccountsList() {
+  const list = document.getElementById('accounts-list');
+  list.innerHTML='';
+  ACCOUNT_SVCS.forEach(svc => {
+    const acc = settings.accounts[svc.id]||{};
+    const connected = !!acc.connected;
+    const el = document.createElement('div');
+    el.className = 'account-item';
+    el.innerHTML = `
+      <div class="ai-icon" style="background:var(--surface2)">${svc.icon}</div>
+      <div class="ai-info">
+        <div class="ai-name">${svc.name} ${connected?'<span style="color:var(--success);font-size:11px;">✓ Connecté</span>':''}</div>
+        <div class="ai-status ${connected?'ok':'off'}">${connected?acc.email||'Connecté':'Non connecté'}</div>
+      </div>
+      <div class="flex-row">
+        ${connected?`<button class="btn" onclick="editAccountLink('${svc.id}')">Modifier</button><button class="btn danger" onclick="disconnectAccount('${svc.id}')">Déconnecter</button>`
+                   :`<button class="btn primary" onclick="connectAccount('${svc.id}')">Lier</button>`}
+      </div>`;
+    list.appendChild(el);
+  });
+  // Sync Google client ID input
+  const cinp = document.getElementById('googledrive-client-id');
+  if (cinp) cinp.value = settings.accounts.googledrive?.clientId || getRuntimeGoogleClientId() || '';
+}
 
-        function addStartupApp() {
-            if (wm && wm.notify) {
-                wm.notify('Applications', 'Application ajoutée au démarrage', 'settings_change');
-            }
-        }
+// ── NOTIFICATION TYPES ──
+const NOTIF_TYPES = [
+  {key:'system',          title:'Système',              desc:'Alertes générales OS'},
+  {key:'settings_change', title:'Changements paramètres',desc:'Modifications de réglages'},
+  {key:'security',        title:'Sécurité',             desc:'Alertes de sécurité'},
+  {key:'accounts',        title:'Comptes',              desc:'Connexion / déconnexion cloud'},
+  {key:'store',           title:'Store',                desc:'Infos du store'},
+  {key:'install',         title:'Installation',         desc:'Install / suppression d\'apps'},
+  {key:'dock',            title:'Dock',                 desc:'Actions du dock'},
+  {key:'immersive',       title:'Mode immersif',        desc:'Plein écran'},
+  {key:'file',            title:'Fichiers',             desc:'Opérations VFS'},
+];
 
-        // Initialize
-        document.addEventListener('DOMContentLoaded', () => {
-            console.log('Settings app initialized');
-            applyTheme();
-            applyPersonalization();
-            applyNotifications();
-            showCategory('apps');
-        });
-    </script>
+function buildNotifTypes() {
+  const list = document.getElementById('notif-types-list');
+  list.innerHTML='';
+  NOTIF_TYPES.forEach(t => {
+    const on = settings.notifications.types[t.key]!==false;
+    const el = document.createElement('div');
+    el.className='row';
+    el.innerHTML=`
+      <div class="row-info"><div class="row-label">${t.title}</div><div class="row-sub">${t.desc}</div></div>
+      <div class="row-ctrl">
+        <button class="tog ${on?'on':''}" id="tog-notif-${t.key}" onclick="toggleNotificationType('${t.key}');this.classList.toggle('on')"></button>
+      </div>`;
+    list.appendChild(el);
+  });
+}
+
+// ── SHORTCUTS ──
+const SHORTCUTS_SYS = [
+  {name:'Spotlight',          keys:['⌘','Espace']},
+  {name:'Capture d\'écran',   keys:['⌘','Shift','3']},
+  {name:'Fermer fenêtre',     keys:['⌘','W']},
+  {name:'Nouvelle fenêtre',   keys:['⌘','N']},
+  {name:'Paramètres',         keys:['⌘',',']},
+  {name:'Afficher le bureau', keys:['⌘','M']},
+  {name:'Changer d\'app',     keys:['⌘','Tab']},
+  {name:'Quitter l\'app',     keys:['⌘','Q']},
+];
+const SHORTCUTS_APPS = [
+  {name:'Explorateur',   keys:['⌘','E']},
+  {name:'Éditeur',       keys:['⌘','T']},
+  {name:'Terminal',      keys:['⌘','Alt','T']},
+  {name:'Calculatrice',  keys:['⌘','K']},
+  {name:'Navigateur',    keys:['⌘','B']},
+  {name:'Gestionnaire',  keys:['⌘','Shift','M']},
+];
+
+function buildShortcuts() {
+  function render(items, containerId) {
+    const c = document.getElementById(containerId);
+    c.innerHTML='';
+    items.forEach(s => {
+      const el = document.createElement('div');
+      el.className='sc-row';
+      el.innerHTML=`<span class="sc-name">${s.name}</span><div class="sc-keys">${s.keys.map(k=>`<span class="key">${k}</span>`).join('')}</div>`;
+      c.appendChild(el);
+    });
+  }
+  render(SHORTCUTS_SYS,'sc-system');
+  render(SHORTCUTS_APPS,'sc-apps');
+}
+
+// ── STORAGE ──
+function updateStorageInfo() {
+  try {
+    let vfsStr='', files=0;
+    const wm2 = window.parent&&window.parent.windowManager;
+    if (wm2&&wm2.vfs) { try{vfsStr=JSON.stringify(wm2.vfs);files=Object.keys(wm2.vfs).length;}catch{} }
+    else { try{vfsStr=localStorage.getItem('funnywebos_vfs')||'';files=Object.keys(JSON.parse(vfsStr||'{}')).length;}catch{} }
+    const bytes = new Blob([vfsStr]).size;
+    const kb = (bytes/1024).toFixed(1);
+    const mb = (bytes/1048576).toFixed(2);
+    const display = bytes>1048576?mb+' MB':kb+' KB';
+    const pct = Math.min((bytes/5242880*100),100).toFixed(1);
+    document.getElementById('storage-text').textContent = `${display} utilisé · ${files} fichiers · ${pct}% de 5 MB`;
+    document.getElementById('storage-fill').style.width = pct+'%';
+  } catch(e) { document.getElementById('storage-text').textContent = 'Erreur calcul'; }
+}
+
+function clearVFS() {
+  if (!confirm('Vider tout le stockage VFS ? Cette action est irréversible.')) return;
+  try{localStorage.removeItem('funnywebos_vfs');}catch{}
+  updateStorageInfo();
+  toast('Stockage VFS vidé');
+}
+
+function updateAboutInfo() {
+  try {
+    const wm2 = window.parent&&window.parent.windowManager;
+    document.getElementById('about-apps').textContent = (wm2&&wm2.appsRegistry)?wm2.appsRegistry.length:'—';
+    let files=0;
+    if(wm2&&wm2.vfs) try{files=Object.keys(wm2.vfs).length;}catch{}
+    document.getElementById('about-files').textContent = files;
+  } catch{}
+}
+
+// ── CUSTOM THEME EDITOR ──
+function openCustomTheme() { showPanel('custom-theme'); }
+function updateTePreview() {
+  const bg=document.getElementById('te-bg').value;
+  const surface=document.getElementById('te-surface').value;
+  const sidebar=document.getElementById('te-sidebar').value;
+  document.getElementById('te-prev').style.background=bg;
+  document.getElementById('te-bar').style.background=hexToRgba(sidebar,.88);
+  document.getElementById('te-side').style.background=sidebar;
+  document.getElementById('te-main').style.background=surface;
+  ['bg','surface','text','accent','sidebar'].forEach(id=>{
+    const inp=document.getElementById('te-'+id);
+    const lbl=document.getElementById('te-'+id+'-val');
+    if(inp&&lbl) lbl.textContent=inp.value;
+  });
+  const brdLbl=document.getElementById('te-border-val');
+  const brdInp=document.getElementById('te-border');
+  if(brdInp&&brdLbl) brdLbl.textContent=brdInp.value;
+}
+function applyTePreviewLive() {
+  const bg=document.getElementById('te-bg').value;
+  const surface=document.getElementById('te-surface').value;
+  const text=document.getElementById('te-text').value;
+  const accent=document.getElementById('te-accent').value;
+  const sidebar=document.getElementById('te-sidebar').value;
+  const root=document.documentElement;
+  root.style.setProperty('--bg',bg);
+  root.style.setProperty('--surface',surface);
+  root.style.setProperty('--text',text);
+  root.style.setProperty('--sidebar',sidebar);
+  applyAccent(accent,false);
+  toast('Aperçu live appliqué');
+}
+function saveCustomTheme() {
+  const name=document.getElementById('te-name').value||'Mon thème';
+  const bg=document.getElementById('te-bg').value;
+  const surface=document.getElementById('te-surface').value;
+  const text=document.getElementById('te-text').value;
+  const accent=document.getElementById('te-accent').value;
+  const sidebar=document.getElementById('te-sidebar').value;
+  const isDark=parseInt(bg.replace('#',''),16)<0x888888*3;
+  const id='custom-'+Date.now();
+  THEMES.push({id,name,bg,surface,sidebar,text,accent,dark:isDark});
+  buildThemesGrid();
+  applyBuiltinTheme(id);
+  showPanel('personalization');
+  toast('Thème «'+name+'» créé et appliqué !');
+}
+
+// ── PROFILE ──
+function saveProfile() {
+  const name=document.getElementById('pref-username').value||'Admin';
+  document.getElementById('profile-name-disp').textContent=name;
+  document.getElementById('profile-av').textContent=(name[0]||'A').toUpperCase();
+  markUnsaved();
+  saveSettings();
+  toast('Profil mis à jour ✅');
+}
+function signOut() { if(confirm('Se déconnecter ?')) try{window.parent.postMessage({type:'aether_signout'},'*');}catch{} }
+
+// ── SYNC ──
+function syncNow() {
+  const now=new Date().toLocaleTimeString('fr-FR');
+  document.getElementById('last-sync-label').textContent='Aujourd\'hui à '+now;
+  toast('Synchronisation terminée ✅');
+  try{window.parent.postMessage({type:'aether_sync_request'},'*');}catch{}
+}
+
+// ── EXPORT / IMPORT ──
+function exportSettings() {
+  try {
+    const blob=new Blob([JSON.stringify(settings,null,2)],{type:'application/json'});
+    const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='aether-settings.json';a.click();
+    toast('Paramètres exportés');
+  } catch { toast('Erreur export'); }
+}
+function importSettings() {
+  const inp=document.createElement('input');inp.type='file';inp.accept='.json';
+  inp.onchange=e=>{
+    const f=e.target.files[0];if(!f)return;
+    const r=new FileReader();
+    r.onload=ev=>{
+      try{settings=JSON.parse(ev.target.result);localStorage.setItem('aether_settings',JSON.stringify(settings));applyTheme();applyPersonalization();toast('Paramètres importés ✅');}
+      catch{toast('Fichier invalide');}
+    };r.readAsText(f);
+  };inp.click();
+}
+function resetAll() {
+  if(!confirm('Réinitialiser TOUS les paramètres ? Irréversible.')) return;
+  localStorage.clear();location.reload();
+}
+
+// ── UNSAVED ──
+function markUnsaved() { document.getElementById('save-badge').classList.add('show'); }
+function clearUnsaved() { document.getElementById('save-badge').classList.remove('show'); }
+document.addEventListener('change',()=>{clearUnsaved();});
+
+// ── TOAST ──
+function toast(msg) {
+  const el=document.getElementById('toast');
+  el.textContent=msg;el.style.display='block';
+  clearTimeout(el._t);el._t=setTimeout(()=>el.style.display='none',3000);
+}
+
+// ── UTILS ──
+function hexToRgb(hex) {
+  const r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);
+  if(isNaN(r)) return null;return{r,g,b};
+}
+function hexToRgba(hex,a) { const rgb=hexToRgb(hex);if(!rgb)return hex;return`rgba(${rgb.r},${rgb.g},${rgb.b},${a})`; }
+function darken(hex,pct) {
+  const rgb=hexToRgb(hex);if(!rgb)return hex;
+  return'#'+[rgb.r,rgb.g,rgb.b].map(c=>Math.max(0,Math.round(c*(1-pct/100))).toString(16).padStart(2,'0')).join('');
+}
+function colorMatch(cssColor,hex) {
+  try{const d=document.createElement('div');d.style.color=hex;document.body.appendChild(d);const c=getComputedStyle(d).color;d.remove();
+  const d2=document.createElement('div');d2.style.color=cssColor;document.body.appendChild(d2);const c2=getComputedStyle(d2).color;d2.remove();return c===c2;}catch{return false;}
+}
+
+// ── INIT ──
+document.addEventListener('DOMContentLoaded',()=>{
+  applyTheme();
+  applyPersonalization();
+  applyNotifications();
+
+  // Sync toggles
+  document.getElementById('tog-dark')?.classList.toggle('on', settings.theme==='dark');
+  document.getElementById('tog-contrast')?.classList.toggle('on', settings.accessibility.highContrast);
+  document.getElementById('tog-largetext')?.classList.toggle('on', settings.accessibility.largeText);
+  document.getElementById('tog-reduced')?.classList.toggle('on', settings.accessibility.reducedMotion);
+  document.getElementById('tog-notif-enabled')?.classList.toggle('on', settings.notifications.enabled);
+  document.getElementById('tog-sec-warn')?.classList.toggle('on', settings.security.warnings);
+
+  // Sync selects for taskbar
+  ['left','right','bottom','top'].forEach(v=>{ const o=document.querySelector(`#panel-personalization select option[value="${v}"]`);if(o&&settings.taskbar.position===v)o.selected=true; });
+
+  // Build all components
+  buildNav();
+  buildThemesGrid();
+  buildAccentGrid();
+  buildWpGrid();
+  buildFontList();
+
+  // Apply saved typography to this app immediately (and to the OS via wm in applyPersonalization).
+  try {
+    if (settings.personalization && settings.personalization.fontFamily) {
+      document.body.style.fontFamily = `'${settings.personalization.fontFamily}',var(--font)`;
+    }
+    const px = parseInt(settings.accessibility && settings.accessibility.fontPx) || 14;
+    const fs = document.getElementById('fs-slider');
+    if (fs) fs.value = String(px);
+    changeFontSize(px);
+  } catch(e) {}
+
+  buildSecLevels();
+  buildAccountsList();
+  buildNotifTypes();
+  buildShortcuts();
+
+  // Restore profile
+  try {
+    const raw=JSON.parse(localStorage.getItem('aether_settings')||'{}');
+    if(raw['pref-username']){document.getElementById('pref-username').value=raw['pref-username'];document.getElementById('profile-name-disp').textContent=raw['pref-username'];document.getElementById('profile-av').textContent=(raw['pref-username'][0]||'A').toUpperCase();}
+    if(raw['pref-email']) document.getElementById('pref-email').value=raw['pref-email'];
+  }catch{}
+
+  // Try loading username from WM
+  try{const u=window.parent.windowManager?.currentUser;if(u){document.getElementById('pref-username').value=u;document.getElementById('profile-name-disp').textContent=u;document.getElementById('profile-av').textContent=(u[0]||'A').toUpperCase();}}catch{}
+
+  // Notif slider
+  const dur=Math.round((settings.notifications.durationMs||5000)/1000);
+  const sl=document.getElementById('notif-dur-slider');
+  if(sl){sl.value=dur;sl.style.setProperty('--v',((dur-2)/(15-2)*100).toFixed(0)+'%');}
+  document.getElementById('notif-dur-val').textContent=dur+'s';
+  document.getElementById('notif-dur-label').textContent=dur+'s';
+
+  // Accent custom input sync
+  document.getElementById('accent-custom').value=settings.accentColor||'#0078d4';
+  document.getElementById('accent-hex').textContent=settings.accentColor||'#0078d4';
+
+  showPanel('profil');
+  syncNotifUI();
+});
+
+window.addEventListener('message',e=>{
+  if(e.data?.type==='funnyweb_user_sync'){
+    const n=e.data.userName||'Admin';
+    document.getElementById('pref-username').value=n;
+    document.getElementById('profile-name-disp').textContent=n;
+    document.getElementById('profile-av').textContent=(n[0]||'A').toUpperCase();
+    buildAccountsList();
+  }
+});
+</script>
 </body>
 </html>

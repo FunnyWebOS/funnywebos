@@ -4,6 +4,26 @@
 <meta charset="UTF-8">
 <title>AetherSlides</title>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script>
+(() => {
+  const applyTheme = (raw) => {
+    const theme = raw === 'light' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', theme);
+    if (document.body) document.body.dataset.theme = theme;
+  };
+
+  try {
+    const parentTheme = window.parent?.document?.documentElement?.getAttribute('data-theme') || '';
+    if (parentTheme) applyTheme(parentTheme);
+  } catch (e) {}
+
+  window.addEventListener('message', (e) => {
+    const data = e.data || {};
+    if (data.type === 'funnyweb_theme_change') applyTheme(data.theme);
+    if (data.type === 'funnyweb_user_sync' && data.theme) applyTheme(data.theme);
+  });
+})();
+</script>
 <style>
 /* ═══════════════════════════════════════════════
    AETHERSLIDES — PowerPoint-faithful UI
@@ -30,6 +50,23 @@
   --font: 'IBM Plex Sans', 'Segoe UI', system-ui, sans-serif;
   --r: 3px;
 }
+:root[data-theme="light"]{ color-scheme: light; }
+:root[data-theme="dark"]{
+  color-scheme: dark;
+  --accent-l: rgba(231,76,60,0.16);
+  --bg:      #0b1220;
+  --bg2:     #0f172a;
+  --white:   #0f172a;
+  --panel:   #0f172a;
+  --ribbon:  #0b1220;
+  --border:  rgba(255,255,255,0.12);
+  --border2: rgba(255,255,255,0.18);
+  --text:    #e5e7eb;
+  --text2:   rgba(229,231,235,0.72);
+  --text3:   rgba(229,231,235,0.45);
+}
+:root[data-theme="dark"] ::-webkit-scrollbar-track{ background: var(--bg2); }
+:root[data-theme="dark"] ::-webkit-scrollbar-thumb{ background: rgba(255,255,255,0.18); }
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 html, body {
   height: 100vh; overflow: hidden;
