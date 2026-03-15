@@ -12,7 +12,7 @@
     <meta property="og:title" content="AetherOS - Pure Digital Fluidity">
     <meta property="og:description" content="Découvrez le futur du WebOS avec AetherOS.">
     <meta property="og:type" content="website">
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style.css?v=202503150912">
 </head>
 
 <body>
@@ -92,8 +92,8 @@
                     <div id="login-profile-subtitle" class="lockscreen-profile-subtitle">Entrez votre code PIN</div>
 
                     <div class="lockscreen-auth-card">
-                        <input type="password" id="login-pin-input" placeholder="Code PIN" class="setup-input" maxlength="4"
-                            inputmode="numeric" pattern="[0-9]*"
+                        <input type="tel" id="login-pin-input" placeholder="Code PIN" class="setup-input" maxlength="4"
+                            inputmode="numeric" pattern="[0-9]*" autocomplete="one-time-code" enterkeyhint="done"
                             onkeydown="if(event.key==='Enter'){windowManager.attemptLogin();}">
                         <button class="setup-btn lockscreen-submit" onclick="windowManager.attemptLogin()">Connexion</button>
                         <button class="lockscreen-forgot-btn" onclick="windowManager.showSetup(2)">J'ai oublie mon PIN</button>
@@ -310,6 +310,125 @@
         </div>
     </div>
     <!-- End of #desktop -->
+
+    <!-- Phone shell (mobile-first UI) -->
+    <div id="phone" style="display:none; opacity:0;">
+        <div class="phone-shell">
+            <div class="phone-statusbar" id="phone-statusbar">
+                <div class="phone-status-left">
+                    <span id="phone-time">12:00</span>
+                </div>
+                <div class="phone-status-right">
+                    <span class="phone-status-pill" id="phone-shell-label">AetherOS</span>
+                </div>
+            </div>
+
+            <!-- Quick settings / Control Center -->
+            <div class="phone-control-center" id="phone-control-center" aria-hidden="true">
+                <div class="phone-cc-card">
+                    <div class="phone-cc-row">
+                        <div class="phone-cc-title">Contrôles rapides</div>
+                        <button class="phone-cc-close" type="button" onclick="windowManager.closePhoneControlCenter()">×</button>
+                    </div>
+                    <div class="phone-cc-grid">
+                        <button class="phone-cc-tile" type="button" onclick="windowManager.togglePhoneTheme()">Thème</button>
+                        <button class="phone-cc-tile" type="button" onclick="windowManager.toggleImmersiveMode()">Immersif</button>
+                        <button class="phone-cc-tile" type="button" onclick="windowManager.togglePhoneDrawer(true)">Apps</button>
+                        <button class="phone-cc-tile" type="button" onclick="windowManager.openPhoneWidgetPicker()">Widgets</button>
+                        <button class="phone-cc-tile" type="button" onclick="windowManager.showPhoneRecents()">Récents</button>
+                        <button class="phone-cc-tile settings" type="button" onclick="openApp('settings')">⚙️ Paramètres</button>
+                        <button class="phone-cc-tile" type="button" onclick="windowManager.lockSession()">Verrouiller</button>
+                    </div>
+                    <div class="phone-cc-row phone-cc-volume">
+                        <div class="phone-cc-muted">Volume</div>
+                        <input id="phone-volume" type="range" min="0" max="1" step="0.01" value="1"
+                            oninput="windowManager.setPhoneMasterVolume(this.value)">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Home -->
+            <div class="phone-home" id="phone-home">
+                <div class="phone-home-scroll">
+                    <div class="phone-widgets" id="phone-widgets">
+                        <!-- Dynamic widget cards -->
+                    </div>
+                    <div class="phone-apps-grid" id="phone-home-grid" aria-label="Apps">
+                        <!-- Dynamic home icons -->
+                    </div>
+                </div>
+
+                <div class="phone-dock" id="phone-dock" aria-label="Dock">
+                    <!-- Search -->
+                    <div class="dock-item" title="Recherche" onclick="windowManager.togglePhoneDrawer(true)">
+                        <div class="dock-icon" style="font-size: 28px;">🔍</div>
+                    </div>
+                    
+                    <!-- Settings -->
+                    <div class="dock-item" title="Paramètres" onclick="openApp('settings')">
+                        <div class="dock-icon" style="font-size: 28px;">⚙️</div>
+                    </div>
+                    
+                    <!-- Dynamic dock icons -->
+                </div>
+
+                <div class="phone-gesture-pill" id="phone-gesture-pill" aria-hidden="true"></div>
+            </div>
+
+            <!-- App Drawer -->
+            <div class="phone-drawer" id="phone-drawer" aria-hidden="true">
+                <div class="phone-drawer-sheet">
+                    <div class="phone-drawer-handle"></div>
+                    <div class="phone-drawer-search">
+                        <input id="phone-drawer-search" type="text" placeholder="Rechercher une app..."
+                            oninput="windowManager.filterPhoneDrawer(this.value)">
+                    </div>
+                    <div class="phone-drawer-grid" id="phone-drawer-grid"></div>
+                </div>
+            </div>
+
+            <!-- Recents -->
+            <div class="phone-recents" id="phone-recents" aria-hidden="true">
+                <div class="phone-recents-sheet">
+                    <div class="phone-recents-head">
+                        <div class="phone-recents-title">Récents</div>
+                        <button class="phone-recents-close" type="button" onclick="windowManager.closePhoneRecents()">×</button>
+                    </div>
+                    <div class="phone-recents-list" id="phone-recents-list"></div>
+                </div>
+            </div>
+
+            <!-- App actions (long-press) -->
+            <div class="phone-actions" id="phone-actions" aria-hidden="true">
+                <div class="phone-actions-sheet">
+                    <div class="phone-actions-head">
+                        <div class="phone-actions-title" id="phone-actions-title">Actions</div>
+                        <button class="phone-actions-close" type="button" onclick="windowManager.closePhoneActions()">×</button>
+                    </div>
+                    <div class="phone-actions-grid" id="phone-actions-grid"></div>
+                    <div class="phone-actions-danger" id="phone-actions-danger"></div>
+                </div>
+            </div>
+
+            <!-- Fullscreen app stage -->
+            <div class="phone-appstage" id="phone-appstage" aria-hidden="true">
+                <div class="phone-appstage-top">
+                    <button class="phone-nav-btn" type="button" onclick="windowManager.phoneBack()">‹</button>
+                    <div class="phone-appstage-title" id="phone-app-title">App</div>
+                    <button class="phone-nav-btn" type="button" onclick="windowManager.togglePhoneDrawer(true)">⋯</button>
+                </div>
+                <div class="phone-appstage-frame" id="phone-app-frame"></div>
+            </div>
+
+            <!-- Bottom nav (fallback for gestures) -->
+            <div class="phone-nav" id="phone-nav">
+                <button class="phone-nav-btn" type="button" onclick="windowManager.phoneBack()">‹</button>
+                <button class="phone-nav-btn home" type="button" onclick="windowManager.phoneHome()">●</button>
+                <button class="phone-nav-btn" type="button" onclick="windowManager.togglePhoneDrawer()">▦</button>
+            </div>
+        </div>
+    </div>
+    <!-- End of #phone -->
 
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <script src="env.public.js"></script>

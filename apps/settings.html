@@ -448,9 +448,47 @@ body{
 .mt-2{margin-top:8px;}
 .mt-3{margin-top:12px;}
 .hidden{display:none!important;}
+
+/* ─── Phone mode (AetherOS Phone Shell) ─── */
+body.phone-mode{overflow:hidden;}
+body.phone-mode .sidebar{
+  position:fixed;inset:0 auto 0 0;
+  width:min(86vw,320px);
+  transform:translateX(-110%);
+  z-index:9999;
+  box-shadow:0 20px 60px rgba(0,0,0,.35);
+  transition:transform .22s var(--ease);
+}
+body.phone-mode.nav-open .sidebar{transform:translateX(0);}
+body.phone-mode .main{width:100%;}
+body.phone-mode .topbar{padding:0 14px;position:sticky;top:0;z-index:5;}
+body.phone-mode .content{padding:14px 14px 90px;}
+body.phone-mode .save-badge{display:none!important;}
+
+.mb-nav-btn{
+  width:38px;height:38px;border-radius:12px;
+  border:1px solid var(--border);
+  background:var(--surface2);
+  color:var(--text);
+  display:inline-flex;align-items:center;justify-content:center;
+  cursor:pointer;
+}
+body.phone-mode .topbar-title{display:flex;align-items:center;gap:10px;}
+body.phone-mode .row{align-items:flex-start;flex-wrap:wrap;}
+body.phone-mode .row-ctrl{width:100%;justify-content:flex-end;}
+body.phone-mode .row-ctrl input,
+body.phone-mode .row-ctrl select,
+body.phone-mode .row-ctrl textarea{width:100%;}
+
+.phone-nav-overlay{
+  display:none;position:fixed;inset:0;z-index:9998;
+  background:rgba(0,0,0,.45);
+}
+body.phone-mode.nav-open .phone-nav-overlay{display:block;}
 </style>
 </head>
 <body>
+<div class="phone-nav-overlay" id="phone-nav-overlay"></div>
 <div class="shell">
 
 <!-- ════ SIDEBAR ════ -->
@@ -1080,6 +1118,47 @@ let currentCategory = 'profil';
 let settings = loadSettings();
 let googleTokenClient = null;
 
+(function initPhoneMode() {
+  try {
+    const params = new URLSearchParams(location.search || '');
+    const phone = params.get('phone') === '1' || (window.matchMedia && window.matchMedia('(max-width: 700px)').matches);
+    if (!phone) return;
+    document.body.classList.add('phone-mode');
+
+    // Overlay closes nav.
+    const overlay = document.getElementById('phone-nav-overlay');
+    if (overlay) overlay.addEventListener('click', () => document.body.classList.remove('nav-open'));
+
+    // Inject a hamburger button into the topbar title, without touching original HTML.
+    const title = document.getElementById('topbar-title');
+    if (title) {
+      // Wrap existing text into a span so later code can update it without removing the button.
+      if (!document.getElementById('topbar-title-text')) {
+        const span = document.createElement('span');
+        span.id = 'topbar-title-text';
+        span.textContent = title.textContent || 'Paramètres';
+        title.textContent = '';
+        title.appendChild(span);
+      }
+
+      const existingBtn = document.getElementById('mb-nav-btn');
+      if (!existingBtn) {
+        const btn = document.createElement('button');
+        btn.className = 'mb-nav-btn';
+        btn.id = 'mb-nav-btn';
+        btn.type = 'button';
+        btn.setAttribute('aria-label', 'Menu');
+        btn.innerHTML = '<i class="fas fa-bars"></i>';
+        btn.addEventListener('click', (e) => {
+          e.preventDefault();
+          document.body.classList.toggle('nav-open');
+        });
+        title.insertBefore(btn, title.firstChild);
+      }
+    }
+  } catch {}
+})();
+
 function loadSettings() {
   const runtimeTheme = (() => {
     try {
@@ -1125,9 +1204,21 @@ function loadSettings() {
   const parsed = saved ? JSON.parse(saved) : {};
   const wmPrefs = wm && wm.uiPreferences ? wm.uiPreferences : {};
   const wmNotif = (wmPrefs && typeof wmPrefs.notifications === 'object' && wmPrefs.notifications) ? wmPrefs.notifications : {};
+  const wmWallpaper = (wm && typeof wm.wallpaper === 'string') ? wm.wallpaper.trim() : '';
+
+  const personalization = {
+    ...def.personalization,
+    ...((parsed.personalization) || {})
+  };
+  // Opening Settings should never wipe the current OS wallpaper.
+  // If the user hasn't explicitly set a wallpaper in Settings storage, inherit the current WM wallpaper.
+  if ((!parsed.personalization || !parsed.personalization.wallpaper || parsed.personalization.wallpaper === 'default') && wmWallpaper) {
+    personalization.wallpaper = wmWallpaper;
+  }
   return {
     ...def, ...parsed,
     profile: { ...def.profile, ...((parsed.profile)||{}) },
+    personalization,
     system: { ...def.system, ...((parsed.system)||{}) },
     accounts: {
       ...def.accounts, ...(parsed.accounts||{}),
@@ -1171,7 +1262,12 @@ function applyTheme() {
 }
 
 function applyPersonalization() {
-  if (wm && wm.setWallpaper && settings.personalization.wallpaper) wm.setWallpaper(settings.personalization.wallpaper);
+  const nextWallpaper = settings && settings.personalization && typeof settings.personalization.wallpaper === 'string'
+    ? settings.personalization.wallpaper.trim()
+    : '';
+  if (wm && wm.setWallpaper && nextWallpaper && nextWallpaper !== 'default' && String(wm.wallpaper || '').trim() !== nextWallpaper) {
+    wm.setWallpaper(nextWallpaper);
+  }
   if (wm && wm.setUIScale && settings.personalization.uiScale) wm.setUIScale(settings.personalization.uiScale);
   if (wm && wm.setFontFamily && settings.personalization.fontFamily) wm.setFontFamily(settings.personalization.fontFamily);
   if (wm && wm.setBaseFontSizePx && settings.accessibility && settings.accessibility.fontPx) wm.setBaseFontSizePx(settings.accessibility.fontPx);
@@ -1687,7 +1783,7 @@ function showPanel(id) {
   currentCategory = id;
   buildNav(document.getElementById('sb-search').value);
   const item = NAV.find(n=>n.id===id);
-  document.getElementById('topbar-title').textContent = item ? item.label : 'Paramètres';
+  (document.getElementById('topbar-title-text') || document.getElementById('topbar-title')).textContent = item ? item.label : 'Paramètres';
   if (id==='stockage') updateStorageInfo();
   if (id==='apropos') updateAboutInfo();
   if (id==='notifications') syncNotifUI();

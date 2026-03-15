@@ -40,6 +40,33 @@ class WindowManager {
         this.launchpadOpenTimer = null;
         this.webWrapApps = {};
 
+        // Desktop layout (smartphone-like organization)
+        this.desktopIconOrder = [];
+        this.desktopFolderNavStack = [];
+
+        // Phone shell state (mobile-first UI)
+        this.shellMode = 'desktop'; // desktop|phone
+        this.phoneRecents = [];
+        this.phoneLastApp = '';
+        this.phoneDrawerQuery = '';
+        this.phoneMasterVolume = 1;
+        this._phoneBound = false;
+        this._phoneClockInterval = null;
+
+        // Music widget state (updated by apps via postMessage)
+        this.musicWidgetState = {
+            sourceAppId: '',
+            title: '',
+            artist: '',
+            album: '',
+            coverUrl: '',
+            duration: 0,
+            currentTime: 0,
+            isPlaying: false,
+            volume: 1
+        };
+        this._musicWidgetLastTick = 0;
+
         // Apps that manage their own theme and should NOT be forced by the OS theme.
         this.themeSyncExclusions = new Set(['word', 'excel', 'powerpoint', 'docs', 'sheets', 'slides']);
 
@@ -118,6 +145,10 @@ class WindowManager {
                     const next = e.data.settings && typeof e.data.settings === 'object' ? e.data.settings : null;
                     if (next) this.applyAetherSettings(next, { persist: false });
                 } catch (err) { }
+            } else if (e.data && e.data.type === 'AETHER_MUSIC_UPDATE') {
+                try {
+                    this.updateMusicWidgetStateFromMessage(e.data.state || {}, e.source);
+                } catch (err) { }
             }
         });
 
@@ -170,15 +201,9 @@ class WindowManager {
                 height: 100% !important;
                 display: block !important;
             }
-
-            /* Widgets Container */
-            #desktop-widgets {
-                position: absolute; inset: 0; pointer-events: none; z-index: 0; overflow: hidden;
-            }
-            .widget { 
-                pointer-events: auto; position: absolute; background: var(--glass-bg); backdrop-filter: blur(20px); padding: 20px; border-radius: 20px; color: var(--text-main); border: 1px solid var(--glass-border); transition: transform 0.1s, background 0.3s; cursor: grab; box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-            }
-            .widget:active { cursor: grabbing; transform: scale(1.02); background: rgba(255, 255, 255, 0.12); z-index: 10; }
+            
+            /* Widgets Container (layout only; visuals defined in style.css) */
+            #desktop-widgets { position:absolute; inset:0; pointer-events:none; z-index:20; overflow:hidden; }
         `;
         document.head.appendChild(style);
     }
@@ -380,8 +405,10 @@ class WindowManager {
     }
 
     loadAccounts() {
-        const data = localStorage.getItem('aether_accounts');
-        const legacy = localStorage.getItem('funnyweb_accounts') || localStorage.getItem('funnyweb_user');
+        let data = null;
+        let legacy = null;
+        try { data = localStorage.getItem('aether_accounts'); } catch (_) { data = null; }
+        try { legacy = localStorage.getItem('funnyweb_accounts') || localStorage.getItem('funnyweb_user'); } catch (_) { legacy = null; }
 
         let loaded = false;
         if (data) {
@@ -424,12 +451,27 @@ class WindowManager {
             } catch (_) { }
         }
 
-        const lastUser = localStorage.getItem('aether_last_user');
+        let lastUser = '';
+        try { lastUser = String(localStorage.getItem('aether_last_user') || ''); } catch (_) { lastUser = ''; }
+        if (!lastUser) {
+            try {
+                const backup = this.readAccountsCookieBackup();
+                if (backup && backup.lastUser) lastUser = String(backup.lastUser);
+            } catch (_) { }
+        }
         const lastUserKey = this.findAccountKey(lastUser);
         if (lastUserKey && this.accounts[lastUserKey]) {
             this.prepareAccount(lastUserKey);
+            try { this.writeAccountsCookieBackup(); } catch (_) { }
             this.showLogin();
         } else if (Object.keys(this.accounts).length > 0) {
+            try {
+                if (!this.currentAccount) {
+                    const first = Object.keys(this.accounts || {})[0];
+                    if (first) this.prepareAccount(first);
+                }
+            } catch (_) { }
+            try { this.writeAccountsCookieBackup(); } catch (_) { }
             this.showLogin();
         } else {
             this.showSetup();
@@ -461,15 +503,18 @@ class WindowManager {
                 timeFormat: this.timeFormat,
                  accessibility: this.accessibility,
                  uiPreferences: this.uiPreferences,
-                 vfs: this.vfs,
-                 webWrapApps: this.webWrapApps,
-                 installedApps: normalizedInstalled,
-                 pinnedApps: normalizedPinned
-             };
-         }
+                  vfs: this.vfs,
+                  webWrapApps: this.webWrapApps,
+                  activeWidgets: Array.isArray(this.activeWidgets) ? this.activeWidgets : [],
+                  desktopIconOrder: Array.isArray(this.desktopIconOrder) ? this.desktopIconOrder : [],
+                  installedApps: normalizedInstalled,
+                  pinnedApps: normalizedPinned
+              };
+          }
         try {
             localStorage.setItem('aether_accounts', JSON.stringify(this.accounts));
-            try { this.clearAccountsCookieBackup(); } catch (_) { }
+            // Keep a small cookie backup even on success so reloads still work in constrained storage contexts.
+            try { this.writeAccountsCookieBackup(); } catch (_) { }
         } catch (err) {
             // If localStorage is full, evict known large app caches so users don't get forced back into setup.
             try { localStorage.removeItem('musicLibrary'); } catch (e) {}
@@ -486,7 +531,7 @@ class WindowManager {
             try { localStorage.removeItem('aether_deleted_apps'); } catch (e) {}
             try {
                 localStorage.setItem('aether_accounts', JSON.stringify(this.accounts));
-                try { this.clearAccountsCookieBackup(); } catch (_) { }
+                try { this.writeAccountsCookieBackup(); } catch (_) { }
                 this.notify('SystÃ¨me', 'Stockage local plein : cache musique supprimÃ© pour sauvegarder votre session.', 'system');
             } catch (e) {
                 // Last resort: save a minimal account snapshot (keeps username/PIN) without heavy fields (VFS, webwrap).
@@ -514,7 +559,7 @@ class WindowManager {
                             pinnedApps: Array.isArray(acc.pinnedApps) ? acc.pinnedApps : []
                         };
                     });
-                    localStorage.setItem('aether_accounts', JSON.stringify(minimalAccounts));
+                    try { localStorage.setItem('aether_accounts', JSON.stringify(minimalAccounts)); } catch (_) { }
                     try { this.writeAccountsCookieBackup(); } catch (_) { }
                     this.notify('SystÃ¨me', 'Stockage local plein : sauvegarde minimale (connexion conservee).', 'system');
                 } catch (_) {
@@ -567,7 +612,10 @@ class WindowManager {
 
     writeAccountsCookieBackup() {
         try {
-            const lastUser = this.currentAccount || localStorage.getItem('aether_last_user') || '';
+            let lastUser = this.currentAccount || '';
+            if (!lastUser) {
+                try { lastUser = localStorage.getItem('aether_last_user') || ''; } catch (_) { lastUser = ''; }
+            }
             const key = this.findAccountKey(lastUser) || String(lastUser || '');
             const acc = key && this.accounts && this.accounts[key] ? this.accounts[key] : null;
             const pin = acc && acc.pin ? String(acc.pin) : (this.pin ? String(this.pin) : '');
@@ -634,6 +682,54 @@ class WindowManager {
         this.scheduleAccountCloudSync();
     }
 
+    ensureNotepadDefaultInstalled(accountKey = '') {
+        const resolvedKey = this.findAccountKey(accountKey) || String(accountKey || '').trim();
+        if (!resolvedKey) return;
+        const markerKey = `aether_mig_notepad_v1_${this.normalizeAccountLookup(resolvedKey)}`;
+
+        try {
+            if (localStorage.getItem(markerKey) === '1') return;
+        } catch (_) { }
+
+        const oldDefaultPinned = ["word", "excel", "powerpoint", "store", "wiki"];
+        const oldDefaultPinnedSig = oldDefaultPinned.join('|');
+
+        if (!Array.isArray(this.installedApps)) this.installedApps = [];
+        if (!Array.isArray(this.pinnedApps)) this.pinnedApps = [];
+
+        let changed = false;
+
+        if (!this.installedApps.includes('notepad')) {
+            this.installedApps.push('notepad');
+            changed = true;
+        }
+
+        // If the user still has the legacy default dock, add Bloc-notes there too.
+        const pinnedSig = this.pinnedApps.filter(Boolean).join('|');
+        if (pinnedSig === oldDefaultPinnedSig && !this.pinnedApps.includes('notepad')) {
+            this.pinnedApps = ["word", "notepad", "excel", "powerpoint", "store", "wiki"];
+            changed = true;
+        }
+
+        if (!changed) {
+            try { localStorage.setItem(markerKey, '1'); } catch (_) { }
+            return;
+        }
+
+        this.pinnedApps = [...new Set(this.pinnedApps.filter(Boolean))];
+        this.installedApps = [...new Set([...this.installedApps, ...this.pinnedApps].filter(Boolean))];
+
+        if (this.accounts && this.accounts[resolvedKey]) {
+            this.accounts[resolvedKey].installedApps = this.installedApps;
+            this.accounts[resolvedKey].pinnedApps = this.pinnedApps;
+        }
+
+        try { localStorage.setItem('aether_accounts', JSON.stringify(this.accounts)); } catch (_) { }
+        try { this.writeAccountsCookieBackup(); } catch (_) { }
+        try { localStorage.setItem(markerKey, '1'); } catch (_) { }
+        this.scheduleAccountCloudSync();
+    }
+
     prepareAccount(name) {
         const resolvedName = this.findAccountKey(name) || name;
         const user = this.accounts[resolvedName];
@@ -651,9 +747,11 @@ class WindowManager {
          this.uiPreferences = this.sanitizeUIPreferences(user.uiPreferences || {});
          this.vfs = user.vfs || this.getDefaultVFS();
          this.webWrapApps = (user.webWrapApps && typeof user.webWrapApps === 'object') ? user.webWrapApps : {};
- 
-         const defaultInstalledApps = ["word", "excel", "powerpoint", "store", "explorer", "wiki"];
-         const defaultPinnedApps = ["word", "excel", "powerpoint", "store", "wiki"];
+         this.desktopIconOrder = Array.isArray(user.desktopIconOrder) ? user.desktopIconOrder : [];
+         this.activeWidgets = Array.isArray(user.activeWidgets) ? user.activeWidgets : (Array.isArray(this.activeWidgets) ? this.activeWidgets : []);
+  
+         const defaultInstalledApps = ["word", "notepad", "excel", "powerpoint", "store", "explorer", "wiki"];
+         const defaultPinnedApps = ["word", "notepad", "excel", "powerpoint", "store", "wiki"];
 
         const savedInstalledApps = Array.isArray(user.installedApps) ? user.installedApps : [];
         const savedPinnedApps = Array.isArray(user.pinnedApps) ? user.pinnedApps : [];
@@ -669,6 +767,7 @@ class WindowManager {
 
         this.pinnedApps = [...new Set(nextPinned.filter(Boolean))];
         this.installedApps = [...new Set([...nextInstalled, ...this.pinnedApps].filter(Boolean))];
+        this.ensureNotepadDefaultInstalled(resolvedName);
         this.ensureAdminToolsInstalled();
         this.sessionID = user.sessionID || this.generateSessionId(this.userName);
         if (!user.sessionID) {
@@ -722,6 +821,8 @@ class WindowManager {
             dockSize: 'normal',
             trayStyle: 'floating',
             clockSeconds: false,
+            shellMode: 'auto', // auto|desktop|phone
+            phoneWidgets: ['music', 'todo', 'quote', 'quicklaunch'],
             notifications: this.getDefaultNotificationPreferences()
         };
     }
@@ -751,6 +852,8 @@ class WindowManager {
         const allowedDockPositions = ['left', 'bottom', 'right', 'top'];
         const allowedDockSizes = ['compact', 'normal', 'large'];
         const allowedTrayStyles = ['floating', 'attached'];
+        const allowedShellModes = ['auto', 'desktop', 'phone'];
+        const allowedPhoneWidgets = ['music', 'todo', 'news', 'quote', 'quicklaunch'];
         const notifDefaults = this.getDefaultNotificationPreferences();
         const rawNotif = (raw && typeof raw.notifications === 'object' && raw.notifications) ? raw.notifications : {};
         const rawTypes = (rawNotif && typeof rawNotif.types === 'object' && rawNotif.types) ? rawNotif.types : {};
@@ -768,6 +871,13 @@ class WindowManager {
             dockSize: allowedDockSizes.includes(raw.dockSize) ? raw.dockSize : defaults.dockSize,
             trayStyle: allowedTrayStyles.includes(raw.trayStyle) ? raw.trayStyle : defaults.trayStyle,
             clockSeconds: !!raw.clockSeconds,
+            shellMode: allowedShellModes.includes(String(raw.shellMode || '')) ? String(raw.shellMode) : defaults.shellMode,
+            phoneWidgets: (() => {
+                const list = Array.isArray(raw.phoneWidgets) ? raw.phoneWidgets.map(x => String(x || '').trim()) : defaults.phoneWidgets;
+                const cleaned = list.filter(x => allowedPhoneWidgets.includes(x));
+                const unique = Array.from(new Set(cleaned));
+                return unique.length ? unique : defaults.phoneWidgets;
+            })(),
             notifications: {
                 enabled: typeof rawNotif.enabled === 'boolean' ? rawNotif.enabled : notifDefaults.enabled,
                 dnd: typeof rawNotif.dnd === 'boolean' ? rawNotif.dnd : notifDefaults.dnd,
@@ -909,14 +1019,13 @@ class WindowManager {
     }
 
     async loadSupabaseConfigFromWorker() {
-        const endpoint = this.getSupabaseConfigRemoteUrl();
-        if (!endpoint) return null;
-
-        const controller = (typeof AbortController !== 'undefined') ? new AbortController() : null;
-        const timeoutMs = 3500;
-        const t = setTimeout(() => {
-            try { controller && controller.abort(); } catch (err) { }
-        }, timeoutMs);
+        // Désactiver le chargement depuis le worker pour éviter les erreurs 403
+        return null;
+        
+        const endpoint = 'https://aetheros-ai-proxy.aetheros.workers.dev/aether/v1/supabase-config';
+        const timeoutMs = 4000;
+        const controller = new AbortController();
+        const t = setTimeout(() => controller?.abort(), timeoutMs);
 
         try {
             const resp = await fetch(endpoint, {
@@ -976,7 +1085,10 @@ class WindowManager {
 
         // If a remote config URL is explicitly configured, don't probe local .env files.
         // (Static hosting: those files should not exist; probing can also add startup latency.)
-        for (const path of (hasExplicitRemote ? [] : candidates)) {
+        // Désactiver la recherche des fichiers .env pour éviter les erreurs 404
+        const filteredCandidates = [];
+        
+        for (const path of filteredCandidates) {
             try {
                 const response = await fetch(path, { cache: 'no-store' });
                 if (!response.ok) continue;
@@ -1160,6 +1272,20 @@ class WindowManager {
             .replace(/>/g, '&gt;');
     }
 
+    appendUrlParam(url, key, value = '1') {
+        const raw = String(url || '').trim();
+        if (!raw) return raw;
+        const k = encodeURIComponent(String(key || '').trim());
+        const v = encodeURIComponent(String(value || '').trim());
+        if (!k) return raw;
+        const parts = raw.split('#');
+        const base = parts[0];
+        const hash = parts.length > 1 ? parts.slice(1).join('#') : '';
+        const sep = base.includes('?') ? '&' : '?';
+        const next = `${base}${sep}${k}=${v}`;
+        return hash ? `${next}#${hash}` : next;
+    }
+
     renderAppIconMarkup(iconValue, fallback = '📦') {
         const icon = typeof iconValue === 'string' ? iconValue.trim() : '';
         
@@ -1287,10 +1413,12 @@ class WindowManager {
              uiPreferences: this.uiPreferences || account.uiPreferences || this.getDefaultUIPreferences(),
              vfs: this.vfs || account.vfs || this.getDefaultVFS(),
              webWrapApps: (this.webWrapApps && typeof this.webWrapApps === 'object') ? this.webWrapApps : (account.webWrapApps || {}),
-             installedApps: Array.isArray(this.installedApps) ? this.installedApps : (account.installedApps || ["word", "excel", "powerpoint", "store", "explorer", "wiki"]),
+             activeWidgets: Array.isArray(this.activeWidgets) ? this.activeWidgets : (Array.isArray(account.activeWidgets) ? account.activeWidgets : []),
+             desktopIconOrder: Array.isArray(this.desktopIconOrder) ? this.desktopIconOrder : (Array.isArray(account.desktopIconOrder) ? account.desktopIconOrder : []),
+             installedApps: Array.isArray(this.installedApps) ? this.installedApps : (account.installedApps || ["word", "notepad", "excel", "powerpoint", "store", "explorer", "wiki"]),
              pinnedApps: Array.isArray(this.pinnedApps) ? this.pinnedApps : (account.pinnedApps || [])
          };
-     }
+      }
 
     sanitizeAccountCloudPayload(payload = {}) {
         return {
@@ -1305,9 +1433,11 @@ class WindowManager {
              uiPreferences: this.sanitizeUIPreferences(payload.uiPreferences || {}),
              vfs: payload.vfs || this.getDefaultVFS(),
              webWrapApps: (payload.webWrapApps && typeof payload.webWrapApps === 'object' && !Array.isArray(payload.webWrapApps)) ? payload.webWrapApps : {},
+             activeWidgets: Array.isArray(payload.activeWidgets) ? payload.activeWidgets : [],
+             desktopIconOrder: Array.isArray(payload.desktopIconOrder) ? payload.desktopIconOrder : [],
              installedApps: Array.isArray(payload.installedApps) && payload.installedApps.length > 0
                  ? payload.installedApps
-                 : ["word", "excel", "powerpoint", "store", "explorer", "wiki"],
+                 : ["word", "notepad", "excel", "powerpoint", "store", "explorer", "wiki"],
              pinnedApps: Array.isArray(payload.pinnedApps) ? payload.pinnedApps : []
         };
     }
@@ -1540,9 +1670,12 @@ class WindowManager {
                 this.accessibility = remote.accessibility;
                 this.uiPreferences = remote.uiPreferences;
                 this.vfs = remote.vfs;
+                this.desktopIconOrder = Array.isArray(remote.desktopIconOrder) ? remote.desktopIconOrder : [];
+                this.activeWidgets = Array.isArray(remote.activeWidgets) ? remote.activeWidgets : this.activeWidgets;
                 this.pinnedApps = Array.isArray(remote.pinnedApps) ? remote.pinnedApps : [];
                 this.installedApps = Array.isArray(remote.installedApps) ? remote.installedApps : [];
                 this.installedApps = [...new Set([...this.installedApps, ...this.pinnedApps].filter(Boolean))];
+                this.ensureNotepadDefaultInstalled(userName);
                 this.ensureAdminToolsInstalled();
                 setTimeout(() => {
                     this.setTheme(this.theme || 'dark');
@@ -2075,6 +2208,11 @@ class WindowManager {
             desktop.style.filter = 'blur(14px)';
         }
 
+        const phone = document.getElementById('phone');
+        if (phone) {
+            phone.style.opacity = '0';
+        }
+
         const launchpad = document.getElementById('launchpad');
         const spotlight = document.getElementById('spotlight-search');
         const controlCenter = document.querySelector('.control-center');
@@ -2095,13 +2233,42 @@ class WindowManager {
         setTimeout(() => {
             login.style.display = 'none';
             login.style.opacity = '1';
-            this.launchDesktop();
+            this.launchShell();
         }, 500);
+    }
+
+    getPreferredShell() {
+        const pref = this.uiPreferences && this.uiPreferences.shellMode ? String(this.uiPreferences.shellMode) : 'auto';
+        if (pref === 'desktop' || pref === 'phone') return pref;
+        const profile = this.getViewportProfile();
+        return profile === 'mobile' ? 'phone' : 'desktop';
+    }
+
+    isPhoneShellActive() {
+        return this.shellMode === 'phone' || (document.body && document.body.classList.contains('shell-phone'));
+    }
+
+    launchShell() {
+        const preferred = this.getPreferredShell();
+        if (preferred === 'phone') this.launchPhone();
+        else this.launchDesktop();
     }
 
     launchDesktop() {
         const desktop = document.getElementById('desktop');
         if (!desktop) return;
+
+        this.shellMode = 'desktop';
+        try { document.body.classList.remove('shell-phone'); } catch (err) { }
+        try { if (this._phoneClockInterval) clearInterval(this._phoneClockInterval); } catch (_) { }
+        this._phoneClockInterval = null;
+        try {
+            const phone = document.getElementById('phone');
+            if (phone) {
+                phone.style.opacity = '0';
+                phone.style.display = 'none';
+            }
+        } catch (err) { }
 
         desktop.style.display = "block";
         
@@ -2146,6 +2313,792 @@ class WindowManager {
             this.notify('AetherOS v2', `Content de vous revoir, ${this.userName}.`, 'system');
             setTimeout(() => this.showWhatsNew(), 360);
         }, 100);
+    }
+
+    // ==================== PHONE SHELL (MOBILE-FIRST) ====================
+    bindPhoneShellOnce() {
+        if (this._phoneBound) return;
+        this._phoneBound = true;
+
+        this._phoneTapSuppressedUntil = 0;
+        this._phoneLongPressTimer = null;
+        this._phoneLongPressStart = null;
+        this._phoneActionsAppId = '';
+
+        const status = document.getElementById('phone-statusbar');
+        if (status) {
+            status.addEventListener('click', (ev) => {
+                if (this.isEditableTarget(ev.target)) return;
+                this.togglePhoneControlCenter();
+            });
+        }
+
+        const actions = document.getElementById('phone-actions');
+        if (actions) {
+            actions.addEventListener('click', (ev) => {
+                if (ev.target === actions) this.closePhoneActions();
+            });
+        }
+
+        const drawer = document.getElementById('phone-drawer');
+        if (drawer) {
+            drawer.addEventListener('click', (ev) => {
+                if (ev.target === drawer) this.togglePhoneDrawer(false);
+            });
+        }
+
+        const recents = document.getElementById('phone-recents');
+        if (recents) {
+            recents.addEventListener('click', (ev) => {
+                if (ev.target === recents) this.closePhoneRecents();
+            });
+        }
+
+        const cc = document.getElementById('phone-control-center');
+        if (cc) {
+            cc.addEventListener('click', (ev) => {
+                if (ev.target === cc) this.closePhoneControlCenter();
+            });
+        }
+
+        const home = document.getElementById('phone-home');
+        if (home) {
+            let start = null;
+            home.addEventListener('pointerdown', (ev) => {
+                if (this.isEditableTarget(ev.target)) return;
+                start = { x: ev.clientX, y: ev.clientY, t: Date.now() };
+            }, { passive: true });
+            home.addEventListener('pointerup', (ev) => {
+                if (!start) return;
+                const dx = ev.clientX - start.x;
+                const dy = ev.clientY - start.y;
+                const nearBottom = (window.innerHeight - start.y) < 140;
+                const quick = (Date.now() - start.t) < 500;
+                start = null;
+                if (!nearBottom) return;
+                if (quick && dy < -42 && Math.abs(dx) < 80) this.togglePhoneDrawer(true);
+            }, { passive: true });
+        }
+
+        // Long-press on app icons (home/drawer/dock) -> actions sheet
+        const phoneRoot = document.getElementById('phone');
+        if (phoneRoot) {
+            const clear = () => {
+                if (this._phoneLongPressTimer) clearTimeout(this._phoneLongPressTimer);
+                this._phoneLongPressTimer = null;
+                this._phoneLongPressStart = null;
+            };
+
+            phoneRoot.addEventListener('pointerdown', (ev) => {
+                const widget = ev.target && ev.target.closest ? ev.target.closest('[data-phone-widget]') : null;
+                const btn = ev.target && ev.target.closest ? ev.target.closest('[data-phone-app]') : null;
+                if (!widget && !btn) return;
+                if (this.isEditableTarget(ev.target)) return;
+
+                const mode = btn ? 'app' : 'widget';
+                const id = mode === 'widget'
+                    ? String(widget.getAttribute('data-phone-widget') || '').trim()
+                    : String(btn.getAttribute('data-phone-app') || '').trim();
+                if (!id) return;
+
+                // Don't trigger widget long-press when the user holds a control inside the widget (play buttons, checkboxes, etc.).
+                if (mode === 'widget') {
+                    const isControl = !!(ev.target && ev.target.closest && ev.target.closest('button,input,select,textarea,a,[role=\"button\"]'));
+                    if (isControl) return;
+                }
+
+                clear();
+                this._phoneLongPressStart = { x: ev.clientX, y: ev.clientY, id, mode, t: Date.now() };
+                this._phoneLongPressTimer = setTimeout(() => {
+                    try {
+                        this._phoneTapSuppressedUntil = Date.now() + 700;
+                        if (mode === 'widget') this.openPhoneWidgetActions(id);
+                        else this.openPhoneActions(id);
+                        console.log('Appui long détecté pour:', id); // Debug
+                    } catch (_) { }
+                    clear();
+                }, 400); // Réduit de 520ms à 400ms pour plus de réactivité
+            }, { passive: true });
+
+            phoneRoot.addEventListener('pointermove', (ev) => {
+                const s = this._phoneLongPressStart;
+                if (!s) return;
+                const dx = ev.clientX - s.x;
+                const dy = ev.clientY - s.y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                // Augmenter la tolérance de mouvement pour éviter d'annuler trop facilement
+                if (dist > 20) { 
+                    clear();
+                }
+            }, { passive: true });
+
+            phoneRoot.addEventListener('pointerup', clear, { passive: true });
+            phoneRoot.addEventListener('pointercancel', clear, { passive: true });
+        }
+
+        const appStage = document.getElementById('phone-appstage');
+        if (appStage) {
+            let start = null;
+            appStage.addEventListener('pointerdown', (ev) => {
+                if (this.isEditableTarget(ev.target)) return;
+                start = { x: ev.clientX, y: ev.clientY, t: Date.now() };
+            }, { passive: true });
+            appStage.addEventListener('pointerup', (ev) => {
+                if (!start) return;
+                const dx = ev.clientX - start.x;
+                const dy = ev.clientY - start.y;
+                const leftEdge = start.x < 26;
+                start = null;
+                if (leftEdge && dx > 70 && Math.abs(dy) < 110) this.phoneBack();
+            }, { passive: true });
+        }
+    }
+
+    launchPhone() {
+        const phone = document.getElementById('phone');
+        if (!phone) return;
+
+        this.shellMode = 'phone';
+        try { document.body.classList.add('shell-phone'); } catch (err) { }
+
+        // Hide desktop shell if it was running.
+        try {
+            const desktop = document.getElementById('desktop');
+            if (desktop) {
+                desktop.style.opacity = '0';
+                desktop.style.filter = 'blur(14px)';
+                desktop.style.display = 'none';
+            }
+        } catch (err) { }
+
+        phone.style.display = 'block';
+        setTimeout(() => { try { phone.style.opacity = '1'; } catch (e) { } }, 40);
+
+        this.bindPhoneShellOnce();
+        this.refreshViewportProfile();
+        this.setWallpaper(this.wallpaper);
+        this.applyAccessibilitySettings();
+        this.applyUIPreferences();
+
+        this.renderPhoneHome();
+        this.togglePhoneDrawer(false);
+        this.closePhoneRecents();
+        this.closePhoneControlCenter();
+
+        const vol = document.getElementById('phone-volume');
+        if (vol) {
+            const next = typeof this.musicWidgetState.volume === 'number' ? this.musicWidgetState.volume : 1;
+            vol.value = String(next);
+        }
+
+        this.startPhoneClock();
+        this.notify('AetherOS', `Mode téléphone • ${this.userName || 'Utilisateur'}`, 'system');
+    }
+
+    startPhoneClock() {
+        try { if (this._phoneClockInterval) clearInterval(this._phoneClockInterval); } catch (_) { }
+        const tick = () => {
+            try {
+                const el = document.getElementById('phone-time');
+                if (!el) return;
+                const showSeconds = !!(this.uiPreferences && this.uiPreferences.clockSeconds);
+                const locale = this.locale || 'fr-FR';
+                const options = {
+                    timeZone: this.timeZone,
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    ...(showSeconds ? { second: '2-digit' } : {}),
+                    hour12: this.timeFormat === '12h'
+                };
+                el.textContent = new Date().toLocaleTimeString(locale, options);
+            } catch (_) { }
+        };
+        tick();
+        this._phoneClockInterval = setInterval(tick, 1000);
+    }
+
+    togglePhoneControlCenter(force) {
+        const cc = document.getElementById('phone-control-center');
+        if (!cc) return;
+        const open = typeof force === 'boolean' ? force : !cc.classList.contains('active');
+        if (open) {
+            this.togglePhoneDrawer(false);
+            this.closePhoneRecents();
+            cc.classList.add('active');
+            cc.setAttribute('aria-hidden', 'false');
+        } else {
+            this.closePhoneControlCenter();
+        }
+    }
+
+    closePhoneControlCenter() {
+        const cc = document.getElementById('phone-control-center');
+        if (!cc) return;
+        cc.classList.remove('active');
+        cc.setAttribute('aria-hidden', 'true');
+    }
+
+    setPhoneMasterVolume(value) {
+        const v = Math.max(0, Math.min(1, Number(value)));
+        this.phoneMasterVolume = v;
+        this.musicWidgetVolume(v);
+    }
+
+    togglePhoneTheme() {
+        const next = (this.theme === 'light') ? 'dark' : 'light';
+        this.setTheme(next);
+        this.saveUserData();
+        this.renderPhoneHome();
+    }
+
+    switchToDesktopShell() {
+        if (!this.uiPreferences || typeof this.uiPreferences !== 'object') this.uiPreferences = this.getDefaultUIPreferences();
+        this.uiPreferences.shellMode = 'desktop';
+        this.saveUserData();
+        this.launchDesktop();
+    }
+
+    switchToPhoneShell() {
+        if (!this.uiPreferences || typeof this.uiPreferences !== 'object') this.uiPreferences = this.getDefaultUIPreferences();
+        this.uiPreferences.shellMode = 'phone';
+        this.saveUserData();
+        this.launchPhone();
+    }
+
+    ensurePhoneDefaults() {
+        if (!Array.isArray(this.pinnedApps) || this.pinnedApps.length === 0) {
+            this.pinnedApps = ['explorer', 'browser', 'spotaether', 'store', 'settings'];
+        }
+    }
+
+    getPhoneAppMeta(id) {
+        const safeId = String(id || '').trim();
+        const fromRegistry = Array.isArray(this.appsRegistry)
+            ? this.appsRegistry.find(a => a && a.id === safeId)
+            : null;
+        const title = (fromRegistry && fromRegistry.title) ? String(fromRegistry.title) : (gameTitles[safeId] || safeId);
+        const icon = (fromRegistry && fromRegistry.icon) ? String(fromRegistry.icon) : (appIcons[safeId] || '🧩');
+        return { id: safeId, title, icon };
+    }
+
+    renderPhoneHome() {
+        if (!this.isPhoneShellActive()) return;
+        this.ensurePhoneDefaults();
+        this.renderPhoneWidgets();
+        this.renderPhoneHomeGrid();
+        this.renderPhoneDock();
+        this.renderPhoneDrawer(this.phoneDrawerQuery || '');
+    }
+
+    renderPhoneWidgets() {
+        const wrap = document.getElementById('phone-widgets');
+        if (!wrap) return;
+
+        const prefList = (this.uiPreferences && Array.isArray(this.uiPreferences.phoneWidgets))
+            ? this.uiPreferences.phoneWidgets.map(x => String(x || '').trim())
+            : this.getDefaultUIPreferences().phoneWidgets;
+        const allowed = new Set(['music', 'todo', 'news', 'quote', 'quicklaunch']);
+        const widgets = Array.from(new Set(prefList.filter(x => allowed.has(x))));
+
+        const music = this.musicWidgetState || {};
+        const musicTitle = String(music.title || 'Aucune lecture');
+        const musicArtist = String(music.artist || '—');
+        const musicAlbum = String(music.album || '');
+        const cover = String(music.coverUrl || '');
+        const playing = !!music.isPlaying;
+
+        const todoWidget = Array.isArray(this.activeWidgets) ? this.activeWidgets.find(w => w && w.type === 'todo') : null;
+        const todoItems = todoWidget && todoWidget.data && Array.isArray(todoWidget.data.items) ? todoWidget.data.items : [];
+        const remaining = todoItems.filter(t => t && !t.done).length;
+
+        const quote = this.getDailyQuote('phone');
+
+        const cards = [];
+
+        if (widgets.includes('music')) {
+            cards.push(`
+            <div class="phone-widget-card" data-phone-widget="music">
+                <div class="phone-widget-head">
+                    <div class="phone-widget-title">MUSIQUE</div>
+                    <div style="display:flex; gap:8px; align-items:center;">
+                        <button class="widget-mini" onclick="windowManager.musicWidgetControl('prev')" aria-label="Précédent">⏮</button>
+                        <button class="widget-mini" onclick="windowManager.musicWidgetControl('${playing ? 'pause' : 'play'}')" aria-label="Play/Pause">${playing ? '⏸' : '▶'}</button>
+                        <button class="widget-mini" onclick="windowManager.musicWidgetControl('next')" aria-label="Suivant">⏭</button>
+                    </div>
+                </div>
+                <div style="display:flex; gap:12px; align-items:center;">
+                    <div style="width:52px; height:52px; border-radius:16px; overflow:hidden; border:1px solid rgba(255,255,255,0.14); background:rgba(255,255,255,0.08); flex:0 0 auto;">
+                        ${cover ? `<img src="${this.escapeHtmlAttr(cover)}" alt="" style="width:100%;height:100%;object-fit:cover;">` : `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:22px;">🎵</div>`}
+                    </div>
+                    <div style="min-width:0; flex:1;">
+                        <div style="font-weight:900; line-height:1.1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${this.escapeHtmlAttr(musicTitle)}</div>
+                        <div style="opacity:0.75; font-size:12px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${this.escapeHtmlAttr(musicArtist)}${musicAlbum ? ` • ${this.escapeHtmlAttr(musicAlbum)}` : ''}</div>
+                        <div style="margin-top:10px; height:6px; border-radius:999px; background:rgba(255,255,255,0.12); overflow:hidden;" onclick="windowManager.musicWidgetSeek(event)">
+                            <div style="height:100%; width:${(Number(music.duration) > 0 ? (Math.max(0, Math.min(1, Number(music.currentTime) / Number(music.duration))) * 100) : 0).toFixed(2)}%; background:rgba(255,255,255,0.85); border-radius:999px;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>`);
+        }
+
+        if (widgets.includes('todo')) {
+            cards.push(`
+            <div class="phone-widget-card" data-phone-widget="todo">
+                <div class="phone-widget-head">
+                    <div class="phone-widget-title">AGENDA / TO‑DO</div>
+                    <button class="widget-mini" onclick="windowManager.openPhoneWidgetPicker()" aria-label="Widgets">＋</button>
+                </div>
+                <div style="display:flex; align-items:baseline; gap:10px; margin-bottom:10px;">
+                    <div style="font-size:28px; font-weight:900; letter-spacing:-0.03em;">${remaining}</div>
+                    <div style="opacity:0.76; font-size:13px;">tâche${remaining > 1 ? 's' : ''} restante${remaining > 1 ? 's' : ''}</div>
+                </div>
+                <div style="display:flex; flex-direction:column; gap:8px;">
+                    ${(todoItems.slice(0, 4)).map((t, idx) => `
+                        <label style="display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:16px; border:1px solid rgba(255,255,255,0.12); background:rgba(255,255,255,0.06); cursor:pointer;">
+                            <input type="checkbox" ${t && t.done ? 'checked' : ''} onchange="${todoWidget ? `windowManager.todoToggle('${todoWidget.id}', ${idx})` : ''}">
+                            <span style="flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; ${t && t.done ? 'text-decoration:line-through; opacity:0.6;' : ''}">${this.escapeHtmlAttr(t && t.text ? t.text : '')}</span>
+                        </label>
+                    `).join('') || `<div style="opacity:0.75;">Aucune tâche (ajoute un widget To‑Do sur le bureau).</div>`}
+                </div>
+            </div>`);
+        }
+
+        if (widgets.includes('quote')) {
+            cards.push(`
+            <div class="phone-widget-card" data-phone-widget="quote">
+                <div class="phone-widget-head">
+                    <div class="phone-widget-title">CITATION</div>
+                    <button class="widget-mini" onclick="windowManager.renderPhoneWidgets()" aria-label="Rafraîchir">✨</button>
+                </div>
+                <div style="font-weight:900; font-size:16px; line-height:1.25;">“${this.escapeHtmlAttr(quote.text)}”</div>
+                <div style="margin-top:10px; opacity:0.78; font-size:12px;">— ${this.escapeHtmlAttr(quote.author)}</div>
+            </div>`);
+        }
+
+        if (widgets.includes('quicklaunch')) {
+            const ids = (Array.isArray(this.pinnedApps) ? this.pinnedApps : []).slice(0, 8);
+            const items = ids.map(id => this.getPhoneAppMeta(id)).filter(a => a && a.id);
+            cards.push(`
+            <div class="phone-widget-card" data-phone-widget="quicklaunch">
+                <div class="phone-widget-head">
+                    <div class="phone-widget-title">RACCOURCIS</div>
+                    <button class="widget-mini" onclick="windowManager.togglePhoneDrawer(true)" aria-label="Apps">▦</button>
+                </div>
+                <div style="display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px;">
+                    ${items.map(app => `
+                        <button type="button" class="phone-app-icon" data-phone-app="${this.escapeHtmlAttr(app.id)}" style="min-height:auto; padding:10px 6px;" onclick="windowManager.openPhoneApp('${this.escapeHtmlAttr(app.id)}')">
+                            <div class="phone-app-emoji">${this.renderAppIconMarkup(app.icon, '🧩')}</div>
+                            <div class="phone-app-label">${this.escapeHtmlAttr(app.title)}</div>
+                        </button>
+                    `).join('')}
+                </div>
+            </div>`);
+        }
+
+        if (widgets.length === 0) {
+            cards.push(`
+                <div class="phone-widget-card" data-phone-widget="picker">
+                    <div class="phone-widget-head">
+                        <div class="phone-widget-title">WIDGETS</div>
+                        <button class="widget-mini" onclick="windowManager.openPhoneWidgetPicker()" aria-label="Ajouter">＋</button>
+                    </div>
+                    <div style="opacity:0.78;">Maintiens un widget pour le gérer, ou ajoute-en avec +.</div>
+                </div>
+            `);
+        }
+
+        wrap.innerHTML = cards.join('');
+    }
+
+    renderPhoneHomeGrid() {
+        const grid = document.getElementById('phone-home-grid');
+        if (!grid) return;
+        const apps = this.getPhoneAllApps();
+        const home = apps.slice(0, 16);
+        grid.innerHTML = home.map(app => this.renderPhoneAppIcon(app)).join('');
+    }
+
+    renderPhoneDock() {
+        const dock = document.getElementById('phone-dock');
+        if (!dock) return;
+        
+        // Conserver les éléments statiques (recherche, paramètres)
+        const staticElements = [];
+        const staticItems = dock.querySelectorAll('.dock-item');
+        staticItems.forEach(item => {
+            const title = item.getAttribute('title');
+            if (title === 'Recherche' || title === 'Paramètres') {
+                staticElements.push(item.outerHTML);
+            }
+        });
+        
+        // Ajouter les applications épinglées dynamiquement
+        const ids = (Array.isArray(this.pinnedApps) ? this.pinnedApps : []).slice(0, 4); // Plus de place maintenant
+        const items = ids.map(id => this.getPhoneAppMeta(id)).filter(a => a && a.id);
+        const dynamicItems = items.map(app => `
+            <button type="button" class="phone-app-icon" data-phone-app="${this.escapeHtmlAttr(app.id)}" style="min-height:auto; height:46px; padding:8px;" onclick="windowManager.openPhoneApp('${this.escapeHtmlAttr(app.id)}')">
+                <div class="phone-app-emoji">${this.renderAppIconMarkup(app.icon, '🧩')}</div>
+            </button>
+        `).join('');
+        
+        // Combiner éléments statiques et dynamiques
+        dock.innerHTML = staticElements.join('') + dynamicItems;
+    }
+
+    getPhoneAllApps() {
+        const seen = new Set();
+        const list = [];
+        const add = (id) => {
+            const key = String(id || '').trim();
+            if (!key || seen.has(key)) return;
+            seen.add(key);
+            list.push(this.getPhoneAppMeta(key));
+        };
+        (Array.isArray(this.pinnedApps) ? this.pinnedApps : []).forEach(add);
+        (Array.isArray(this.installedApps) ? this.installedApps : []).forEach(add);
+        (Array.isArray(this.appsRegistry) ? this.appsRegistry : []).forEach(app => add(app && app.id));
+        return list.filter(a => a && a.id);
+    }
+
+    renderPhoneAppIcon(app) {
+        const id = this.escapeHtmlAttr(app.id);
+        const label = this.escapeHtmlAttr(app.title);
+        const iconMarkup = this.renderAppIconMarkup(app.icon, '🧩');
+        return `
+            <button type="button" class="phone-app-icon" data-phone-app="${id}" onclick="windowManager.openPhoneApp('${id}')">
+                <div class="phone-app-emoji">${iconMarkup}</div>
+                <div class="phone-app-label">${label}</div>
+            </button>
+        `;
+    }
+
+    renderPhoneDrawer(query = '') {
+        const grid = document.getElementById('phone-drawer-grid');
+        if (!grid) return;
+        const q = String(query || '').trim().toLowerCase();
+        const apps = this.getPhoneAllApps().filter(app => {
+            if (!q) return true;
+            return (String(app.title || '').toLowerCase().includes(q) || String(app.id || '').toLowerCase().includes(q));
+        });
+        grid.innerHTML = apps.map(app => this.renderPhoneAppIcon(app)).join('');
+    }
+
+    filterPhoneDrawer(value) {
+        this.phoneDrawerQuery = String(value || '');
+        this.renderPhoneDrawer(this.phoneDrawerQuery);
+    }
+
+    togglePhoneDrawer(force) {
+        const drawer = document.getElementById('phone-drawer');
+        if (!drawer) return;
+        const open = typeof force === 'boolean' ? force : !drawer.classList.contains('active');
+        if (open) {
+            this.closePhoneControlCenter();
+            this.closePhoneRecents();
+            drawer.classList.add('active');
+            drawer.setAttribute('aria-hidden', 'false');
+            const input = document.getElementById('phone-drawer-search');
+            if (input) {
+                try { input.value = this.phoneDrawerQuery || ''; } catch (_) { }
+                try { input.focus(); } catch (_) { }
+            }
+            this.renderPhoneDrawer(this.phoneDrawerQuery || '');
+        } else {
+            drawer.classList.remove('active');
+            drawer.setAttribute('aria-hidden', 'true');
+        }
+    }
+
+    openPhoneApp(id) {
+        if (Date.now() < (Number(this._phoneTapSuppressedUntil) || 0)) return;
+        const meta = this.getPhoneAppMeta(id);
+        if (!meta || !meta.id) return;
+
+        this.phoneLastApp = meta.id;
+        this.trackPhoneRecent(meta.id);
+
+        const stage = document.getElementById('phone-appstage');
+        const title = document.getElementById('phone-app-title');
+        const frame = document.getElementById('phone-app-frame');
+        if (!stage || !frame) return;
+
+        if (title) title.textContent = meta.title || meta.id;
+        frame.innerHTML = this.getAppContent(meta.id);
+
+        this.togglePhoneDrawer(false);
+        this.closePhoneControlCenter();
+        this.closePhoneRecents();
+
+        try { document.body.classList.add('phone-app-open'); } catch (_) { }
+        stage.classList.add('active');
+        stage.setAttribute('aria-hidden', 'false');
+    }
+
+    openPhoneActions(id) {
+        const meta = this.getPhoneAppMeta(id);
+        if (!meta || !meta.id) return;
+        const wrap = document.getElementById('phone-actions');
+        const title = document.getElementById('phone-actions-title');
+        const grid = document.getElementById('phone-actions-grid');
+        const danger = document.getElementById('phone-actions-danger');
+        if (!wrap || !grid || !danger) return;
+
+        this._phoneActionsMode = 'app';
+        this._phoneActionsAppId = meta.id;
+        if (title) title.textContent = meta.title || meta.id;
+
+        const isInstalled = Array.isArray(this.installedApps) ? this.installedApps.includes(meta.id) : false;
+        const isPinned = Array.isArray(this.pinnedApps) ? this.pinnedApps.includes(meta.id) : false;
+
+        grid.innerHTML = `
+            <button type="button" onclick="windowManager.openPhoneApp('${this.escapeHtmlAttr(meta.id)}'); windowManager.closePhoneActions();">Ouvrir</button>
+            <button type="button" onclick="windowManager.phoneTogglePin('${this.escapeHtmlAttr(meta.id)}'); windowManager.closePhoneActions();">${isPinned ? 'Retirer du dock' : 'Épingler au dock'}</button>
+            <button type="button" onclick="windowManager.openPhoneWidgetPicker()">Widgets</button>
+            <button type="button" onclick="windowManager.createDesktopShortcutForApp('${this.escapeHtmlAttr(meta.id)}'); windowManager.notify('Bureau', 'Raccourci créé.', 'system'); windowManager.closePhoneActions();">Raccourci bureau</button>
+            <button type="button" onclick=\"windowManager.togglePhoneDrawer(true); windowManager.closePhoneActions();\">Voir apps</button>
+        `;
+
+        danger.innerHTML = isInstalled ? `
+            <button type="button" onclick="windowManager.phoneUninstallApp('${this.escapeHtmlAttr(meta.id)}')">Désinstaller</button>
+        ` : '';
+
+        this.togglePhoneDrawer(false);
+        this.closePhoneControlCenter();
+        this.closePhoneRecents();
+
+        wrap.classList.add('active');
+        wrap.setAttribute('aria-hidden', 'false');
+    }
+
+    openPhoneWidgetActions(type) {
+        const wrap = document.getElementById('phone-actions');
+        const title = document.getElementById('phone-actions-title');
+        const grid = document.getElementById('phone-actions-grid');
+        const danger = document.getElementById('phone-actions-danger');
+        if (!wrap || !grid || !danger) return;
+
+        const t = String(type || '').trim();
+        const mapTitle = { music: 'Musique', todo: 'Agenda / To‑Do', news: 'Actualités', quote: 'Citation', quicklaunch: 'Raccourcis' };
+        const list = (this.uiPreferences && Array.isArray(this.uiPreferences.phoneWidgets))
+            ? this.uiPreferences.phoneWidgets.map(x => String(x || '').trim())
+            : this.getDefaultUIPreferences().phoneWidgets;
+        const idx = list.indexOf(t);
+        const canMoveUp = idx > 0;
+        const canMoveDown = idx !== -1 && idx < (list.length - 1);
+
+        this._phoneActionsMode = 'widget';
+        this._phoneActionsAppId = '';
+        this._phoneActionsWidgetType = t;
+        if (title) title.textContent = `Widget • ${mapTitle[t] || t}`;
+
+        grid.innerHTML = `
+            <button type="button" onclick="windowManager.openPhoneWidgetPicker()">Ajouter / Retirer</button>
+            <button type="button" onclick="windowManager.phoneWidgetMove('${this.escapeHtmlAttr(t)}', -1)" ${canMoveUp ? '' : 'disabled'}>Monter</button>
+            <button type="button" onclick="windowManager.phoneWidgetMove('${this.escapeHtmlAttr(t)}', 1)" ${canMoveDown ? '' : 'disabled'}>Descendre</button>
+            <button type="button" onclick="windowManager.closePhoneActions()">Fermer</button>
+        `;
+
+        danger.innerHTML = (idx !== -1) ? `
+            <button type="button" onclick="windowManager.phoneWidgetRemove('${this.escapeHtmlAttr(t)}')">Retirer ce widget</button>
+        ` : '';
+
+        this.togglePhoneDrawer(false);
+        this.closePhoneControlCenter();
+        this.closePhoneRecents();
+
+        wrap.classList.add('active');
+        wrap.setAttribute('aria-hidden', 'false');
+    }
+
+    openPhoneWidgetPicker() {
+        const wrap = document.getElementById('phone-actions');
+        const title = document.getElementById('phone-actions-title');
+        const grid = document.getElementById('phone-actions-grid');
+        const danger = document.getElementById('phone-actions-danger');
+        if (!wrap || !grid || !danger) return;
+
+        const allowed = [
+            { id: 'music', name: 'Musique' },
+            { id: 'todo', name: 'Agenda / To‑Do' },
+            { id: 'quote', name: 'Citation' },
+            { id: 'quicklaunch', name: 'Raccourcis' }
+        ];
+
+        const list = (this.uiPreferences && Array.isArray(this.uiPreferences.phoneWidgets))
+            ? this.uiPreferences.phoneWidgets.map(x => String(x || '').trim())
+            : this.getDefaultUIPreferences().phoneWidgets;
+        const set = new Set(list);
+
+        this._phoneActionsMode = 'widget_picker';
+        this._phoneActionsWidgetType = '';
+        if (title) title.textContent = 'Widgets (appui long pour gérer)';
+
+        grid.innerHTML = allowed.map(w => {
+            const on = set.has(w.id);
+            return `<button type="button" onclick="windowManager.phoneWidgetToggle('${this.escapeHtmlAttr(w.id)}')">${on ? '✅' : '➕'} ${this.escapeHtmlAttr(w.name)}</button>`;
+        }).join('') + `<button type="button" onclick="windowManager.closePhoneActions()">Terminé</button>`;
+
+        danger.innerHTML = ``;
+
+        this.togglePhoneDrawer(false);
+        this.closePhoneControlCenter();
+        this.closePhoneRecents();
+
+        wrap.classList.add('active');
+        wrap.setAttribute('aria-hidden', 'false');
+    }
+
+    phoneWidgetToggle(type) {
+        const t = String(type || '').trim();
+        if (!t) return;
+        if (!this.uiPreferences || typeof this.uiPreferences !== 'object') this.uiPreferences = this.getDefaultUIPreferences();
+        if (!Array.isArray(this.uiPreferences.phoneWidgets)) this.uiPreferences.phoneWidgets = this.getDefaultUIPreferences().phoneWidgets.slice();
+        const list = this.uiPreferences.phoneWidgets.map(x => String(x || '').trim()).filter(Boolean);
+        const exists = list.includes(t);
+        const next = exists ? list.filter(x => x !== t) : [...list, t];
+        this.uiPreferences.phoneWidgets = next;
+        this.saveUserData();
+        this.renderPhoneWidgets();
+        if (this._phoneActionsMode === 'widget_picker') this.openPhoneWidgetPicker();
+    }
+
+    phoneWidgetRemove(type) {
+        const t = String(type || '').trim();
+        if (!t) return;
+        if (!this.uiPreferences || typeof this.uiPreferences !== 'object') this.uiPreferences = this.getDefaultUIPreferences();
+        if (!Array.isArray(this.uiPreferences.phoneWidgets)) this.uiPreferences.phoneWidgets = this.getDefaultUIPreferences().phoneWidgets.slice();
+        this.uiPreferences.phoneWidgets = this.uiPreferences.phoneWidgets.map(x => String(x || '').trim()).filter(x => x && x !== t);
+        this.saveUserData();
+        this.closePhoneActions();
+        this.renderPhoneWidgets();
+    }
+
+    phoneWidgetMove(type, dir = 0) {
+        const t = String(type || '').trim();
+        const d = Number(dir) || 0;
+        if (!t || !d) return;
+        if (!this.uiPreferences || typeof this.uiPreferences !== 'object') this.uiPreferences = this.getDefaultUIPreferences();
+        if (!Array.isArray(this.uiPreferences.phoneWidgets)) this.uiPreferences.phoneWidgets = this.getDefaultUIPreferences().phoneWidgets.slice();
+        const list = this.uiPreferences.phoneWidgets.map(x => String(x || '').trim()).filter(Boolean);
+        const idx = list.indexOf(t);
+        if (idx === -1) return;
+        const nidx = Math.max(0, Math.min(list.length - 1, idx + (d < 0 ? -1 : 1)));
+        if (nidx === idx) return;
+        const copy = list.slice();
+        const [it] = copy.splice(idx, 1);
+        copy.splice(nidx, 0, it);
+        this.uiPreferences.phoneWidgets = copy;
+        this.saveUserData();
+        this.renderPhoneWidgets();
+        this.openPhoneWidgetActions(t);
+    }
+
+    closePhoneActions() {
+        const wrap = document.getElementById('phone-actions');
+        if (!wrap) return;
+        wrap.classList.remove('active');
+        wrap.setAttribute('aria-hidden', 'true');
+        this._phoneActionsAppId = '';
+        this._phoneActionsMode = '';
+        this._phoneActionsWidgetType = '';
+    }
+
+    phoneTogglePin(id) {
+        const appId = String(id || '').trim();
+        if (!appId) return;
+        if (!Array.isArray(this.pinnedApps)) this.pinnedApps = [];
+        const exists = this.pinnedApps.includes(appId);
+        if (exists) this.pinnedApps = this.pinnedApps.filter(x => x !== appId);
+        else this.pinnedApps = [appId, ...this.pinnedApps].slice(0, 8);
+        this.saveUserData();
+        if (this.isPhoneShellActive()) this.renderPhoneHome();
+    }
+
+    phoneUninstallApp(id) {
+        const appId = String(id || '').trim();
+        if (!appId) return;
+        const ok = confirm(`Désinstaller ${appId} ?`);
+        if (!ok) return;
+        this.uninstallApp(appId);
+        this.closePhoneActions();
+        if (this.isPhoneShellActive()) this.renderPhoneHome();
+    }
+
+    closePhoneApp() {
+        const stage = document.getElementById('phone-appstage');
+        const frame = document.getElementById('phone-app-frame');
+        if (frame) frame.innerHTML = '';
+        if (stage) {
+            stage.classList.remove('active');
+            stage.setAttribute('aria-hidden', 'true');
+        }
+        try { document.body.classList.remove('phone-app-open'); } catch (_) { }
+    }
+
+    phoneHome() {
+        this.togglePhoneDrawer(false);
+        this.closePhoneControlCenter();
+        this.closePhoneRecents();
+        this.closePhoneApp();
+    }
+
+    phoneBack() {
+        const drawer = document.getElementById('phone-drawer');
+        if (drawer && drawer.classList.contains('active')) { this.togglePhoneDrawer(false); return; }
+        const cc = document.getElementById('phone-control-center');
+        if (cc && cc.classList.contains('active')) { this.closePhoneControlCenter(); return; }
+        const actions = document.getElementById('phone-actions');
+        if (actions && actions.classList.contains('active')) { this.closePhoneActions(); return; }
+        const recents = document.getElementById('phone-recents');
+        if (recents && recents.classList.contains('active')) { this.closePhoneRecents(); return; }
+        const stage = document.getElementById('phone-appstage');
+        if (stage && stage.classList.contains('active')) { this.phoneHome(); return; }
+        this.togglePhoneDrawer(true);
+    }
+
+    trackPhoneRecent(id) {
+        const meta = this.getPhoneAppMeta(id);
+        if (!meta || !meta.id) return;
+        this.phoneRecents = (Array.isArray(this.phoneRecents) ? this.phoneRecents : []).filter(r => r && r.id !== meta.id);
+        this.phoneRecents.unshift({ id: meta.id, title: meta.title, icon: meta.icon, ts: Date.now() });
+        this.phoneRecents = this.phoneRecents.slice(0, 12);
+        this.renderPhoneRecentsList();
+    }
+
+    showPhoneRecents() {
+        const wrap = document.getElementById('phone-recents');
+        if (!wrap) return;
+        this.togglePhoneDrawer(false);
+        this.closePhoneControlCenter();
+        wrap.classList.add('active');
+        wrap.setAttribute('aria-hidden', 'false');
+        this.renderPhoneRecentsList();
+    }
+
+    closePhoneRecents() {
+        const wrap = document.getElementById('phone-recents');
+        if (!wrap) return;
+        wrap.classList.remove('active');
+        wrap.setAttribute('aria-hidden', 'true');
+    }
+
+    renderPhoneRecentsList() {
+        const list = document.getElementById('phone-recents-list');
+        if (!list) return;
+        const recents = Array.isArray(this.phoneRecents) ? this.phoneRecents : [];
+        if (recents.length === 0) {
+            list.innerHTML = `<div style="opacity:0.75; padding: 8px 4px;">Aucune app récente.</div>`;
+            return;
+        }
+        list.innerHTML = recents.map(r => `
+            <div class="phone-recents-item" onclick="windowManager.openPhoneApp('${this.escapeHtmlAttr(r.id)}')">
+                <div class="meta">
+                    <div style="font-size:20px;">${this.escapeHtmlAttr(r.icon || '🧩')}</div>
+                    <div class="name">${this.escapeHtmlAttr(r.title || r.id)}</div>
+                </div>
+                <div style="opacity:0.7; font-weight:900;">›</div>
+            </div>
+        `).join('');
     }
 
     async fetchAppsRegistry() {
@@ -2195,12 +3148,62 @@ class WindowManager {
             this.appsRegistry = fallbackRegistry;
         }
 
-    // V3.1: Merge Custom AI Apps
-    if (this.customApps && this.customApps.length > 0) {
-        // Filter out duplicates if any
-        const customIds = new Set(this.customApps.map(a => a.id));
-        this.appsRegistry = [...this.appsRegistry.filter(a => !customIds.has(a.id)), ...this.customApps];
-    }
+        const normalizeRegistryEntry = (app) => {
+            if (!app || typeof app !== 'object') return null;
+            const id = String(app.id || '').trim();
+            if (!id) return null;
+
+            const title = String(app.title || app.name || '').trim() || id;
+            const creator = String(app.creator || app.dev || app.developer || '').trim() || 'Community';
+            const description = String(app.description || app.desc || '').trim();
+            const category = String(app.category || app.cat || '').trim() || 'productivity';
+
+            const iconRaw = app.icon !== undefined && app.icon !== null ? String(app.icon) : '';
+            const icon = iconRaw.trim() ? iconRaw : '📦';
+
+            const typeRaw = String(app.type || '').trim();
+            const type = typeRaw || (app.url ? 'site' : '');
+
+            const normalized = {
+                ...app,
+                id,
+                title,
+                creator,
+                description,
+                category,
+                icon,
+                type
+            };
+
+            if (typeof app.url === 'string') normalized.url = app.url;
+            if (typeof app.code === 'string') normalized.code = app.code;
+            if (typeof app.appFile === 'string') normalized.appFile = app.appFile;
+            if (Array.isArray(app.screenshots)) normalized.screenshots = app.screenshots;
+
+            return normalized;
+        };
+
+        // Merge Store-approved community apps into the OS registry (so Dock/Desktop use correct title/icon).
+        try {
+            const approvedRaw = JSON.parse(localStorage.getItem('aether_approved_apps') || '[]');
+            const approved = (Array.isArray(approvedRaw) ? approvedRaw : [])
+                .map(normalizeRegistryEntry)
+                .filter(Boolean);
+            if (approved.length > 0) {
+                const ids = new Set(approved.map(a => a.id));
+                this.appsRegistry = [...this.appsRegistry.filter(a => a && !ids.has(a.id)), ...approved];
+            }
+        } catch (e) { }
+
+        // V3.1: Merge Custom AI Apps
+        if (this.customApps && this.customApps.length > 0) {
+            const normalizedCustom = (Array.isArray(this.customApps) ? this.customApps : [])
+                .map(normalizeRegistryEntry)
+                .filter(Boolean);
+            this.customApps = normalizedCustom;
+            const customIds = new Set(normalizedCustom.map(a => a.id));
+            this.appsRegistry = [...this.appsRegistry.filter(a => a && !customIds.has(a.id)), ...normalizedCustom];
+        }
 
         const deletedIds = new Set(this.getDeletedAppIds());
         if (deletedIds.size > 0) {
@@ -2632,12 +3635,19 @@ class WindowManager {
     }
 
     getAppContent(id) {
+        const phoneParamIds = new Set(['store', 'settings', 'explorer', 'admin', 'spotaether', 'browser']);
+        const maybePhone = (src) => {
+            if (!this.isPhoneShellActive()) return src;
+            if (!phoneParamIds.has(String(id || '').trim())) return src;
+            return this.appendUrlParam(src, 'phone', '1');
+        };
+
         const localFileAliases = { webos: 'browser', sheets: 'excel', slides: 'powerpoint', docs: 'word' };
         const localFirstApps = new Set(['docs', 'word', 'sheets', 'excel', 'slides', 'powerpoint']);
         if (localFirstApps.has(id)) {
             const resolvedId = localFileAliases[id] || id;
             const appFile = `apps/${resolvedId}.html`;
-            return `<iframe src="${appFile}" style="width:100%; height:100%; border:none; background:#0f172a;" id="iframe-${id}" onload="windowManager.initIframeUser('${id}')"></iframe>`;
+            return `<iframe src="${maybePhone(appFile)}" style="width:100%; height:100%; border:none; background:#0f172a;" allow="autoplay; encrypted-media" id="iframe-${id}" onload="windowManager.initIframeUser('${id}')"></iframe>`;
         }
 
         if (id.startsWith('webwrap_') && this.webWrapApps && this.webWrapApps[id] && this.webWrapApps[id].url) {
@@ -2646,14 +3656,14 @@ class WindowManager {
             const name = encodeURIComponent(String(cfg.name || '').trim());
             const icon = encodeURIComponent(String(cfg.icon || '').trim());
             const src = `apps/webwrap.html#url=${url}&name=${name}&icon=${icon}`;
-            return `<iframe src="${src}" style="width:100%; height:100%; border:none; background:#0f172a;" id="iframe-${id}" onload="windowManager.initIframeUser('${id}')"></iframe>`;
+            return `<iframe src="${src}" style="width:100%; height:100%; border:none; background:#0f172a;" allow="autoplay; encrypted-media" id="iframe-${id}" onload="windowManager.initIframeUser('${id}')"></iframe>`;
         }
 
         const registryAppInfo = this.appsRegistry.find(app => app && app.id === id);
         if (registryAppInfo && registryAppInfo.url) {
             // V3.1: URL-based apps are wrapped in the browser component (proxy-capable)
             const browserSrc = `apps/newbrowser.html#embed=1&url=${encodeURIComponent(registryAppInfo.url)}`;
-            return `<iframe src="${browserSrc}" style="width:100%; height:100%; border:none; background:#1e1e1e;" id="iframe-${id}" onload="windowManager.initIframeUser('${id}')"></iframe>`;
+            return `<iframe src="${maybePhone(browserSrc)}" style="width:100%; height:100%; border:none; background:#1e1e1e;" allow="autoplay; encrypted-media" id="iframe-${id}" onload="windowManager.initIframeUser('${id}')"></iframe>`;
         }
 
         // V3: Running an installed APK
@@ -2694,37 +3704,37 @@ class WindowManager {
                 const registryUrl = normalizeExternalUrl(registryApp.url);
                 if (registryUrl) {
                     const browserSrc = `apps/newbrowser.html#embed=1&url=${encodeURIComponent(registryUrl)}`;
-                    return `<iframe src="${browserSrc}" style="width:100%; height:100%; border:none; background:#1e1e1e;" id="iframe-${id}" onload="windowManager.initIframeUser('${id}')"></iframe>`;
+                    return `<iframe src="${maybePhone(browserSrc)}" style="width:100%; height:100%; border:none; background:#1e1e1e;" id="iframe-${id}" onload="windowManager.initIframeUser('${id}')"></iframe>`;
                 }
             }
 
             if (registryApp.type === 'microtool') {
                 const toolId = encodeURIComponent(registryApp.toolId || registryApp.id || id);
                 const toolName = encodeURIComponent(registryApp.title || id);
-                return `<iframe src="apps/microtools.html?tool=${toolId}&name=${toolName}" style="width:100%; height:100%; border:none; background:#0f172a;" id="iframe-${id}" onload="windowManager.initIframeUser('${id}')"></iframe>`;
+                return `<iframe src="apps/microtools.html?tool=${toolId}&name=${toolName}" style="width:100%; height:100%; border:none; background:#0f172a;" allow="autoplay; encrypted-media" id="iframe-${id}" onload="windowManager.initIframeUser('${id}')"></iframe>`;
             }
 
             if (typeof registryApp.appFile === 'string' && registryApp.appFile.trim()) {
                 const rawFile = registryApp.appFile.trim();
                 const appSrc = rawFile.startsWith('apps/') ? rawFile : `apps/${rawFile}`;
-                return `<iframe src="${appSrc}" style="width:100%; height:100%; border:none; background:#0f172a;" id="iframe-${id}" onload="windowManager.initIframeUser('${id}')"></iframe>`;
+                return `<iframe src="${maybePhone(appSrc)}" style="width:100%; height:100%; border:none; background:#0f172a;" allow="autoplay; encrypted-media" id="iframe-${id}" onload="windowManager.initIframeUser('${id}')"></iframe>`;
             }
         }
     
     // V3.1: Custom AI Apps (Code based)
     if (registryApp && registryApp.code) {
-        return `<iframe srcdoc='${registryApp.code.replace(/'/g, "&#39;")}' style="width:100%; height:100%; border:none; background:white;" id="iframe-${id}" onload="windowManager.initIframeUser('${id}')"></iframe>`;
+        return `<iframe srcdoc='${registryApp.code.replace(/'/g, "&#39;")}' style="width:100%; height:100%; border:none; background:white;" allow="autoplay; encrypted-media" id="iframe-${id}" onload="windowManager.initIframeUser('${id}')"></iframe>`;
     }
 
         if (id.startsWith('dev_app_')) {
             const code = (this.devApps[id] || '').replace(/'/g, "&#39;");
-            return `<iframe srcdoc='${code}' style="width:100%; height:100%; border:none; background:white;" id="iframe-${id}" onload="windowManager.initIframeUser('${id}')"></iframe>`;
+            return `<iframe srcdoc='${code}' style="width:100%; height:100%; border:none; background:white;" allow="autoplay; encrypted-media" id="iframe-${id}" onload="windowManager.initIframeUser('${id}')"></iframe>`;
         }
 
         if (id.startsWith('dev_url_')) {
             const previewUrl = normalizeExternalUrl(this.devUrls[id]);
             if (previewUrl) {
-                return `<iframe src="${previewUrl}" style="width:100%; height:100%; border:none; background:#0f172a;" id="iframe-${id}" onload="windowManager.initIframeUser('${id}')"></iframe>`;
+                return `<iframe src="${previewUrl}" style="width:100%; height:100%; border:none; background:#0f172a;" allow="autoplay; encrypted-media" id="iframe-${id}" onload="windowManager.initIframeUser('${id}')"></iframe>`;
             }
         }
 
@@ -2741,12 +3751,12 @@ class WindowManager {
                         const uvOrigin = String(runtimeEnv.AETHER_UV_ORIGIN || '').trim();
                         if (uvOrigin) {
                             const browserSrc = `apps/newbrowser.html#embed=1&url=${encodeURIComponent(siteUrl)}`;
-                            return `<iframe src="${browserSrc}" style="width:100%; height:100%; border:none; background:#1e1e1e;" id="iframe-${id}" onload="windowManager.initIframeUser('${id}')"></iframe>`;
+                            return `<iframe src="${browserSrc}" style="width:100%; height:100%; border:none; background:#1e1e1e;" allow="autoplay; encrypted-media" id="iframe-${id}" onload="windowManager.initIframeUser('${id}')"></iframe>`;
                         }
-                        return `<iframe src="${siteUrl}" style="width:100%; height:100%; border:none; background:#0f172a;" id="iframe-${id}" onload="windowManager.initIframeUser('${id}')"></iframe>`;
+                        return `<iframe src="${siteUrl}" style="width:100%; height:100%; border:none; background:#0f172a;" allow="autoplay; encrypted-media" id="iframe-${id}" onload="windowManager.initIframeUser('${id}')"></iframe>`;
                         }
                     } else if (communityApp.code) {
-                        return `<iframe srcdoc='${communityApp.code.replace(/'/g, "&#39;")}' style="width:100%; height:100%; border:none; background:white;" id="iframe-${id}" onload="windowManager.initIframeUser('${id}')"></iframe>`;
+                        return `<iframe srcdoc='${communityApp.code.replace(/'/g, "&#39;")}' style="width:100%; height:100%; border:none; background:white;" allow="autoplay; encrypted-media" id="iframe-${id}" onload="windowManager.initIframeUser('${id}')"></iframe>`;
                     }
                 }
             } catch (err) {
@@ -2759,7 +3769,7 @@ class WindowManager {
             ? `apps/${fileAliases[id] || id}.html`
             : `apps/${resolvedId}.html`;
 
-        return `<iframe src="${appFile}" style="width:100%; height:100%; border:none; background:#0f172a;" id="iframe-${id}" onload="windowManager.initIframeUser('${id}')"></iframe>`;
+        return `<iframe src="${appFile}" style="width:100%; height:100%; border:none; background:#0f172a;" allow="autoplay; encrypted-media" id="iframe-${id}" onload="windowManager.initIframeUser('${id}')"></iframe>`;
     }
 
     initIframeUser(id) {
@@ -2848,6 +3858,7 @@ class WindowManager {
 
     vfs_write(path, content, type = "file") {
         path = this.normalizeVfsPath(path);
+        const existed = !!this.vfs[path];
         this.vfs[path] = {
             type: type,
             content: content,
@@ -2862,6 +3873,12 @@ class WindowManager {
         if (this.vfs[parentDir] && this.vfs[parentDir].type === "folder") {
             if (!this.vfs[parentDir].children) this.vfs[parentDir].children = {};
             this.vfs[parentDir].children[path] = type;
+        }
+
+        if (!existed && this.isDesktopRootPath(path)) {
+            if (!Array.isArray(this.desktopIconOrder)) this.desktopIconOrder = [];
+            const normalized = this.normalizeVfsPath(path);
+            this.desktopIconOrder = [...this.desktopIconOrder.filter(p => this.normalizeVfsPath(p) !== normalized), normalized];
         }
 
         this.saveUserData();
@@ -2882,12 +3899,67 @@ class WindowManager {
         if (this.vfs[parentDir] && this.vfs[parentDir].children) {
             delete this.vfs[parentDir].children[path];
         }
+        if (this.isDesktopRootPath(path)) {
+            this.desktopIconOrder = (Array.isArray(this.desktopIconOrder) ? this.desktopIconOrder : [])
+                .filter(p => this.normalizeVfsPath(p) !== path);
+        }
         this.saveUserData();
         this.syncAllIframes();
         this.renderDesktop(); // Refresh desktop icons
         if (this.currentAccount) {
             this.deleteVfsEntryFromSupabase(this.currentAccount, path).catch(() => {});
         }
+    }
+
+    vfs_move(oldPath, newPath) {
+        oldPath = this.normalizeVfsPath(oldPath);
+        newPath = this.normalizeVfsPath(newPath);
+        if (!oldPath || !newPath || oldPath === '/' || newPath === '/') return false;
+        if (!this.vfs[oldPath]) return false;
+        if (newPath.startsWith(oldPath + '/')) return false;
+        if (this.vfs[newPath]) return false;
+
+        const movedKeys = Object.keys(this.vfs).filter(p => p === oldPath || p.startsWith(oldPath + '/'));
+        if (movedKeys.length === 0) return false;
+
+        const nextVfs = { ...this.vfs };
+        movedKeys.forEach((p) => {
+            const suffix = p.slice(oldPath.length);
+            const dest = `${newPath}${suffix}`;
+            nextVfs[dest] = nextVfs[p];
+            delete nextVfs[p];
+        });
+
+        this.vfs = this.rebuildVfsTree(nextVfs);
+
+        // Keep desktop order consistent (root only)
+        if (Array.isArray(this.desktopIconOrder)) {
+            this.desktopIconOrder = this.desktopIconOrder
+                .map(p => {
+                    const normalized = this.normalizeVfsPath(p);
+                    if (normalized === oldPath) return newPath;
+                    if (normalized.startsWith(oldPath + '/')) return `${newPath}${normalized.slice(oldPath.length)}`;
+                    return normalized;
+                })
+                .filter(Boolean);
+        }
+
+        this.saveUserData();
+        this.syncAllIframes();
+        this.renderDesktop();
+
+        if (this.currentAccount) {
+            try {
+                movedKeys.forEach((p) => {
+                    const suffix = p.slice(oldPath.length);
+                    const dest = `${newPath}${suffix}`;
+                    this.upsertVfsEntryToSupabase(this.currentAccount, dest, this.vfs[dest]).catch(() => {});
+                    this.deleteVfsEntryFromSupabase(this.currentAccount, p).catch(() => {});
+                });
+            } catch (_) { }
+        }
+
+        return true;
     }
 
     setWallpaper(theme) {
@@ -3913,7 +4985,8 @@ class WindowManager {
     initDefaultWidgets() {
         this.activeWidgets = [
             { id: 'w_clock', type: 'clock', x: window.innerWidth - 340, y: 40 },
-            { id: 'w_sys', type: 'system', x: window.innerWidth - 340, y: 180 }
+            { id: 'w_music', type: 'music', x: window.innerWidth - 340, y: 180, data: {} },
+            { id: 'w_todo', type: 'todo', x: window.innerWidth - 340, y: 430, data: { items: [], events: [] } }
         ];
     }
 
@@ -3932,7 +5005,7 @@ class WindowManager {
             el.id = w.id;
             el.style.left = w.x + 'px';
             el.style.top = w.y + 'px';
-            el.style.width = w.type === 'clock' ? '280px' : '280px';
+            el.style.width = w.type === 'music' ? '320px' : '280px';
             
             // Content based on type
             if (w.type === 'clock') {
@@ -3951,34 +5024,246 @@ class WindowManager {
                     }
                 })();
                 el.innerHTML = `
-                    <div style="font-size:42px; font-weight:800; line-height:1;">${timeLabel}</div>
-                    <div style="opacity:0.7; font-size:14px; margin-top:5px;">${date.toLocaleDateString(locale, { timeZone: this.timeZone, weekday: 'long', day: 'numeric', month: 'long' })}</div>
+                    <div class="widget-head">
+                        <div class="widget-title">Horloge</div>
+                        <button class="widget-close" onclick="windowManager.removeWidget('${w.id}')" aria-label="Supprimer">×</button>
+                    </div>
+                    <div class="widget-body">
+                        <div class="widget-clock-time">${timeLabel}</div>
+                        <div class="widget-clock-date">${date.toLocaleDateString(locale, { timeZone: this.timeZone, weekday: 'long', day: 'numeric', month: 'long' })}</div>
+                    </div>
                 `;
             } else if (w.type === 'system') {
                 el.innerHTML = `
-                    <div style="font-size:11px; font-weight:700; margin-bottom:10px; opacity:0.6; letter-spacing:1px;">SYSTÈME</div>
-                    <div style="display:flex; justify-content:space-between; font-size:13px; margin-bottom:5px;"><span>CPU</span> <span style="color:#28c840">12%</span></div>
-                    <div style="width:100%; height:4px; background:rgba(255,255,255,0.1); border-radius:2px; margin-bottom:10px;"><div style="width:12%; height:100%; background:#28c840; border-radius:2px;"></div></div>
-                    <div style="display:flex; justify-content:space-between; font-size:13px; margin-bottom:5px;"><span>RAM</span> <span style="color:#0A84FF">3.4GB</span></div>
-                    <div style="width:100%; height:4px; background:rgba(255,255,255,0.1); border-radius:2px;"><div style="width:45%; height:100%; background:#0A84FF; border-radius:2px;"></div></div>
+                    <div class="widget-head">
+                        <div class="widget-title">Système</div>
+                        <button class="widget-close" onclick="windowManager.removeWidget('${w.id}')" aria-label="Supprimer">×</button>
+                    </div>
+                    <div class="widget-body">
+                        <div class="sys-row"><span>CPU</span><span class="sys-val ok">12%</span></div>
+                        <div class="sys-bar"><div class="sys-fill ok" style="width:12%"></div></div>
+                        <div class="sys-row"><span>RAM</span><span class="sys-val info">3.4GB</span></div>
+                        <div class="sys-bar"><div class="sys-fill info" style="width:45%"></div></div>
+                    </div>
                 `;
             } else if (w.type === 'battery') {
                 el.innerHTML = `
-                    <div style="font-size:24px;">🔋 85%</div>
-                    <div style="font-size:12px; opacity:0.7;">Sur batterie</div>
+                    <div class="widget-head">
+                        <div class="widget-title">Batterie</div>
+                        <button class="widget-close" onclick="windowManager.removeWidget('${w.id}')" aria-label="Supprimer">×</button>
+                    </div>
+                    <div class="widget-body">
+                        <div class="widget-kpi">🔋 85%</div>
+                        <div class="widget-sub">Sur batterie</div>
+                    </div>
                 `;
             } else if (w.type === 'note') {
                 el.style.width = '280px';
                 el.style.height = '200px';
                 el.innerHTML = `
-                    <div style="font-size:11px; font-weight:700; margin-bottom:10px; opacity:0.6; letter-spacing:1px;">NOTE RAPIDE</div>
-                    <textarea style="width:100%; height: 120px; background:transparent; border:none; color:white; resize:none; font-family:inherit; font-size:13px;" placeholder="Écrivez quelque chose...">${w.content || ''}</textarea>
+                    <div class="widget-head">
+                        <div class="widget-title">Note</div>
+                        <button class="widget-close" onclick="windowManager.removeWidget('${w.id}')" aria-label="Supprimer">×</button>
+                    </div>
+                    <div class="widget-body">
+                        <textarea class="widget-note" placeholder="Écrivez quelque chose...">${w.content || ''}</textarea>
+                    </div>
                 `;
                 const textarea = el.querySelector('textarea');
                 textarea.onchange = (e) => {
                     w.content = e.target.value;
                     this.saveUserData();
                 };
+            } else if (w.type === 'music') {
+                const s = this.musicWidgetState || {};
+                const title = s.title || 'Aucune musique';
+                const artist = s.artist || '—';
+                const album = s.album || '';
+                const cover = s.coverUrl || '';
+                const dur = Number(s.duration) || 0;
+                const cur = Number(s.currentTime) || 0;
+                const pct = dur > 0 ? Math.max(0, Math.min(100, (cur / dur) * 100)) : 0;
+                const vol = Math.max(0, Math.min(1, Number(s.volume)));
+                const playing = !!s.isPlaying;
+                const accent = this.hashToColor(`${title}|${artist}|${album}`);
+
+                el.classList.add('widget-music');
+                el.style.setProperty('--music-accent', accent);
+                el.innerHTML = `
+                    <div class="widget-head">
+                        <div class="widget-title">Musique</div>
+                        <button class="widget-close" onclick="windowManager.removeWidget('${w.id}')" aria-label="Supprimer">×</button>
+                    </div>
+                    <div class="widget-body">
+                        <div class="music-row">
+                            <div class="music-cover ${playing ? 'playing' : ''}">
+                                ${cover ? `<img src="${this.escapeHtmlAttr(cover)}" alt="">` : `<div class="music-cover-placeholder">🎵</div>`}
+                            </div>
+                            <div class="music-meta">
+                                <div class="music-title">${this.escapeHtmlAttr(title)}</div>
+                                <div class="music-artist">${this.escapeHtmlAttr(artist)}</div>
+                                ${album ? `<div class="music-album">${this.escapeHtmlAttr(album)}</div>` : ``}
+                            </div>
+                        </div>
+
+                        <div class="music-controls">
+                            <button class="music-btn" onclick="windowManager.musicWidgetControl('prev')" aria-label="Précédent">⏮</button>
+                            <button class="music-btn primary" onclick="windowManager.musicWidgetControl('${playing ? 'pause' : 'play'}')" aria-label="Play/Pause">${playing ? '⏸' : '▶'}</button>
+                            <button class="music-btn" onclick="windowManager.musicWidgetControl('next')" aria-label="Suivant">⏭</button>
+                        </div>
+
+                        <div class="music-progress" onclick="windowManager.musicWidgetSeek(event)">
+                            <div class="music-progress-track"></div>
+                            <div class="music-progress-fill" style="width:${pct.toFixed(2)}%"></div>
+                            <div class="music-progress-glow ${playing ? 'on' : ''}" style="left:${pct.toFixed(2)}%"></div>
+                        </div>
+                        <div class="music-time">
+                            <span>${this.formatSeconds(cur)}</span>
+                            <span>${this.formatSeconds(dur)}</span>
+                        </div>
+
+                        <div class="music-visual ${playing ? 'on' : ''}">
+                            ${Array.from({ length: 12 }).map((_, i) => `<div class="bar" style="--i:${i}"></div>`).join('')}
+                        </div>
+
+                        <div class="music-volume">
+                            <span class="vol-ico">🔊</span>
+                            <input type="range" min="0" max="1" step="0.01" value="${vol}" oninput="windowManager.musicWidgetVolume(this.value)">
+                        </div>
+                    </div>
+                `;
+
+                // Ask apps for a fresh state (best effort)
+                this.requestMusicStateRefresh();
+            } else if (w.type === 'todo') {
+                if (!w.data || typeof w.data !== 'object') w.data = { items: [], events: [] };
+                if (!Array.isArray(w.data.items)) w.data.items = [];
+                if (!Array.isArray(w.data.events)) w.data.events = [];
+
+                const today = new Date();
+                const ymd = today.toISOString().slice(0, 10);
+                const items = w.data.items;
+                const remaining = items.filter(t => !t.done).length;
+                const events = w.data.events.filter(ev => String(ev.date || '') === ymd).slice(0, 3);
+
+                el.style.width = '320px';
+                el.innerHTML = `
+                    <div class="widget-head">
+                        <div class="widget-title">Agenda / To‑Do</div>
+                        <button class="widget-close" onclick="windowManager.removeWidget('${w.id}')" aria-label="Supprimer">×</button>
+                    </div>
+                    <div class="widget-body">
+                        <div class="todo-summary">
+                            <div class="todo-kpi">${remaining}</div>
+                            <div class="todo-sub">tâche${remaining > 1 ? 's' : ''} restante${remaining > 1 ? 's' : ''} aujourd’hui</div>
+                        </div>
+
+                        <div class="todo-add">
+                            <input class="todo-input" id="todo-input-${w.id}" placeholder="Ajouter une tâche..." onkeypress="if(event.key==='Enter') windowManager.todoAdd('${w.id}')">
+                            <button class="todo-add-btn" onclick="windowManager.todoAdd('${w.id}')">＋</button>
+                        </div>
+
+                        <div class="todo-list">
+                            ${items.slice(0, 6).map((t, idx) => `
+                                <label class="todo-item ${t.done ? 'done' : ''}">
+                                    <input type="checkbox" ${t.done ? 'checked' : ''} onchange="windowManager.todoToggle('${w.id}', ${idx})">
+                                    <span>${this.escapeHtmlAttr(t.text || '')}</span>
+                                </label>
+                            `).join('') || `<div class="todo-empty">Aucune tâche</div>`}
+                        </div>
+
+                        <div class="todo-events-head">
+                            <div>Événements du jour</div>
+                            <button class="todo-mini-btn" onclick="windowManager.todoAddEvent('${w.id}')">Ajouter</button>
+                        </div>
+                        <div class="todo-events">
+                            ${events.map(ev => `
+                                <div class="todo-event">
+                                    <div class="todo-event-time">${this.escapeHtmlAttr(ev.time || '')}</div>
+                                    <div class="todo-event-title">${this.escapeHtmlAttr(ev.title || '')}</div>
+                                </div>
+                            `).join('') || `<div class="todo-empty">Aucun événement</div>`}
+                        </div>
+                    </div>
+                `;
+            } else if (w.type === 'news') {
+                if (!w.data || typeof w.data !== 'object') w.data = { feeds: [], items: [], lastError: '' };
+                if (!Array.isArray(w.data.feeds)) w.data.feeds = [];
+                if (!Array.isArray(w.data.items)) w.data.items = [];
+                const items = w.data.items.slice(0, 6);
+                el.style.width = '360px';
+                el.innerHTML = `
+                    <div class="widget-head">
+                        <div class="widget-title">Actualités</div>
+                        <div class="widget-actions">
+                            <button class="widget-mini" onclick="windowManager.newsConfigure('${w.id}')" aria-label="Flux">⚙️</button>
+                            <button class="widget-mini" onclick="windowManager.newsRefresh('${w.id}')" aria-label="Rafraîchir">⟳</button>
+                            <button class="widget-close" onclick="windowManager.removeWidget('${w.id}')" aria-label="Supprimer">×</button>
+                        </div>
+                    </div>
+                    <div class="widget-body">
+                        ${w.data.lastError ? `<div class="widget-warn">${this.escapeHtmlAttr(w.data.lastError)}</div>` : ``}
+                        <div class="news-list">
+                            ${items.map((it) => `
+                                <div class="news-item" onclick="windowManager.openUrlMini(${JSON.stringify(it.link || '')}, ${JSON.stringify(it.title || 'News')})">
+                                    <div class="news-thumb">${it.image ? `<img src="${this.escapeHtmlAttr(it.image)}" alt="">` : `<div class="news-thumb-ph">📰</div>`}</div>
+                                    <div class="news-text">
+                                        <div class="news-title">${this.escapeHtmlAttr(it.title || '')}</div>
+                                        <div class="news-sub">${this.escapeHtmlAttr(it.source || '')}</div>
+                                    </div>
+                                </div>
+                            `).join('') || `<div class="todo-empty">Aucun item (ajoute un flux RSS).</div>`}
+                        </div>
+                    </div>
+                `;
+            } else if (w.type === 'quote') {
+                const quote = this.getDailyQuote(w.data && w.data._nonce ? w.data._nonce : '');
+                el.style.width = '320px';
+                el.innerHTML = `
+                    <div class="widget-head">
+                        <div class="widget-title">Citation</div>
+                        <div class="widget-actions">
+                            <button class="widget-mini" onclick="windowManager.quoteNext('${w.id}')" aria-label="Changer">✨</button>
+                            <button class="widget-close" onclick="windowManager.removeWidget('${w.id}')" aria-label="Supprimer">×</button>
+                        </div>
+                    </div>
+                    <div class="widget-body">
+                        <div class="quote-card">
+                            <div class="quote-mark">“</div>
+                            <div class="quote-text">${this.escapeHtmlAttr(quote.text)}</div>
+                            <div class="quote-author">${this.escapeHtmlAttr(quote.author)}</div>
+                        </div>
+                    </div>
+                `;
+            } else if (w.type === 'quicklaunch') {
+                if (!w.data || typeof w.data !== 'object') w.data = { appIds: [] };
+                if (!Array.isArray(w.data.appIds) || w.data.appIds.length === 0) {
+                    w.data.appIds = Array.from(new Set((Array.isArray(this.pinnedApps) ? this.pinnedApps : []).filter(Boolean))).slice(0, 10);
+                }
+                const apps = w.data.appIds.map(id => this.resolveAppCatalogEntry(id)).filter(Boolean);
+                el.style.width = '360px';
+                el.innerHTML = `
+                    <div class="widget-head">
+                        <div class="widget-title">Quick Launch</div>
+                        <div class="widget-actions">
+                            <button class="widget-mini" onclick="windowManager.quickLaunchEdit('${w.id}')" aria-label="Modifier">✎</button>
+                            <button class="widget-close" onclick="windowManager.removeWidget('${w.id}')" aria-label="Supprimer">×</button>
+                        </div>
+                    </div>
+                    <div class="widget-body">
+                        <div class="ql-grid" ondragover="event.preventDefault()">
+                            ${apps.map((app, idx) => `
+                                <div class="ql-item" draggable="true"
+                                    ondragstart="windowManager.quickLaunchDragStart('${w.id}', ${idx})"
+                                    ondrop="windowManager.quickLaunchDrop('${w.id}', ${idx}); event.preventDefault();"
+                                    onclick="windowManager.installApp('${this.escapeHtmlAttr(app.id)}')">
+                                    <div class="ql-ico">${this.renderAppIconMarkup(app.icon, '📦')}</div>
+                                    <div class="ql-label">${this.escapeHtmlAttr(app.title || app.id)}</div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
             }
 
             // Drag Logic
@@ -3990,6 +5275,12 @@ class WindowManager {
 
     handleWidgetDrag(e, widget) {
         e.stopPropagation();
+        // Don't drag when interacting with controls/inputs inside widgets.
+        try {
+            if (e.target && (e.target.closest('button') || e.target.closest('input') || e.target.closest('textarea') || e.target.closest('select') || e.target.closest('a'))) {
+                return;
+            }
+        } catch (_) { }
         const el = document.getElementById(widget.id);
         const startX = e.clientX;
         const startY = e.clientY;
@@ -4022,26 +5313,627 @@ removeWidget(id) {
     this.saveUserData();
 }
 
+    isDesktopRootPath(path) {
+        const normalized = this.normalizeVfsPath(path);
+        return normalized.startsWith('/Bureau/') && normalized.split('/').length === 3;
+    }
+
+    getDesktopRootPaths() {
+        return Object.keys(this.vfs || {}).filter(p => this.isDesktopRootPath(p));
+    }
+
+    normalizeDesktopIconOrder(order = [], desktopRootPaths = []) {
+        const rootSet = new Set((Array.isArray(desktopRootPaths) ? desktopRootPaths : []).map(p => this.normalizeVfsPath(p)));
+        const rawOrder = Array.isArray(order) ? order : [];
+        const seen = new Set();
+        const cleaned = rawOrder
+            .map(p => this.normalizeVfsPath(p))
+            .filter(p => rootSet.has(p))
+            .filter(p => {
+                if (seen.has(p)) return false;
+                seen.add(p);
+                return true;
+            });
+        const rest = Array.from(rootSet).filter(p => !seen.has(p)).sort();
+        return [...cleaned, ...rest];
+    }
+
+    ensureDesktopOrderUpToDate() {
+        const roots = this.getDesktopRootPaths();
+        this.desktopIconOrder = this.normalizeDesktopIconOrder(this.desktopIconOrder, roots);
+    }
+
+    sanitizeDesktopName(name = '') {
+        const raw = String(name || '').trim();
+        const compact = raw.replace(/\s+/g, ' ');
+        const cleaned = compact.replace(/[\\\/:*?"<>|]/g, '').trim();
+        return cleaned || 'Nouveau';
+    }
+
+    ensureUniqueNameInFolder(folderPath, baseName) {
+        const folder = this.normalizeVfsPath(folderPath);
+        const base = this.sanitizeDesktopName(baseName);
+        const existing = new Set(Object.keys(this.vfs || {}).filter(p => {
+            const parent = p.substring(0, p.lastIndexOf('/')) || '/';
+            return parent === folder;
+        }).map(p => p.split('/').pop()));
+
+        if (!existing.has(base)) return base;
+        for (let i = 2; i < 99; i++) {
+            const candidate = `${base} (${i})`;
+            if (!existing.has(candidate)) return candidate;
+        }
+        return `${base} (${Date.now()})`;
+    }
+
+    // ==================== WIDGET HELPERS ====================
+    getWidgetById(id) {
+        return (Array.isArray(this.activeWidgets) ? this.activeWidgets : []).find(w => w && w.id === id) || null;
+    }
+
+    saveWidgetData() {
+        this.saveUserData();
+        try { this.renderWidgets(); } catch (_) { }
+        try { if (this.isPhoneShellActive()) this.renderPhoneWidgets(); } catch (_) { }
+    }
+
+    escapeText(value = '') {
+        return String(value || '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/\"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+
+    formatSeconds(value = 0) {
+        const seconds = Math.max(0, Math.floor(Number(value) || 0));
+        const m = Math.floor(seconds / 60);
+        const s = seconds % 60;
+        return `${m}:${String(s).padStart(2, '0')}`;
+    }
+
+    hashToColor(seed = '') {
+        const s = String(seed || '');
+        let h = 0;
+        for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
+        const hue = h % 360;
+        return `hsl(${hue} 88% 58%)`;
+    }
+
+    // ==================== MUSIC WIDGET ====================
+    findMusicIframes() {
+        const ids = [];
+        try {
+            this.windows.forEach((win, id) => {
+                if (!win || !win.iframe || !win.iframe.contentWindow) return;
+                const key = String(id || '');
+                if (key === 'spotaether' || key === 'music' || key.includes('spotaether') || key.includes('music')) ids.push({ id: key, win });
+            });
+        } catch (_) { }
+        return ids;
+    }
+
+    requestMusicStateRefresh() {
+        try {
+            const now = Date.now();
+            if (now - (this._musicWidgetLastTick || 0) < 600) return;
+            this._musicWidgetLastTick = now;
+            this.findMusicIframes().forEach(({ win }) => {
+                try { win.iframe.contentWindow.postMessage({ type: 'AETHER_MUSIC_REQUEST' }, '*'); } catch (_) { }
+            });
+        } catch (_) { }
+    }
+
+    updateMusicWidgetStateFromMessage(state = {}, sourceWindow = null) {
+        const next = state && typeof state === 'object' ? state : {};
+        const merged = {
+            ...this.musicWidgetState,
+            sourceAppId: String(next.sourceAppId || this.musicWidgetState.sourceAppId || ''),
+            title: String(next.title || ''),
+            artist: String(next.artist || ''),
+            album: String(next.album || ''),
+            coverUrl: String(next.coverUrl || ''),
+            duration: Number(next.duration) || 0,
+            currentTime: Number(next.currentTime) || 0,
+            isPlaying: !!next.isPlaying,
+            volume: typeof next.volume === 'number' ? Math.max(0, Math.min(1, next.volume)) : (this.musicWidgetState.volume || 1)
+        };
+        this.musicWidgetState = merged;
+        this.renderWidgets();
+        if (this.isPhoneShellActive()) this.renderPhoneWidgets();
+    }
+
+    musicWidgetControl(action) {
+        const act = String(action || '').trim();
+        if (!act) return;
+        this.findMusicIframes().forEach(({ win }) => {
+            try { win.iframe.contentWindow.postMessage({ type: 'AETHER_MUSIC_CONTROL', action: act }, '*'); } catch (_) { }
+        });
+    }
+
+    musicWidgetSeek(ev) {
+        try {
+            const bar = ev.currentTarget;
+            const rect = bar.getBoundingClientRect();
+            const pos = Math.max(0, Math.min(1, (ev.clientX - rect.left) / rect.width));
+            const duration = Number(this.musicWidgetState.duration) || 0;
+            const time = duration > 0 ? duration * pos : 0;
+            this.findMusicIframes().forEach(({ win }) => {
+                try { win.iframe.contentWindow.postMessage({ type: 'AETHER_MUSIC_CONTROL', action: 'seek', time }, '*'); } catch (_) { }
+            });
+        } catch (_) { }
+    }
+
+    musicWidgetVolume(value) {
+        const volume = Math.max(0, Math.min(1, Number(value)));
+        this.musicWidgetState.volume = volume;
+        this.findMusicIframes().forEach(({ win }) => {
+            try { win.iframe.contentWindow.postMessage({ type: 'AETHER_MUSIC_CONTROL', action: 'volume', volume }, '*'); } catch (_) { }
+        });
+    }
+
+    // ==================== TODO / AGENDA WIDGET ====================
+    todoAdd(widgetId) {
+        const w = this.getWidgetById(widgetId);
+        if (!w) return;
+        if (!w.data || typeof w.data !== 'object') w.data = { items: [], events: [] };
+        if (!Array.isArray(w.data.items)) w.data.items = [];
+
+        const input = document.getElementById(`todo-input-${widgetId}`);
+        const text = input ? String(input.value || '').trim() : '';
+        if (!text) return;
+        w.data.items.unshift({ text, done: false, createdAt: Date.now(), date: new Date().toISOString().slice(0, 10) });
+        if (input) input.value = '';
+        this.saveWidgetData();
+    }
+
+    todoToggle(widgetId, idx) {
+        const w = this.getWidgetById(widgetId);
+        if (!w || !w.data || !Array.isArray(w.data.items)) return;
+        const item = w.data.items[idx];
+        if (!item) return;
+        item.done = !item.done;
+        item.updatedAt = Date.now();
+        this.saveWidgetData();
+    }
+
+    todoAddEvent(widgetId) {
+        const w = this.getWidgetById(widgetId);
+        if (!w) return;
+        if (!w.data || typeof w.data !== 'object') w.data = { items: [], events: [] };
+        if (!Array.isArray(w.data.events)) w.data.events = [];
+
+        const title = prompt('Titre de l’événement :');
+        if (!title) return;
+        const time = prompt('Heure (ex: 14:30) :', '09:00') || '';
+        const date = prompt('Date (YYYY-MM-DD) :', new Date().toISOString().slice(0, 10)) || new Date().toISOString().slice(0, 10);
+        w.data.events.unshift({ title: String(title).trim(), time: String(time).trim(), date: String(date).trim() });
+        this.saveWidgetData();
+    }
+
+    // ==================== NEWS (RSS) WIDGET ====================
+    newsConfigure(widgetId) {
+        const w = this.getWidgetById(widgetId);
+        if (!w) return;
+        if (!w.data || typeof w.data !== 'object') w.data = { feeds: [], items: [], lastError: '' };
+        const current = Array.isArray(w.data.feeds) ? w.data.feeds.join('\n') : '';
+        const next = prompt('Flux RSS (1 par ligne) :', current);
+        if (next === null) return;
+        const feeds = String(next || '').split('\n').map(s => s.trim()).filter(Boolean);
+        w.data.feeds = feeds;
+        this.saveWidgetData();
+        this.newsRefresh(widgetId);
+    }
+
+    async newsRefresh(widgetId) {
+        const w = this.getWidgetById(widgetId);
+        if (!w) return;
+        if (!w.data || typeof w.data !== 'object') w.data = { feeds: [], items: [], lastError: '' };
+        if (!Array.isArray(w.data.feeds) || w.data.feeds.length === 0) {
+            w.data.items = [];
+            w.data.lastError = '';
+            this.saveWidgetData();
+            return;
+        }
+
+        const all = [];
+        w.data.lastError = '';
+        for (const feed of w.data.feeds.slice(0, 6)) {
+            try {
+                const resp = await fetch(feed, { method: 'GET' });
+                if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+                const xmlText = await resp.text();
+                const doc = new DOMParser().parseFromString(xmlText, 'text/xml');
+                const channelTitle = (doc.querySelector('channel > title')?.textContent || '').trim();
+                const items = Array.from(doc.querySelectorAll('item')).slice(0, 8).map((it) => {
+                    const title = (it.querySelector('title')?.textContent || '').trim();
+                    const link = (it.querySelector('link')?.textContent || '').trim();
+                    const pub = (it.querySelector('pubDate')?.textContent || '').trim();
+                    const enc = it.querySelector('enclosure[url]');
+                    const media = it.querySelector('media\\:thumbnail[url], thumbnail[url]');
+                    const image = (media && media.getAttribute('url')) || (enc && enc.getAttribute('url')) || '';
+                    return { title, link, pub, image, source: channelTitle || feed };
+                }).filter(it => it.title && it.link);
+                all.push(...items);
+            } catch (err) {
+                w.data.lastError = `Impossible de charger certains flux (CORS/URL).`;
+            }
+        }
+        w.data.items = all.slice(0, 20);
+        this.saveWidgetData();
+    }
+
+    openUrlMini(url, title = 'Lien') {
+        const raw = String(url || '').trim();
+        if (!raw) return;
+        const id = 'dev_url_' + Date.now();
+        if (!this.devUrls) this.devUrls = {};
+        this.devUrls[id] = raw;
+        this.createWindow(id, String(title || 'Lien'), true);
+    }
+
+    // ==================== QUOTE WIDGET ====================
+    getDailyQuote(extraSeed = '') {
+        const quotes = [
+            { text: 'Fais simple, puis améliore.', author: 'AetherOS' },
+            { text: 'La discipline bat la motivation.', author: 'Anonyme' },
+            { text: 'Un petit pas aujourd’hui, un grand changement demain.', author: 'Anonyme' },
+            { text: 'Construis ce que tu veux utiliser.', author: 'Anonyme' },
+            { text: 'La constance est une super‑puissance.', author: 'Anonyme' }
+        ];
+        const dayKey = new Date().toISOString().slice(0, 10) + '|' + String(extraSeed || '');
+        let h = 0;
+        for (let i = 0; i < dayKey.length; i++) h = (h * 31 + dayKey.charCodeAt(i)) >>> 0;
+        return quotes[h % quotes.length];
+    }
+
+    quoteNext(widgetId) {
+        // Just re-render: daily quote is deterministic, but user wants motion.
+        const w = this.getWidgetById(widgetId);
+        if (!w) return;
+        if (!w.data || typeof w.data !== 'object') w.data = {};
+        w.data._nonce = Date.now();
+        this.saveWidgetData();
+    }
+
+    // ==================== QUICK LAUNCH ====================
+    quickLaunchEdit(widgetId) {
+        const w = this.getWidgetById(widgetId);
+        if (!w) return;
+        if (!w.data || typeof w.data !== 'object') w.data = { appIds: [] };
+        const current = Array.isArray(w.data.appIds) ? w.data.appIds.join(',') : '';
+        const next = prompt('IDs d’apps séparés par des virgules :', current);
+        if (next === null) return;
+        const ids = String(next || '').split(',').map(s => s.trim()).filter(Boolean);
+        w.data.appIds = Array.from(new Set(ids));
+        this.saveWidgetData();
+    }
+
+    quickLaunchDragStart(widgetId, idx) {
+        try {
+            const w = this.getWidgetById(widgetId);
+            if (!w || !w.data || !Array.isArray(w.data.appIds)) return;
+            this._qlDrag = { widgetId, idx };
+        } catch (_) { }
+    }
+
+    quickLaunchDrop(widgetId, idx) {
+        const drag = this._qlDrag;
+        if (!drag || drag.widgetId !== widgetId) return;
+        const w = this.getWidgetById(widgetId);
+        if (!w || !w.data || !Array.isArray(w.data.appIds)) return;
+        const from = drag.idx;
+        const to = idx;
+        if (from === to) return;
+        const arr = w.data.appIds;
+        const [moved] = arr.splice(from, 1);
+        arr.splice(to, 0, moved);
+        this._qlDrag = null;
+        this.saveWidgetData();
+    }
+
+    createDesktopShortcutForApp(appId, folderPath = '/Bureau') {
+        const id = String(appId || '').trim();
+        if (!id) return null;
+        const entry = this.resolveAppCatalogEntry(id);
+        const title = entry ? entry.title : id;
+        const folder = this.normalizeVfsPath(folderPath || '/Bureau');
+        const filename = this.ensureUniqueNameInFolder(folder, title);
+        const path = `${folder}/${filename}`;
+
+        if (folder === '/Bureau') {
+            if (!Array.isArray(this.desktopIconOrder)) this.desktopIconOrder = [];
+            this.desktopIconOrder = [...this.desktopIconOrder.filter(p => this.normalizeVfsPath(p) !== path), path];
+        }
+
+        this.vfs_write(path, { targetType: 'app', targetId: id }, 'shortcut');
+        return path;
+    }
+
+    renameDesktopItem(path, nextName) {
+        const oldPath = this.normalizeVfsPath(path);
+        const item = this.vfs[oldPath];
+        if (!item) return false;
+        const parent = oldPath.substring(0, oldPath.lastIndexOf('/')) || '/';
+        const name = this.ensureUniqueNameInFolder(parent, nextName);
+        const newPath = `${parent}/${name}`;
+        if (newPath === oldPath) return false;
+        return this.vfs_move(oldPath, newPath);
+    }
+
+    activateDesktopItem(path) {
+        const normalized = this.normalizeVfsPath(path);
+        const item = this.vfs[normalized];
+        if (!item) return;
+
+        if (item.type === 'folder') {
+            this.openDesktopFolderQuick(normalized, { reset: true });
+            return;
+        }
+
+        if (item.type === 'shortcut') {
+            const payload = (item.content && typeof item.content === 'object') ? item.content : {};
+            const targetType = String(payload.targetType || '').trim();
+            const targetId = String(payload.targetId || '').trim();
+            const targetPath = String(payload.targetPath || '').trim();
+
+            if (targetType === 'app' && targetId) {
+                this.installApp(targetId);
+                return;
+            }
+            if (targetType === 'file' && targetPath) {
+                this.openFile(targetPath);
+                return;
+            }
+
+            this.notify('Système', 'Raccourci invalide.', 'file');
+            return;
+        }
+
+        this.openFile(normalized);
+    }
+
+    handleDesktopIconClick(event, path) {
+        try {
+            if (event && typeof event.preventDefault === 'function') event.preventDefault();
+            if (event && typeof event.stopPropagation === 'function') event.stopPropagation();
+        } catch (_) { }
+        const normalized = this.normalizeVfsPath(path);
+        const item = this.vfs[normalized];
+        if (!item) return;
+        if (item.type === 'folder') {
+            this.openDesktopFolderQuick(normalized, { reset: true });
+        }
+    }
+
+    desktopPointerDown(event, path) {
+        try {
+            if (!event) return;
+            const pointerType = String(event.pointerType || '').toLowerCase();
+            const isTouch = pointerType === 'touch' || pointerType === 'pen';
+            if (!isTouch) return; // Mouse: rely on native HTML5 drag/drop.
+
+            const source = this.normalizeVfsPath(path);
+            if (!this.isDesktopRootPath(source) || !this.vfs[source]) return;
+
+            // Long-press to enter drag mode (keeps single tap usable)
+            const startX = event.clientX;
+            const startY = event.clientY;
+            const iconEl = event.currentTarget && event.currentTarget.classList && event.currentTarget.classList.contains('desktop-icon')
+                ? event.currentTarget
+                : (event.target ? event.target.closest('.desktop-icon') : null);
+
+            if (!iconEl) return;
+
+            const state = {
+                sourcePath: source,
+                startX,
+                startY,
+                lastX: startX,
+                lastY: startY,
+                iconEl,
+                ghost: null,
+                dragging: false,
+                timer: null,
+                hoverPath: '',
+                lastReorderKey: ''
+            };
+
+            const cleanup = () => {
+                if (state.timer) clearTimeout(state.timer);
+                try { window.removeEventListener('pointermove', onMove, { passive: false }); } catch (_) { window.removeEventListener('pointermove', onMove); }
+                window.removeEventListener('pointerup', onUp);
+                window.removeEventListener('pointercancel', onUp);
+                if (state.ghost && state.ghost.parentNode) state.ghost.parentNode.removeChild(state.ghost);
+                state.iconEl.classList.remove('dragging-touch');
+                state.iconEl.style.opacity = '';
+                const hl = document.querySelector('.desktop-icon.drop-target');
+                if (hl) hl.classList.remove('drop-target');
+                this._desktopTouchDrag = null;
+            };
+
+            const beginDrag = () => {
+                state.dragging = true;
+                this.ensureDesktopOrderUpToDate();
+                state.iconEl.classList.add('dragging-touch');
+                state.iconEl.style.opacity = '0.3';
+
+                const rect = state.iconEl.getBoundingClientRect();
+                const ghost = state.iconEl.cloneNode(true);
+                ghost.classList.add('desktop-icon-ghost');
+                ghost.style.position = 'fixed';
+                ghost.style.left = rect.left + 'px';
+                ghost.style.top = rect.top + 'px';
+                ghost.style.width = rect.width + 'px';
+                ghost.style.height = rect.height + 'px';
+                ghost.style.zIndex = '99999';
+                ghost.style.pointerEvents = 'none';
+                ghost.style.opacity = '0.95';
+                ghost.style.transform = 'scale(1.03)';
+                document.body.appendChild(ghost);
+                state.ghost = ghost;
+            };
+
+            const reorderNear = (targetPath, after = false) => {
+                const src = state.sourcePath;
+                const tgt = this.normalizeVfsPath(targetPath);
+                if (!this.isDesktopRootPath(src) || !this.isDesktopRootPath(tgt) || src === tgt) return;
+                const roots = this.getDesktopRootPaths();
+                const order = this.normalizeDesktopIconOrder(this.desktopIconOrder, roots)
+                    .filter(p => this.normalizeVfsPath(p) !== src);
+                const idx = order.indexOf(tgt);
+                const insertAt = Math.min(order.length, Math.max(0, (idx >= 0 ? idx : order.length) + (after ? 1 : 0)));
+                order.splice(insertAt, 0, src);
+                this.desktopIconOrder = order;
+                this.saveUserData();
+                this.renderDesktop();
+            };
+
+            const detectDropTarget = (x, y) => {
+                const el = document.elementFromPoint(x, y);
+                const icon = el ? el.closest('.desktop-icon') : null;
+                if (!icon) return '';
+                const p = String(icon.getAttribute('data-path') || '');
+                return p ? this.normalizeVfsPath(p) : '';
+            };
+
+            const onMove = (ev) => {
+                state.lastX = ev.clientX;
+                state.lastY = ev.clientY;
+
+                const dx = ev.clientX - state.startX;
+                const dy = ev.clientY - state.startY;
+                const moved = (dx * dx + dy * dy) > 36;
+                if (!state.dragging) {
+                    if (moved) {
+                        // Cancel tap if user is moving before long-press; keep waiting for drag activation.
+                        try { ev.preventDefault(); } catch (_) { }
+                    }
+                    return;
+                }
+
+                try { ev.preventDefault(); } catch (_) { }
+
+                if (state.ghost) {
+                    state.ghost.style.left = (ev.clientX - 50) + 'px';
+                    state.ghost.style.top = (ev.clientY - 55) + 'px';
+                }
+
+                const hovered = detectDropTarget(ev.clientX, ev.clientY);
+                if (hovered && hovered !== state.sourcePath) {
+                    const node = this.vfs[hovered];
+                    document.querySelectorAll('.desktop-icon.drop-target').forEach(n => n.classList.remove('drop-target'));
+                    const hoverEl = (() => {
+                        try {
+                            const esc = (typeof CSS !== 'undefined' && CSS && typeof CSS.escape === 'function') ? CSS.escape(hovered) : hovered.replace(/\"/g, '\\\"');
+                            return document.querySelector(`.desktop-icon[data-path="${esc}"]`);
+                        } catch (_) { return null; }
+                    })();
+                    if (hoverEl) hoverEl.classList.add('drop-target');
+
+                    if (node && node.type === 'folder') {
+                        state.hoverPath = hovered;
+                        state.lastReorderKey = '';
+                        return;
+                    }
+
+                    state.hoverPath = '';
+                    const rect = (hoverEl && hoverEl.getBoundingClientRect) ? hoverEl.getBoundingClientRect() : null;
+                    const after = rect ? (ev.clientX > rect.left + rect.width / 2) : false;
+                    const key = `${hovered}|${after ? '1' : '0'}`;
+                    if (key !== state.lastReorderKey) {
+                        state.lastReorderKey = key;
+                        reorderNear(hovered, after);
+                    }
+                } else {
+                    state.hoverPath = '';
+                    state.lastReorderKey = '';
+                    document.querySelectorAll('.desktop-icon.drop-target').forEach(n => n.classList.remove('drop-target'));
+                }
+            };
+
+            const onUp = (ev) => {
+                if (state.timer) clearTimeout(state.timer);
+                if (state.dragging) {
+                    // Drop into folder if hovered
+                    const target = state.hoverPath;
+                    if (target && this.vfs[target] && this.vfs[target].type === 'folder') {
+                        const name = state.sourcePath.split('/').pop();
+                        const destName = this.ensureUniqueNameInFolder(target, name);
+                        const dest = `${target}/${destName}`;
+                        this.desktopIconOrder = (Array.isArray(this.desktopIconOrder) ? this.desktopIconOrder : [])
+                            .filter(p => this.normalizeVfsPath(p) !== state.sourcePath);
+                        this.vfs_move(state.sourcePath, dest);
+                    }
+                }
+                cleanup();
+            };
+
+            state.timer = setTimeout(() => {
+                beginDrag();
+            }, 220);
+
+            this._desktopTouchDrag = state;
+
+            try { window.addEventListener('pointermove', onMove, { passive: false }); } catch (_) { window.addEventListener('pointermove', onMove); }
+            window.addEventListener('pointerup', onUp);
+            window.addEventListener('pointercancel', onUp);
+        } catch (_) { }
+    }
+
     renderDesktop() {
         const grid = document.getElementById('desktop-icons');
         if (!grid) return;
 
-        const desktopFiles = Object.keys(this.vfs).filter(path => path.startsWith('/Bureau/') && path.split('/').length === 3);
+        const desktopFiles = this.getDesktopRootPaths();
+        this.ensureDesktopOrderUpToDate();
+        const ordered = this.normalizeDesktopIconOrder(this.desktopIconOrder, desktopFiles);
 
-        const html = desktopFiles.map(path => {
+        const html = ordered.map(path => {
             const item = this.vfs[path];
+            if (!item) return '';
             const name = path.split('/').pop();
-            const icon = item.type === 'folder' ? '📁' : this.getFileIcon(name);
+
+            let label = name;
+            let iconMarkup = item.type === 'folder' ? '📁' : this.getFileIcon(name);
+            let extraClass = '';
+
+            if (item.type === 'shortcut') {
+                extraClass = ' is-shortcut';
+                const payload = (item.content && typeof item.content === 'object') ? item.content : {};
+                const targetType = String(payload.targetType || '').trim();
+                const targetId = String(payload.targetId || '').trim();
+                if (targetType === 'app' && targetId) {
+                    const entry = this.resolveAppCatalogEntry(targetId);
+                    if (entry) {
+                        label = entry.title || label;
+                        iconMarkup = this.renderAppIconMarkup(entry.icon, '📦');
+                    } else {
+                        label = targetId;
+                        iconMarkup = '📦';
+                    }
+                } else {
+                    label = name;
+                    iconMarkup = '🔗';
+                }
+            } else if (item.type === 'folder') {
+                label = name;
+                iconMarkup = '📁';
+            }
 
             return `
-                <div class="desktop-icon" 
-                     data-path="${path}" 
+                <div class="desktop-icon${extraClass}" 
+                     data-path="${this.escapeHtmlAttr(path)}" 
                      draggable="true" 
-                     ondblclick="windowManager.openFile('${path}')"
-                     ondragstart="windowManager.handleIconDragStart(event, '${path}')"
-                     ondragover="event.preventDefault()">
-                    <div class="icon-img">${icon}</div>
-                    <div class="icon-label">${name}</div>
+                     onpointerdown="windowManager.desktopPointerDown(event, ${JSON.stringify(path)})"
+                     onclick="windowManager.handleDesktopIconClick(event, ${JSON.stringify(path)})"
+                     ondblclick="windowManager.activateDesktopItem(${JSON.stringify(path)})"
+                     ondragstart="windowManager.handleIconDragStart(event, ${JSON.stringify(path)})"
+                     ondragover="event.preventDefault()"
+                     ondrop="windowManager.handleDesktopDrop(event)">
+                    <div class="icon-img">${iconMarkup}</div>
+                    <div class="icon-label">${label}</div>
                 </div>
             `;
         }).join('');
@@ -4060,6 +5952,156 @@ removeWidget(id) {
         if (['fslides', 'ppt', 'pptx'].includes(ext)) return '📽️';
         if (ext === 'js') return '⚙️';
         return '📄';
+    }
+
+    ensureDesktopFolderOverlay() {
+        const existing = document.getElementById('desktop-folder-overlay');
+        if (existing) return existing;
+
+        const desktop = document.getElementById('desktop');
+        if (!desktop) return null;
+
+        const overlay = document.createElement('div');
+        overlay.id = 'desktop-folder-overlay';
+        overlay.className = 'desktop-folder-overlay';
+        overlay.style.display = 'none';
+        overlay.innerHTML = `
+            <div class="desktop-folder-card glass" role="dialog" aria-modal="true">
+                <div class="desktop-folder-head">
+                    <button type="button" class="desktop-folder-btn" id="desktop-folder-back" aria-label="Retour" style="display:none;">←</button>
+                    <div class="desktop-folder-title" id="desktop-folder-title">Dossier</div>
+                    <div class="desktop-folder-actions">
+                        <button type="button" class="desktop-folder-btn" id="desktop-folder-open-explorer" aria-label="Ouvrir dans l'explorateur">📁</button>
+                        <button type="button" class="desktop-folder-btn" id="desktop-folder-close" aria-label="Fermer">×</button>
+                    </div>
+                </div>
+                <div class="desktop-folder-grid" id="desktop-folder-grid"></div>
+            </div>
+        `;
+
+        overlay.addEventListener('mousedown', (e) => {
+            if (e.target === overlay) this.closeDesktopFolderQuick();
+        });
+
+        desktop.appendChild(overlay);
+
+        const closeBtn = document.getElementById('desktop-folder-close');
+        if (closeBtn) closeBtn.onclick = () => this.closeDesktopFolderQuick();
+
+        const backBtn = document.getElementById('desktop-folder-back');
+        if (backBtn) backBtn.onclick = () => {
+            if (!Array.isArray(this.desktopFolderNavStack)) this.desktopFolderNavStack = [];
+            if (this.desktopFolderNavStack.length > 1) {
+                this.desktopFolderNavStack.pop();
+                this.renderDesktopFolderQuick();
+            }
+        };
+
+        const explorerBtn = document.getElementById('desktop-folder-open-explorer');
+        if (explorerBtn) explorerBtn.onclick = () => openApp('explorer');
+
+        return overlay;
+    }
+
+    openDesktopFolderQuick(folderPath, opts = {}) {
+        const normalized = this.normalizeVfsPath(folderPath);
+        const item = this.vfs[normalized];
+        if (!item || item.type !== 'folder') return;
+
+        const overlay = this.ensureDesktopFolderOverlay();
+        if (!overlay) return;
+
+        const reset = !!opts.reset;
+        const push = opts.push !== false;
+
+        if (!Array.isArray(this.desktopFolderNavStack)) this.desktopFolderNavStack = [];
+        if (reset) this.desktopFolderNavStack = [normalized];
+        else if (push) {
+            const last = this.desktopFolderNavStack[this.desktopFolderNavStack.length - 1];
+            if (last !== normalized) this.desktopFolderNavStack.push(normalized);
+        }
+
+        overlay.style.display = 'flex';
+        this.renderDesktopFolderQuick();
+    }
+
+    closeDesktopFolderQuick() {
+        const overlay = document.getElementById('desktop-folder-overlay');
+        if (overlay) overlay.style.display = 'none';
+        this.desktopFolderNavStack = [];
+    }
+
+    handleDesktopFolderItemClick(path) {
+        const normalized = this.normalizeVfsPath(path);
+        const item = this.vfs[normalized];
+        if (!item) return;
+        if (item.type === 'folder') {
+            this.openDesktopFolderQuick(normalized, { push: true });
+            return;
+        }
+        this.activateDesktopItem(normalized);
+    }
+
+    renderDesktopFolderQuick() {
+        const overlay = document.getElementById('desktop-folder-overlay');
+        if (!overlay || overlay.style.display === 'none') return;
+        if (!Array.isArray(this.desktopFolderNavStack) || this.desktopFolderNavStack.length === 0) return;
+
+        const folderPath = this.desktopFolderNavStack[this.desktopFolderNavStack.length - 1];
+        const folder = this.vfs[folderPath];
+        if (!folder || folder.type !== 'folder') return;
+
+        const titleEl = document.getElementById('desktop-folder-title');
+        if (titleEl) titleEl.textContent = folderPath.split('/').pop() || 'Dossier';
+
+        const backBtn = document.getElementById('desktop-folder-back');
+        if (backBtn) backBtn.style.display = this.desktopFolderNavStack.length > 1 ? 'inline-flex' : 'none';
+
+        const grid = document.getElementById('desktop-folder-grid');
+        if (!grid) return;
+
+        const depth = folderPath.split('/').length;
+        const children = Object.keys(this.vfs || {})
+            .filter(p => p.startsWith(folderPath + '/') && p.split('/').length === depth + 1)
+            .sort((a, b) => a.localeCompare(b));
+
+        grid.innerHTML = children.map(p => {
+            const item = this.vfs[p];
+            if (!item) return '';
+            const name = p.split('/').pop();
+
+            let label = name;
+            let iconMarkup = item.type === 'folder' ? '📁' : this.getFileIcon(name);
+            let extraClass = '';
+
+            if (item.type === 'shortcut') {
+                extraClass = ' is-shortcut';
+                const payload = (item.content && typeof item.content === 'object') ? item.content : {};
+                const targetType = String(payload.targetType || '').trim();
+                const targetId = String(payload.targetId || '').trim();
+                if (targetType === 'app' && targetId) {
+                    const entry = this.resolveAppCatalogEntry(targetId);
+                    if (entry) {
+                        label = entry.title || label;
+                        iconMarkup = this.renderAppIconMarkup(entry.icon, '📦');
+                    } else {
+                        label = targetId;
+                        iconMarkup = '📦';
+                    }
+                } else {
+                    iconMarkup = '🔗';
+                }
+            } else if (item.type === 'folder') {
+                iconMarkup = '📁';
+            }
+
+            return `
+                <div class="desktop-folder-item${extraClass}" data-path="${this.escapeHtmlAttr(p)}" onclick="windowManager.handleDesktopFolderItemClick(${JSON.stringify(p)})">
+                    <div class="desktop-folder-icon">${iconMarkup}</div>
+                    <div class="desktop-folder-label">${label}</div>
+                </div>
+            `;
+        }).join('') || `<div class="desktop-folder-empty">Vide</div>`;
     }
 
     openDocumentInApp(appId, title, path) {
@@ -4118,6 +6160,11 @@ removeWidget(id) {
         const item = this.vfs[path];
         if (!item) return;
         const name = path.split('/').pop();
+        if (item.type === 'shortcut') {
+            // Allow opening shortcuts from anywhere (desktop, folder panel, etc.)
+            this.activateDesktopItem(path);
+            return;
+        }
         if (item.type === 'folder') {
             openApp('explorer');
         } else if (name.endsWith('.apk')) {
@@ -4207,9 +6254,104 @@ removeWidget(id) {
 
         const sourcePath = e.dataTransfer.getData('sourcePath');
         if (sourcePath) {
-            // Already handled by CSS Grid layout.
-            // If we wanted to allow custom sorting, we would slice/splice the vfs keys array, 
-            // but for now auto-flow manages it gracefully.
+            const source = this.normalizeVfsPath(sourcePath);
+            if (!this.vfs[source]) return;
+
+            const targetIcon = e.target.closest('.desktop-icon');
+            const targetAttr = targetIcon ? String(targetIcon.getAttribute('data-path') || '') : '';
+            const targetPath = targetAttr ? this.normalizeVfsPath(targetAttr) : '';
+
+            const findNearestDesktopIcon = () => {
+                try {
+                    const icons = Array.from(document.querySelectorAll('#desktop-icons .desktop-icon'));
+                    if (!icons.length) return null;
+                    let best = { el: null, dist: Infinity };
+                    icons.forEach((el) => {
+                        const rect = el.getBoundingClientRect();
+                        const cx = rect.left + rect.width / 2;
+                        const cy = rect.top + rect.height / 2;
+                        const dx = e.clientX - cx;
+                        const dy = e.clientY - cy;
+                        const d = dx * dx + dy * dy;
+                        if (d < best.dist) best = { el, dist: d };
+                    });
+                    if (!best.el) return null;
+                    return {
+                        el: best.el,
+                        path: String(best.el.getAttribute('data-path') || ''),
+                        rect: best.el.getBoundingClientRect()
+                    };
+                } catch (_) {
+                    return null;
+                }
+            };
+
+            // Drop onto a folder => move into it
+            if (targetPath && targetPath !== source) {
+                const targetItem = this.vfs[targetPath];
+                if (targetItem && targetItem.type === 'folder') {
+                    const parent = source.substring(0, source.lastIndexOf('/')) || '/';
+                    if (parent === targetPath) return;
+
+                    const name = source.split('/').pop();
+                    const destName = this.ensureUniqueNameInFolder(targetPath, name);
+                    const dest = `${targetPath}/${destName}`;
+
+                    if (this.isDesktopRootPath(source)) {
+                        this.desktopIconOrder = (Array.isArray(this.desktopIconOrder) ? this.desktopIconOrder : [])
+                            .filter(p => this.normalizeVfsPath(p) !== source);
+                    }
+
+                    this.vfs_move(source, dest);
+                    return;
+                }
+
+                // Reorder within the desktop grid (root only)
+                if (this.isDesktopRootPath(source) && this.isDesktopRootPath(targetPath)) {
+                    this.ensureDesktopOrderUpToDate();
+                    const roots = this.getDesktopRootPaths();
+                    const order = this.normalizeDesktopIconOrder(this.desktopIconOrder, roots)
+                        .filter(p => this.normalizeVfsPath(p) !== source);
+                    const idx = order.indexOf(targetPath);
+                    order.splice(idx >= 0 ? idx : order.length, 0, source);
+                    this.desktopIconOrder = order;
+                    this.saveUserData();
+                    this.renderDesktop();
+                    return;
+                }
+            }
+
+            // Dropped on empty desktop area => try nearest icon, else send to end (root only)
+            if (this.isDesktopRootPath(source)) {
+                const nearestInfo = findNearestDesktopIcon();
+                const nearest = (nearestInfo && nearestInfo.path) ? this.normalizeVfsPath(nearestInfo.path) : '';
+                if (nearest && nearest !== source && this.isDesktopRootPath(nearest)) {
+                    this.ensureDesktopOrderUpToDate();
+                    const roots = this.getDesktopRootPaths();
+                    const order = this.normalizeDesktopIconOrder(this.desktopIconOrder, roots)
+                        .filter(p => this.normalizeVfsPath(p) !== source);
+                    const idx = order.indexOf(nearest);
+                    let insertAt = idx >= 0 ? idx : order.length;
+                    if (nearestInfo && nearestInfo.rect) {
+                        const rect = nearestInfo.rect;
+                        const after = e.clientX > (rect.left + rect.width / 2) || e.clientY > (rect.top + rect.height / 2);
+                        if (after) insertAt += 1;
+                    }
+                    order.splice(Math.min(order.length, Math.max(0, insertAt)), 0, source);
+                    this.desktopIconOrder = order;
+                    this.saveUserData();
+                    this.renderDesktop();
+                    return;
+                }
+                this.ensureDesktopOrderUpToDate();
+                const roots = this.getDesktopRootPaths();
+                const order = this.normalizeDesktopIconOrder(this.desktopIconOrder, roots)
+                    .filter(p => this.normalizeVfsPath(p) !== source);
+                order.push(source);
+                this.desktopIconOrder = order;
+                this.saveUserData();
+                this.renderDesktop();
+            }
             return;
         }
 
@@ -4220,10 +6362,11 @@ removeWidget(id) {
                 reader.onload = (event) => {
                     const content = event.target.result;
                     const isText = /\.(txt|html|md|js|css|json)$/i.test(file.name) && !file.name.endsWith('.apk');
-                    const path = '/Bureau/' + file.name;
+                    const safeName = this.ensureUniqueNameInFolder('/Bureau', file.name);
+                    const path = '/Bureau/' + safeName;
+                    if (!Array.isArray(this.desktopIconOrder)) this.desktopIconOrder = [];
+                    this.desktopIconOrder = [...this.desktopIconOrder.filter(p => this.normalizeVfsPath(p) !== path), path];
                     this.vfs_write(path, content, isText ? 'file' : 'binary');
-                    this.saveUserData();
-                    this.renderDesktop();
                 };
                 if (/\.(txt|html|md|js|css|json)$/i.test(file.name) && !file.name.endsWith('.apk')) reader.readAsText(file);
                 else reader.readAsDataURL(file);
@@ -4561,8 +6704,8 @@ removeWidget(id) {
         this.accessibility = this.getDefaultAccessibility();
         this.uiPreferences = this.getDefaultUIPreferences();
         this.vfs = this.getDefaultVFS();
-        this.installedApps = ["word", "excel", "powerpoint", "store", "explorer", "wiki"];
-        this.pinnedApps = ["word", "excel", "powerpoint", "store", "wiki"];
+        this.installedApps = ["word", "notepad", "excel", "powerpoint", "store", "explorer", "wiki"];
+        this.pinnedApps = ["word", "notepad", "excel", "powerpoint", "store", "wiki"];
         this.saveAccounts();
 
         this.nextSetupStep('loading');
@@ -4575,7 +6718,7 @@ removeWidget(id) {
                 overlay.style.display = 'none';
                 overlay.style.opacity = '1';
                 overlay.style.transform = 'scale(1)';
-                this.launchDesktop();
+                this.launchShell();
             }, 800);
         }, 1500);
     }
@@ -4626,8 +6769,8 @@ removeWidget(id) {
                     this.accessibility = this.getDefaultAccessibility();
                     this.uiPreferences = this.getDefaultUIPreferences();
                     this.vfs = this.getDefaultVFS();
-                    this.installedApps = ["word", "excel", "powerpoint", "store", "explorer", "wiki"];
-                    this.pinnedApps = ["word", "excel", "powerpoint", "store", "wiki"];
+                    this.installedApps = ["word", "notepad", "excel", "powerpoint", "store", "explorer", "wiki"];
+                    this.pinnedApps = ["word", "notepad", "excel", "powerpoint", "store", "wiki"];
                     this.saveAccounts();
                 } else {
                     this.prepareAccount(existingLocalKey);
@@ -4657,8 +6800,8 @@ removeWidget(id) {
                     this.accessibility = this.getDefaultAccessibility();
                     this.uiPreferences = this.getDefaultUIPreferences();
                     this.vfs = this.getDefaultVFS();
-                    this.installedApps = ["word", "excel", "powerpoint", "store", "explorer", "wiki"];
-                    this.pinnedApps = ["word", "excel", "powerpoint", "store", "wiki"];
+                    this.installedApps = ["word", "notepad", "excel", "powerpoint", "store", "explorer", "wiki"];
+                    this.pinnedApps = ["word", "notepad", "excel", "powerpoint", "store", "wiki"];
                     this.saveAccounts();
                     await this.hydrateAccountFromSupabase(userName);
                     await this.syncCurrentAccountToSupabase();
@@ -4679,13 +6822,13 @@ removeWidget(id) {
                 overlay.style.opacity = "0";
                 overlay.style.transform = "scale(1.05)";
                 setTimeout(() => {
-                    overlay.style.display = 'none';
-                    overlay.style.opacity = '1';
-                    overlay.style.transform = 'scale(1)';
-                    this.launchDesktop();
-                }, 800);
-            }, 900);
-        } catch (err) {
+                overlay.style.display = 'none';
+                overlay.style.opacity = '1';
+                overlay.style.transform = 'scale(1)';
+                this.launchShell();
+            }, 800);
+        }, 900);
+    } catch (err) {
             this.showSetupError(this.formatSupabaseSetupError(err, supabaseConfig));
         } finally {
             this.setSetupBusy(false);
@@ -4908,7 +7051,11 @@ removeWidget(id) {
 
         const availableWidgets = [
             { type: 'clock', name: 'Horloge', icon: '⏰' },
-            { type: 'system', name: 'Moniteur Système', icon: '⚙️' },
+            { type: 'music', name: 'Musique', icon: '🎵' },
+            { type: 'todo', name: 'Agenda / To‑Do', icon: '✅' },
+            { type: 'news', name: 'Actualités (RSS)', icon: '📰' },
+            { type: 'quote', name: 'Citation', icon: '✨' },
+            { type: 'quicklaunch', name: 'Quick Launch', icon: '🚀' },
             { type: 'note', name: 'Note Rapide', icon: '📝' },
             { type: 'battery', name: 'Batterie', icon: '🔋' }
         ];
@@ -4928,7 +7075,10 @@ removeWidget(id) {
     }
 
     addWidget(type) {
-        const newWidget = { id: 'w_' + Date.now(), type: type, x: 200, y: 200, content: '' };
+        const newWidget = { id: 'w_' + Date.now(), type: type, x: 200, y: 200, content: '', data: {} };
+        if (type === 'todo') newWidget.data = { items: [], events: [] };
+        if (type === 'news') newWidget.data = { feeds: [], items: [], lastError: '' };
+        if (type === 'quicklaunch') newWidget.data = { appIds: Array.from(new Set((Array.isArray(this.pinnedApps) ? this.pinnedApps : []).filter(Boolean))).slice(0, 10) };
         this.activeWidgets.push(newWidget);
         this.renderWidgets();
         this.saveUserData();
@@ -5035,6 +7185,14 @@ removeWidget(id) {
         const existing = document.getElementById(`dock-item-${id}`);
         if (existing) {
             if (!dock.contains(existing)) return;
+            try {
+                const entry = this.resolveAppCatalogEntry(id);
+                if (entry) {
+                    existing.title = forcedTitle || entry.title || existing.title || id;
+                    const iconEl = document.getElementById(`icon-${id}`);
+                    if (iconEl && entry.icon) iconEl.innerHTML = this.renderAppIconMarkup(entry.icon, '📦');
+                }
+            } catch (e) { }
             if (!Array.isArray(this.pinnedApps)) this.pinnedApps = [];
             if (!this.pinnedApps.includes(id)) this.pinnedApps.push(id);
             if (!Array.isArray(this.installedApps)) this.installedApps = [];
@@ -5044,7 +7202,8 @@ removeWidget(id) {
         }
 
         const appData = this.appsRegistry.find(a => a.id === id);
-        const title = forcedTitle || (appData ? appData.title : (gameTitles[id] || id));
+        const entry = this.resolveAppCatalogEntry(id);
+        const title = forcedTitle || (entry ? entry.title : (appData ? appData.title : (gameTitles[id] || id)));
 
         const item = document.createElement('div');
         item.className = 'dock-item';
@@ -5052,8 +7211,8 @@ removeWidget(id) {
         item.title = title;
         item.setAttribute('data-id', id);
         item.onclick = () => this.installApp(id);
-        const iconContent = appData && appData.icon
-            ? this.renderAppIconMarkup(appData.icon, '📦')
+        const iconContent = (appData && appData.icon) || (entry && entry.icon)
+            ? this.renderAppIconMarkup((appData && appData.icon) ? appData.icon : entry.icon, '📦')
             : (appIcons[id] || `<svg viewBox="0 0 100 100">${this.getGameIcon(id)}</svg>`);
         item.innerHTML = `<div class="dock-icon" id="icon-${id}">${iconContent}</div>`;
 
@@ -5120,7 +7279,8 @@ removeWidget(id) {
         }
 
         const appData = this.appsRegistry.find(a => a.id === id);
-        const title = forcedTitle || (appData ? appData.title : (gameTitles[id] || id));
+        const entry = this.resolveAppCatalogEntry(id);
+        const title = forcedTitle || (entry ? entry.title : (appData ? appData.title : (gameTitles[id] || id)));
 
         if (document.getElementById(`window-${id}`)) {
             this.focusWindow(id);
@@ -5132,7 +7292,7 @@ removeWidget(id) {
 
         const openWindow = () => {
             const sys = ['store', 'webos', 'music', 'notes', 'settings', 'terminal', 'files', 'sysinfo', 'calc', 'weather', 'docs', 'word', 'sheets', 'excel', 'slides', 'powerpoint', 'mail', 'outlook', 'activity', 'coder', 'designer', 'android', 'maps', 'camera'];
-            this.createWindow(id, title, sys.includes(id) || (appData && appData.category === 'productivity') || id.startsWith('dev_app_'));
+            this.createWindow(id, title, sys.includes(id) || (appData && appData.category === 'productivity') || (entry && entry.category === 'productivity') || id.startsWith('dev_app_'));
         };
 
         if (isInstalled) {
@@ -5174,6 +7334,7 @@ const gameTitles = {
     settings: 'Paramètres',
     store: 'App Store',
     word: 'FunnyText',
+    notepad: 'Bloc-notes',
     excel: 'FunnySheets',
     sheets: 'FunnySheets',
     powerpoint: 'FunnySlides',
@@ -5194,6 +7355,7 @@ const appIcons = {
     settings: '💠',
     store: '📦',
     word: '📝',
+    notepad: '🗒️',
     excel: '📊',
     sheets: '📊',
     powerpoint: '📽️',
@@ -5209,6 +7371,10 @@ const appIcons = {
 };
 function openGame(id) { windowManager.createWindow(id, gameTitles[id]); }
 function openApp(id) {
+    if (windowManager && typeof windowManager.isPhoneShellActive === 'function' && windowManager.isPhoneShellActive()) {
+        try { windowManager.openPhoneApp(id); } catch (err) { }
+        return;
+    }
     const titleFromRegistry = Array.isArray(windowManager.appsRegistry)
         ? (windowManager.appsRegistry.find(app => app && app.id === id) || {}).title
         : '';
@@ -5218,18 +7384,20 @@ function openApp(id) {
 }
 function updateClock() {
     const el = document.getElementById('clock');
-    if (el) {
-        const showSeconds = !!(windowManager.uiPreferences && windowManager.uiPreferences.clockSeconds);
-        const options = {
-            timeZone: windowManager.timeZone,
-            hour: '2-digit',
-            minute: '2-digit',
-            ...(showSeconds ? { second: '2-digit' } : {}),
-            hour12: windowManager.timeFormat === '12h'
-        };
-        const locale = windowManager.locale || 'fr-FR';
-        el.textContent = new Date().toLocaleTimeString(locale, options);
-    }
+    const phoneEl = document.getElementById('phone-time');
+    if (!el && !phoneEl) return;
+    const showSeconds = !!(windowManager.uiPreferences && windowManager.uiPreferences.clockSeconds);
+    const options = {
+        timeZone: windowManager.timeZone,
+        hour: '2-digit',
+        minute: '2-digit',
+        ...(showSeconds ? { second: '2-digit' } : {}),
+        hour12: windowManager.timeFormat === '12h'
+    };
+    const locale = windowManager.locale || 'fr-FR';
+    const now = new Date().toLocaleTimeString(locale, options);
+    if (el) el.textContent = now;
+    if (phoneEl) phoneEl.textContent = now;
 }
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -5470,15 +7638,20 @@ document.addEventListener('contextmenu', (e) => {
         if (!path) return;
         const name = path.split('/').pop();
         const isImage = /\.(png|jpg|jpeg|webp|gif|svg)$/i.test(name);
+        const item = windowManager && windowManager.vfs ? windowManager.vfs[windowManager.normalizeVfsPath(path)] : null;
+        const isFolder = !!(item && item.type === 'folder');
+        const isShortcut = !!(item && item.type === 'shortcut');
         showContextMenu(x, y, [
             { header: name },
-            { icon: '🚀', label: 'Ouvrir', action: () => windowManager.openFile(path) },
+            { icon: '🚀', label: 'Ouvrir', action: () => windowManager.activateDesktopItem(path) },
+            ...(isFolder ? [{ icon: '📁', label: 'Ouvrir dans l\'explorateur', action: () => windowManager.openFile(path) }] : []),
             '---',
+            { icon: '✏️', label: 'Renommer', action: () => { const n = prompt('Nouveau nom :', name); if (n) windowManager.renameDesktopItem(path, n); } },
             { icon: '📋', label: 'Copier', action: () => windowManager.notify('Système', 'Option de copie activée.') },
             ...(isImage ? [{
                 icon: '🖼️', label: 'Fond d\'écran', action: () => {
-                    const item = windowManager.vfs[path];
-                    if (item && item.content) windowManager.setWallpaper(item.content);
+                    const node = windowManager.vfs[windowManager.normalizeVfsPath(path)];
+                    if (node && node.content) windowManager.setWallpaper(node.content);
                 }
             }] : []),
             '---',
@@ -5513,6 +7686,11 @@ document.addEventListener('contextmenu', (e) => {
                 icon: '📌',
                 label: isPinned ? 'Désépingler' : 'Épingler',
                 action: () => (isPinned ? windowManager.unpinApp(id) : windowManager.pinApp(id))
+            },
+            {
+                icon: '🖥️',
+                label: 'Créer un raccourci sur le bureau',
+                action: () => windowManager.createDesktopShortcutForApp(id)
             }
         ]);
         return;
@@ -5536,6 +7714,7 @@ document.addEventListener('contextmenu', (e) => {
                 items.push({ icon: '🚀', label: 'Ouvrir', action: () => openApp(id) });
                 if (windowManager.windows.has(id)) items.push({ icon: '❌', label: 'Fermer', danger: true, action: () => windowManager.closeWindow(id) });
                 if (isInstalled) items.push({ icon: '📌', label: 'Désépingler', action: () => windowManager.unpinApp(id) });
+                items.push({ icon: '🖥️', label: 'Créer un raccourci sur le bureau', action: () => windowManager.createDesktopShortcutForApp(id) });
             }
             showContextMenu(x, y, items);
         } else {
@@ -5571,6 +7750,7 @@ document.addEventListener('contextmenu', (e) => {
                 label: isPinned ? 'Désépingler' : 'Épingler',
                 action: () => (isPinned ? windowManager.unpinApp(id) : windowManager.pinApp(id))
             });
+            items.push({ icon: '🖥️', label: 'Créer un raccourci sur le bureau', action: () => windowManager.createDesktopShortcutForApp(id) });
         }
 
         items.push({ icon: '❌', label: 'Fermer', danger: true, action: () => windowManager.closeWindow(id) });

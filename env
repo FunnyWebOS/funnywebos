@@ -1,0 +1,17 @@
+# Configuration AetherOS
+# Fichier d'environnement pour le développement local
+
+# Configuration Supabase (optionnel)
+SUPABASE_URL=
+SUPABASE_ANON_KEY=
+
+# Configuration API
+API_BASE_URL=http://localhost:8080
+WS_URL=ws://localhost:8080
+
+# Configuration système
+DEBUG=true
+LOG_LEVEL=info
+
+# Clés de développement (ne pas utiliser en production)
+DEV_MODE=true

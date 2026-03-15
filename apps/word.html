@@ -51,6 +51,10 @@
   --shadow-lg: 0 8px 32px rgba(0,0,0,0.18);
   --radius: 4px;
   --font-ui: 'IBM Plex Sans', system-ui, sans-serif;
+  --paper-bg: #ffffff;
+  --paper-text: #111827;
+  --paper-muted: #6b7280;
+  --paper-border: rgba(0,0,0,0.12);
 }
 :root[data-theme="light"]{ color-scheme: light; }
 :root[data-theme="dark"]{
@@ -379,7 +383,8 @@ body {
 .page {
   width: 816px;
   min-height: 1056px;
-  background: var(--surface);
+  background: var(--paper-bg);
+  color: var(--paper-text);
   box-shadow: 0 2px 12px rgba(0,0,0,0.18);
   margin-bottom: 24px;
   position: relative;
@@ -389,6 +394,7 @@ body {
   padding: 96px 96px;
   min-height: calc(1056px - 0px);
   outline: none;
+  color: var(--paper-text);
 }
 .page-content:focus { box-shadow: 0 0 0 2px rgba(26,86,219,0.2); }
 
@@ -397,24 +403,24 @@ body {
   position: absolute;
   top: 0; left: 0; right: 0;
   height: 72px;
-  border-bottom: 1px dashed var(--gray-300);
+  border-bottom: 1px dashed var(--paper-border);
   display: flex;
   align-items: center;
   padding: 0 96px;
   cursor: text;
-  color: var(--text-muted);
+  color: var(--paper-muted);
   font-size: 11px;
 }
 .page-footer-zone {
   position: absolute;
   bottom: 0; left: 0; right: 0;
   height: 72px;
-  border-top: 1px dashed var(--gray-300);
+  border-top: 1px dashed var(--paper-border);
   display: flex;
   align-items: center;
   padding: 0 96px;
   cursor: text;
-  color: var(--text-muted);
+  color: var(--paper-muted);
   font-size: 11px;
 }
 .header-footer-content {

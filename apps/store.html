@@ -306,9 +306,9 @@ body{
   width:40px;height:40px;border-radius:var(--radius-icon);
   border:1px solid var(--border);overflow:hidden;flex-shrink:0;
   background:var(--surface2);display:flex;align-items:center;justify-content:center;
-  font-size:20px;
+  font-size:20px;line-height:1;
 }
-.feat-card .fc-icon img{width:100%;height:100%;object-fit:cover;}
+.feat-card .fc-icon img{width:100%;height:100%;object-fit:cover;display:block;}
 .feat-card .fc-name{font-size:13px;font-weight:700;color:var(--text);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .feat-card .fc-sub{font-size:11px;color:var(--text2);margin-top:1px;}
 
@@ -343,11 +343,11 @@ body{
   width:56px;height:56px;border-radius:var(--radius-icon);
   border:1px solid var(--border);overflow:hidden;flex-shrink:0;
   background:var(--surface2);display:flex;align-items:center;justify-content:center;
-  font-size:26px;transition:transform .2s;
+  font-size:26px;transition:transform .2s;line-height:1;
   box-shadow:var(--shadow-sm);
 }
 .app-row:hover .ar-icon{transform:scale(1.04);}
-.ar-icon img{width:100%;height:100%;object-fit:cover;}
+.ar-icon img{width:100%;height:100%;object-fit:cover;display:block;}
 .ar-info{flex:1;min-width:0;}
 .ar-name{font-size:15px;font-weight:700;color:var(--text);letter-spacing:-0.01em;}
 .ar-dev{font-size:12px;color:var(--text2);margin-top:1px;}
@@ -568,9 +568,9 @@ body{
   overflow:hidden;border:1px solid var(--border);
   box-shadow:var(--shadow-md);
   background:var(--surface2);display:flex;align-items:center;justify-content:center;
-  font-size:64px;
+  font-size:64px;line-height:1;
 }
-.dv-icon-wrap img{width:100%;height:100%;object-fit:cover;}
+.dv-icon-wrap img{width:100%;height:100%;object-fit:cover;display:block;}
 .dv-app-info{flex:1;}
 .dv-name{font-size:32px;font-weight:800;color:var(--text);letter-spacing:-0.04em;line-height:1;margin-bottom:6px;}
 .dv-dev{font-size:14px;color:var(--accent);font-weight:600;margin-bottom:14px;}
@@ -754,10 +754,10 @@ body{
 .mod-icon{
   width:52px;height:52px;border-radius:var(--radius-icon);
   overflow:hidden;flex-shrink:0;border:1px solid var(--border);
-  background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:22px;
+  background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:22px;line-height:1;
   box-shadow:var(--shadow-sm);
 }
-.mod-icon img{width:100%;height:100%;object-fit:cover;}
+.mod-icon img{width:100%;height:100%;object-fit:cover;display:block;}
 .mod-info{flex:1;min-width:0;}
 .mod-name{font-size:14px;font-weight:700;color:var(--text);}
 .mod-sub{font-size:12px;color:var(--text3);margin-top:2px;}
@@ -834,6 +834,38 @@ body{
   .dv-top-section{flex-direction:column;}
   .dv-icon-wrap{width:100px;height:100px;}
 }
+
+/* Phone mode (AetherOS Phone Shell) */
+body.phone-mode{overflow:hidden;}
+body.phone-mode .shell{height:100vh;}
+body.phone-mode .sidebar{
+  position:fixed;inset:0 auto 0 0;
+  width:min(86vw,320px);
+  transform:translateX(-110%);
+  z-index:9999;
+  box-shadow:0 20px 60px rgba(0,0,0,.35);
+  transition:transform .22s cubic-bezier(.16,1,.3,1);
+}
+body.phone-mode.nav-open .sidebar{transform:translateX(0);}
+body.phone-mode .main{width:100%;}
+body.phone-mode .topbar{padding:0 14px;position:sticky;top:0;z-index:5;}
+body.phone-mode .content{padding:14px 14px 90px;}
+body.phone-mode .search-input{width:140px;}
+body.phone-mode .search-input:focus{width:170px;}
+
+.mb-nav-btn{
+  width:36px;height:36px;border-radius:14px;
+  background:var(--surface2);border:1px solid var(--border);
+  color:var(--text);cursor:pointer;font-weight:900;
+  display:inline-flex;align-items:center;justify-content:center;
+}
+body.phone-mode .topbar-title{display:flex;align-items:center;gap:10px;}
+
+.phone-nav-overlay{
+  display:none;position:fixed;inset:0;z-index:9998;
+  background:rgba(0,0,0,.45);
+}
+body.phone-mode.nav-open .phone-nav-overlay{display:block;}
 </style>
 </head>
 <body>
@@ -1057,6 +1089,44 @@ body{
 <div class="toast" id="toast"></div>
 
 <script>
+// Phone mode init (sidebar as overlay + hamburger)
+(function initPhoneMode() {
+  try {
+    const params = new URLSearchParams(location.search || '');
+    const phone = params.get('phone') === '1' || (window.matchMedia && window.matchMedia('(max-width: 700px)').matches);
+    if (!phone) return;
+    document.body.classList.add('phone-mode');
+
+    const overlay = document.createElement('div');
+    overlay.className = 'phone-nav-overlay';
+    overlay.addEventListener('click', () => document.body.classList.remove('nav-open'));
+    document.body.appendChild(overlay);
+
+    const title = document.getElementById('topbar-title');
+    if (title) {
+      // Wrap existing title text so later .textContent updates don't kill the button
+      if (!document.getElementById('topbar-title-text')) {
+        const span = document.createElement('span');
+        span.id = 'topbar-title-text';
+        span.textContent = title.textContent || 'Accueil';
+        title.textContent = '';
+        title.appendChild(span);
+      }
+
+      const btn = document.createElement('button');
+      btn.className = 'mb-nav-btn';
+      btn.type = 'button';
+      btn.setAttribute('aria-label', 'Menu');
+      btn.textContent = '☰';
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        document.body.classList.toggle('nav-open');
+      });
+      title.insertBefore(btn, title.firstChild);
+    }
+  } catch {}
+})();
+
 // ══════════════════════════════════════════
 // DATA
 // ══════════════════════════════════════════
@@ -1792,7 +1862,7 @@ function goFwd(){
 function applyNav(entry){
   currentCat=entry.cat||'all';
   _showViewRaw(entry.view);
-  document.getElementById('topbar-title').textContent=entry.title;
+  (document.getElementById('topbar-title-text')||document.getElementById('topbar-title')).textContent=entry.title;
   if(entry.view==='discover')renderDiscover();
   if(entry.view==='settings')renderSettings();
   if(entry.view==='admin')renderAdmin();
@@ -1827,7 +1897,7 @@ function showView(name,btn){
   const titles={'discover':'Accueil','settings':'Paramètres','submit':'Soumettre une App','admin':'Modération'};
   currentCat='all';
   _showViewRaw(name);
-  document.getElementById('topbar-title').textContent=titles[name]||name;
+  (document.getElementById('topbar-title-text')||document.getElementById('topbar-title')).textContent=titles[name]||name;
   pushNav(name,'all',titles[name]||name);
   if(name==='discover')renderDiscover();
   if(name==='settings')renderSettings();
@@ -2489,7 +2559,7 @@ function filterCatSB(cat,btn){
   const labels={all:'Accueil',productivity:'Productivité',online:'En ligne',games:'Jeux'};
   currentCat=cat;
   _showViewRaw('discover');
-  document.getElementById('topbar-title').textContent=labels[cat]||cat;
+  (document.getElementById('topbar-title-text')||document.getElementById('topbar-title')).textContent=labels[cat]||cat;
   pushNav('discover',cat,labels[cat]||cat);
   renderDiscover();
   document.querySelectorAll('.sb-item').forEach(b=>b.classList.remove('active'));
@@ -2512,7 +2582,7 @@ function openDetail(id){
   const starsRaw=(hashHue(id)%15+35)/10;
   const stars='★'.repeat(Math.round(starsRaw))+'☆'.repeat(5-Math.round(starsRaw));
 
-  document.getElementById('dv-back-label').textContent=document.getElementById('topbar-title').textContent;
+  document.getElementById('dv-back-label').textContent=(document.getElementById('topbar-title-text')||document.getElementById('topbar-title')).textContent;
 
   document.getElementById('dv-body').innerHTML=`
     <div class="dv-top-section">
@@ -2572,7 +2642,7 @@ function openWebGameDetail(id){
   const g=webGamesById[String(id||'')];
   if(!g)return;
   const idJs=String(g.id||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'");
-  document.getElementById('dv-back-label').textContent=document.getElementById('topbar-title').textContent;
+  document.getElementById('dv-back-label').textContent=(document.getElementById('topbar-title-text')||document.getElementById('topbar-title')).textContent;
 
   const cover=g.thumbnail?String(g.thumbnail):'';
   const provider=String(g.provider||g.publisher||'Jeu web');

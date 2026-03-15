@@ -53,6 +53,20 @@
         ]
     },
     {
+        "id": "notepad",
+        "title": "Bloc-notes",
+        "creator": "System",
+        "description": "Bloc-notes moderne façon Windows 11 : onglets, recherche/remplacement, ouverture et enregistrement.",
+        "category": "productivity",
+        "icon": "🗒️",
+        "screenshots": [
+            "🗒️",
+            "🔎",
+            "💾"
+        ],
+        "appFile": "notepad.html"
+    },
+    {
         "id": "excel",
         "title": "FunnySheets",
         "creator": "FunnyCorp",
