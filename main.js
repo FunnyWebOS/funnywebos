@@ -532,7 +532,7 @@ class WindowManager {
             try {
                 localStorage.setItem('aether_accounts', JSON.stringify(this.accounts));
                 try { this.writeAccountsCookieBackup(); } catch (_) { }
-                this.notify('SystÃ¨me', 'Stockage local plein : cache musique supprimÃ© pour sauvegarder votre session.', 'system');
+                this.notify('Système', 'Stockage local plein : cache musique supprimé pour sauvegarder votre session.', 'system');
             } catch (e) {
                 // Last resort: save a minimal account snapshot (keeps username/PIN) without heavy fields (VFS, webwrap).
                 const minimalAccounts = {};
@@ -561,10 +561,10 @@ class WindowManager {
                     });
                     try { localStorage.setItem('aether_accounts', JSON.stringify(minimalAccounts)); } catch (_) { }
                     try { this.writeAccountsCookieBackup(); } catch (_) { }
-                    this.notify('SystÃ¨me', 'Stockage local plein : sauvegarde minimale (connexion conservee).', 'system');
+                    this.notify('Système', 'Stockage local plein : sauvegarde minimale (connexion conservée).', 'system');
                 } catch (_) {
                     try { this.writeAccountsCookieBackup(); } catch (_) { }
-                    this.notify('SystÃ¨me', 'Impossible de sauvegarder la session (stockage local plein). LibÃ¨re de l\u2019espace puis recharge la page.', 'system');
+                    this.notify('Système', 'Impossible de sauvegarder la session (stockage local plein). Libère de l\u2019espace puis recharge la page.', 'system');
                 }
             }
         }
@@ -904,8 +904,8 @@ class WindowManager {
         const cleanUrl = typeof raw.url === 'string'
             ? raw.url.trim().replace(/\/+$/, '')
             : '';
-        const cleanKey = typeof raw.anonKey === 'string' ? raw.anonKey.trim() : '';
-        const cleanServiceKey = typeof raw.serviceKey === 'string' ? raw.serviceKey.trim() : '';
+        const cleanKey = typeof raw.anonKey === 'string' ? raw.anonKey.trim().replace(/\s+/g, '') : '';
+        const cleanServiceKey = typeof raw.serviceKey === 'string' ? raw.serviceKey.trim().replace(/\s+/g, '') : '';
         const cleanTable = typeof raw.table === 'string' ? raw.table.trim() : '';
         const cleanUsernameColumn = typeof raw.usernameColumn === 'string' ? raw.usernameColumn.trim() : '';
         const cleanPasswordColumn = typeof raw.passwordColumn === 'string' ? raw.passwordColumn.trim() : '';
@@ -1019,12 +1019,15 @@ class WindowManager {
     }
 
     async loadSupabaseConfigFromWorker() {
-        // Désactiver le chargement depuis le worker pour éviter les erreurs 403
-        return null;
+        // Load Supabase config from a Worker endpoint (AETHER_SUPABASE_CONFIG_URL, or fallback to AETHER_AI_PROXY_URL).
+        const endpoint = this.getSupabaseConfigRemoteUrl();
+        if (!endpoint) {
+            this.supabaseConfigWorkerError = '';
+            return null;
+        }
         
-        const endpoint = 'https://aetheros-ai-proxy.aetheros.workers.dev/aether/v1/supabase-config';
         const timeoutMs = 4000;
-        const controller = new AbortController();
+        const controller = (typeof AbortController !== 'undefined') ? new AbortController() : null;
         const t = setTimeout(() => controller?.abort(), timeoutMs);
 
         try {
@@ -1033,13 +1036,24 @@ class WindowManager {
                 cache: 'no-store',
                 signal: controller ? controller.signal : undefined
             });
-            if (!resp.ok) return null;
-            const data = await resp.json();
+            if (!resp.ok) {
+                this.supabaseConfigWorkerError = `HTTP ${resp.status}`;
+                try {
+                    const text = await resp.text();
+                    if (text && text.length < 500) this.supabaseConfigWorkerError = `HTTP ${resp.status}: ${text}`;
+                } catch (err) { }
+                return null;
+            }
+
+            const data = await resp.json().catch(() => null);
             const remote = this.coerceWorkerSupabaseConfig(data);
             const sanitized = this.sanitizeSupabaseConfig(remote);
-            if (!this.isSupabaseReady(sanitized)) return null;
+            if (!this.isSupabaseApiReady(sanitized)) return null;
+
+            this.supabaseConfigWorkerError = '';
             return sanitized;
         } catch (err) {
+            this.supabaseConfigWorkerError = String((err && err.message) ? err.message : err || '').trim();
             return null;
         } finally {
             clearTimeout(t);
@@ -2073,7 +2087,17 @@ class WindowManager {
         this.setSetupMode(defaultMode);
         this.showSetupError('');
         if (!this.isSupabaseReady()) {
-            this.showSetupError("Supabase n'est pas configure. Tu peux creer un compte local (onglet « Compte local ») ou configurer .env pour le cloud.");
+            const base = "Supabase n'est pas configure. Tu peux creer un compte local (onglet « Compte local ») ou configurer une URL distante (AETHER_SUPABASE_CONFIG_URL via Worker Cloudflare) / env.js pour le cloud.";
+            const workerErr = String(this.supabaseConfigWorkerError || '').trim();
+            if (!workerErr) this.showSetupError(base);
+            else {
+                const lowerErr = workerErr.toLowerCase();
+                if (lowerErr.includes('403') || lowerErr.includes('origin not allowed')) {
+                    this.showSetupError(base + " Le Worker refuse l'origine (403). Vérifie ALLOWED_ORIGINS dans proxy/wrangler.toml puis redeploie.");
+                } else {
+                    this.showSetupError(base + ` Worker: ${workerErr}`);
+                }
+            }
         }
         const userInput = document.getElementById('setup-username');
         const passInput = document.getElementById('setup-password');
@@ -6187,10 +6211,10 @@ removeWidget(id) {
                     } else if (parsed && Array.isArray(parsed.slides)) {
                         this.openDocumentInApp('powerpoint', 'FunnySlides', path);
                     } else {
-                        this.notify("SystÃ¨me", `Impossible d'ouvrir ${name} : format JSON non pris en charge.`, 'file');
+                        this.notify("Système", `Impossible d'ouvrir ${name} : format JSON non pris en charge.`, 'file');
                     }
                 } catch (err) {
-                    this.notify("SystÃ¨me", `Impossible d'ouvrir ${name} : JSON invalide.`, 'file');
+                    this.notify("Système", `Impossible d'ouvrir ${name} : JSON invalide.`, 'file');
                 }
             } else if (['fslides', 'ppt', 'pptx'].includes(ext)) {
                 this.openDocumentInApp('powerpoint', 'FunnySlides', path);
@@ -6747,7 +6771,14 @@ removeWidget(id) {
         if (mode !== 'local') {
             if (!password) return this.showSetupError("Mot de passe requis.");
             if (!this.isSupabaseReady(supabaseConfig)) {
-                return this.showSetupError("Supabase non configure. Choisis « Compte local » ou configure soit une URL distante (AETHER_SUPABASE_CONFIG_URL via Worker Cloudflare), soit .env/env.js (AETHER_SUPABASE_URL, AETHER_SUPABASE_ANON_KEY, AETHER_SUPABASE_TABLE).");
+                const base = "Supabase non configure. Choisis « Compte local » ou configure soit une URL distante (AETHER_SUPABASE_CONFIG_URL via Worker Cloudflare), soit .env/env.js (AETHER_SUPABASE_URL, AETHER_SUPABASE_ANON_KEY, AETHER_SUPABASE_TABLE).";
+                const workerErr = String(this.supabaseConfigWorkerError || '').trim();
+                if (!workerErr) return this.showSetupError(base);
+                const lowerErr = workerErr.toLowerCase();
+                if (lowerErr.includes('403') || lowerErr.includes('origin not allowed')) {
+                    return this.showSetupError(base + " Le Worker refuse l'origine (403). Vérifie ALLOWED_ORIGINS dans proxy/wrangler.toml puis redeploie.");
+                }
+                return this.showSetupError(base + ` Worker: ${workerErr}`);
             }
         }
 

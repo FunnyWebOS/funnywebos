@@ -4,11 +4,39 @@ const json = (value, init = {}) => {
   return new Response(JSON.stringify(value), { ...init, headers });
 };
 
-const withCors = (response, origin) => {
+const stripOuterQuotes = (value) => {
+  const s = String(value || "").trim();
+  if (
+    (s.startsWith('"') && s.endsWith('"')) ||
+    (s.startsWith("'") && s.endsWith("'"))
+  ) {
+    return s.slice(1, -1).trim();
+  }
+  return s;
+};
+
+const normalizeOrigin = (value) => {
+  const raw = stripOuterQuotes(value);
+  if (!raw) return "";
+  if (raw === "*" || raw === "null") return raw;
+  try {
+    const u = new URL(raw);
+    if (!["http:", "https:"].includes(u.protocol)) return "";
+    return u.origin;
+  } catch (err) {
+    return raw.replace(/\/+$/, "");
+  }
+};
+
+const withCors = (response, origin, requestHeaders) => {
   const next = new Response(response.body, response);
   next.headers.set("access-control-allow-origin", origin || "*");
-  next.headers.set("access-control-allow-methods", "GET, POST, PATCH, OPTIONS");
-  next.headers.set("access-control-allow-headers", "content-type");
+  next.headers.set("access-control-allow-methods", "GET, POST, PATCH, PUT, DELETE, OPTIONS");
+  const allowHeaders = String(requestHeaders || "").trim();
+  next.headers.set(
+    "access-control-allow-headers",
+    allowHeaders || "content-type, authorization, apikey, x-api-key"
+  );
   next.headers.set("access-control-max-age", "86400");
   next.headers.set("vary", "Origin");
   return next;
@@ -17,20 +45,22 @@ const withCors = (response, origin) => {
 const parseAllowedOrigins = (raw) => {
   return String(raw || "")
     .split(",")
-    .map((s) => s.trim())
+    .map((s) => normalizeOrigin(s))
     .filter(Boolean);
 };
 
 const isOriginAllowed = (origin, allowedOrigins) => {
-  if (!origin) return allowedOrigins.length === 0; // allow if not configured
   if (allowedOrigins.length === 0) return true; // allow all if not configured
-  return allowedOrigins.includes(origin);
+  if (allowedOrigins.includes("*")) return true;
+  const normalized = normalizeOrigin(origin);
+  if (!normalized) return false;
+  return allowedOrigins.includes(normalized);
 };
 
 const pickSupabase = (env) => {
   return {
-    url: (env.SUPABASE_URL || "").trim(),
-    anonKey: (env.SUPABASE_ANON_KEY || "").trim(),
+    url: stripOuterQuotes(env.SUPABASE_URL || "").trim(),
+    anonKey: stripOuterQuotes(env.SUPABASE_ANON_KEY || "").replace(/\s+/g, ""),
   };
 };
 
@@ -62,9 +92,13 @@ export default {
     const url = new URL(request.url);
     const origin = request.headers.get("Origin") || "";
     const allowedOrigins = parseAllowedOrigins(env.ALLOWED_ORIGINS);
+    const acrh = request.headers.get("access-control-request-headers") || "";
 
     if (request.method === "OPTIONS") {
-      return withCors(new Response(null, { status: 204 }), origin || "*");
+      if (!isOriginAllowed(origin, allowedOrigins)) {
+        return withCors(json({ error: "Origin not allowed" }, { status: 403 }), origin || "*", acrh);
+      }
+      return withCors(new Response(null, { status: 204 }), origin || "*", acrh);
     }
 
     if (!isOriginAllowed(origin, allowedOrigins)) {
@@ -78,13 +112,19 @@ export default {
         return withCors(json({ error: "Method not allowed" }, { status: 405 }), origin || "*");
       }
 
+      const supaUrl = stripOuterQuotes(env.SUPABASE_URL || "").trim();
+      const supaAnonKey = stripOuterQuotes(env.SUPABASE_ANON_KEY || "").replace(/\s+/g, "");
+      if (!supaUrl || !supaAnonKey) {
+        return withCors(json({ error: "Missing SUPABASE_URL/SUPABASE_ANON_KEY" }, { status: 500 }), origin || "*");
+      }
+
       return withCors(
         json({
-          url: (env.SUPABASE_URL || "").trim(),
-          anonKey: (env.SUPABASE_ANON_KEY || "").trim(),
-          table: (env.SUPABASE_TABLE || "").trim(),
-          usernameColumn: (env.SUPABASE_USERNAME_COLUMN || "").trim(),
-          passwordColumn: (env.SUPABASE_PASSWORD_COLUMN || "").trim(),
+          url: supaUrl,
+          anonKey: supaAnonKey,
+          table: stripOuterQuotes(env.SUPABASE_TABLE || "").trim(),
+          usernameColumn: stripOuterQuotes(env.SUPABASE_USERNAME_COLUMN || "").trim(),
+          passwordColumn: stripOuterQuotes(env.SUPABASE_PASSWORD_COLUMN || "").trim(),
         }),
         origin || "*"
       );

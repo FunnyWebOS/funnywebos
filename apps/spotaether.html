@@ -725,7 +725,7 @@ async function localPlayTrack(t) {
           const q = await t.handle.queryPermission({ mode: 'read' });
           if (q !== 'granted' && t.handle.requestPermission) {
             const r = await t.handle.requestPermission({ mode: 'read' });
-            if (r !== 'granted') { toast('AccÃ¨s fichier refusÃ©', 'err'); return; }
+            if (r !== 'granted') { toast('Accès fichier refusé', 'err'); return; }
           }
         }
       } catch (e) {}
@@ -756,20 +756,20 @@ function audioEnginePlay(t, srcUrl) {
   if (!srcUrl) { toast('Audio indisponible', 'err'); return; }
   aud.src = srcUrl;
   aud.volume = S.volume;
-  aud.play().catch(()=>toast('Lecture bloquÃ©e', 'err'));
+  aud.play().catch(()=>toast('Lecture bloquée', 'err'));
   S.playing = true;
-  ge('pTrack').textContent  = t.title  || 'â€”';
-  ge('pArtist').textContent = t.artist || 'â€”';
+  ge('pTrack').textContent  = t.title  || '—';
+  ge('pArtist').textContent = t.artist || '—';
   ge('pArt').src = t.cover || '';
   ge('pFill').style.width = '0%';
   ge('pCur').textContent = '0:00';
-  ge('pDur').textContent = t.duration ? fmt(t.duration) : 'â€”:â€”';
-  ge('playBtn').textContent = 'â¸';
+  ge('pDur').textContent = t.duration ? fmt(t.duration) : '—:—';
+  ge('playBtn').textContent = '⏸';
   ge('eq').style.display = 'flex';
   refreshLikeBtn();
   if (ge('cmPanel').classList.contains('open')) renderComments();
-  if (t.previewOnly) toast(`Extrait 30s â€¢ ${t.title}`, 'err');
-  else toast(`â™ª ${t.title}`, 'ok');
+  if (t.previewOnly) toast(`Extrait 30s • ${t.title}`, 'err');
+  else toast(`♪ ${t.title}`, 'ok');
 }
 
 S.engine = 'audio';

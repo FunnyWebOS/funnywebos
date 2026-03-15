@@ -3,7 +3,7 @@
 window.AETHER_RUNTIME_ENV = window.AETHER_RUNTIME_ENV || {};
 
 // Set your deployed proxy base URL here (no trailing slash).
-// Example: "https://aetheros-ai-proxy.aetheros.workers.dev"https://funn
+// Example: "https://aetheros-ai-proxy.<your-subdomain>.workers.dev"
 window.AETHER_RUNTIME_ENV.AETHER_AI_PROXY_URL = window.AETHER_RUNTIME_ENV.AETHER_AI_PROXY_URL || "https://aetheros-ai-proxy.aetheros.workers.dev";
 
 // Optional: Fetch Supabase config from your Cloudflare Worker (so you don't ship keys in env.js).

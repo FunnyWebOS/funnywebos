@@ -2187,7 +2187,7 @@ function loadWorkbookContent(content, fileName = 'Classeur1', path = null) {
         currentFilePath = path;
         initGrid();
         renderSheetTabs();
-        document.getElementById('doc-name').textContent = ' â€” ' + wb.name;
+        document.getElementById('doc-name').textContent = ' — ' + wb.name;
       }
     } catch (err) {}
     return;
@@ -2207,7 +2207,7 @@ function loadWorkbookContent(content, fileName = 'Classeur1', path = null) {
   currentFilePath = path;
   initGrid();
   renderSheetTabs();
-  document.getElementById('doc-name').textContent = ' â€” ' + wb.name;
+  document.getElementById('doc-name').textContent = ' — ' + wb.name;
   renderGrid();
 }
 function parseCsvLine(line, delim=',') {
@@ -2390,7 +2390,7 @@ async function doExport() {
   if (fmt === 'fsheet') {
     wb.modified = false;
     wb.name = name;
-    document.getElementById('save-ind').textContent = 'âœ“ EnregistrÃ©';
+    document.getElementById('save-ind').textContent = '✓ Enregistré';
     setTimeout(()=>document.getElementById('save-ind').textContent='',2000);
   }
   exportMode = 'export';
